@@ -1,0 +1,63 @@
+import jwt from 'jsonwebtoken';
+
+interface TokenPayload {
+  id: string;
+  email?: string;
+  role?: 'admin' | 'user' | 'super_admin';
+}
+
+const getSecret = (isAdmin: boolean, type: 'access' | 'refresh') => {
+  if (type === 'refresh') {
+    return isAdmin ? process.env.JWT_ADMIN_REFRESH_SECRET : process.env.JWT_REFRESH_SECRET;
+  }
+
+  return isAdmin ? process.env.JWT_ADMIN_SECRET : process.env.JWT_SECRET;
+};
+
+const ensureSecret = (s: string | undefined, name: string) => {
+  if (!s) throw new Error(`${name} is not defined`);
+  return s as jwt.Secret;
+};
+
+export const generateAccessToken = (payload: TokenPayload, expiresIn?: string): string => {
+  const expiry = expiresIn || process.env.JWT_ACCESS_EXPIRE || '15m';
+  const isAdmin = payload.role === 'admin' || payload.role === 'super_admin';
+  const secret = ensureSecret(getSecret(isAdmin, 'access'), 'JWT secret');
+  return jwt.sign(payload as jwt.JwtPayload, secret, { expiresIn: expiry } as any);
+};
+
+export const generateRefreshToken = (payload: TokenPayload, expiresIn?: string): string => {
+  const expiry = expiresIn || process.env.JWT_REFRESH_EXPIRE || '7d';
+  const isAdmin = payload.role === 'admin' || payload.role === 'super_admin';
+  const secret = ensureSecret(getSecret(isAdmin, 'refresh'), 'JWT refresh secret');
+  return jwt.sign(payload as jwt.JwtPayload, secret, { expiresIn: expiry } as any);
+};
+
+export const verifyAccessToken = (token: string, isAdmin: boolean = false): TokenPayload => {
+  const secretEnv = getSecret(isAdmin, 'access');
+  const secret = ensureSecret(secretEnv, 'JWT secret');
+  try {
+    return jwt.verify(token, secret) as TokenPayload;
+  } catch (e) {
+    throw new Error('Invalid or expired access token');
+  }
+};
+
+export const verifyRefreshToken = (token: string, isAdmin: boolean = false): TokenPayload => {
+  const secretEnv = getSecret(isAdmin, 'refresh');
+  const secret = ensureSecret(secretEnv, 'JWT refresh secret');
+  try {
+    return jwt.verify(token, secret) as TokenPayload;
+  } catch (e) {
+    throw new Error('Invalid or expired refresh token');
+  }
+};
+
+/**
+ * Decode token without verification (useful for debugging).
+ */
+export const decodeToken = (token: string): any => {
+  return jwt.decode(token);
+};
+
+// no default export; functions exported above
