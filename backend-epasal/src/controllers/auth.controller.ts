@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import crypto from 'crypto';
 import { Admin } from '../models/Admin';
 import { generateAccessToken, generateRefreshToken, decodeToken, verifyRefreshToken } from '../utils/tokenGenerator';
-import { BadRequestError, UnauthorizedError } from '../utils/errors';
+import { BadRequestError, UnauthorizedError, LockedError } from '../utils/errors';
 import { asyncHandler } from '../middlewares/asyncHandler';
 import { RefreshToken } from '../models/RefreshToken';
 import { refreshCookieOptions } from '../utils/cookieOptions';
@@ -37,12 +37,21 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
     throw new UnauthorizedError('Admin account is inactive');
   }
 
+  if (admin.isLocked) {
+    const remainingTime = Math.ceil(((admin.lockUntil as Date).getTime() - Date.now()) / 60000);
+    await recordAuditEvent({ req, actorType: 'admin', actorId: admin._id.toString(), actorEmail: email, action: 'admin.login_failed', success: false, metadata: { reason: 'account_locked' } });
+    throw new LockedError('Account locked. Try again after 15 minutes.', { remainingTime });
+  }
+
   // Compare password
   const isPasswordValid = await admin.comparePassword(password);
   if (!isPasswordValid) {
+    await admin.incrementLoginAttempts();
     await recordAuditEvent({ req, actorType: 'admin', actorId: admin._id.toString(), actorEmail: email, action: 'admin.login_failed', success: false, metadata: { reason: 'bad_password' } });
     throw new UnauthorizedError('Invalid email or password');
   }
+
+  await admin.resetLoginAttempts();
 
   // Update last login
   admin.lastLogin = new Date();

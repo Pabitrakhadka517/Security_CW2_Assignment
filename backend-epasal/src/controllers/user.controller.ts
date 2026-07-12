@@ -2,7 +2,7 @@ import { Request, Response } from 'express';
 import crypto from 'crypto';
 import { User } from '../models/User';
 import { generateAccessToken, generateRefreshToken, decodeToken } from '../utils/tokenGenerator';
-import { BadRequestError, UnauthorizedError } from '../utils/errors';
+import { BadRequestError, UnauthorizedError, LockedError } from '../utils/errors';
 import { asyncHandler } from '../middlewares/asyncHandler';
 import { RefreshToken } from '../models/RefreshToken';
 import { refreshCookieOptions } from '../utils/cookieOptions';
@@ -38,11 +38,20 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     throw new UnauthorizedError('User account inactive');
   }
 
+  if (user.isLocked) {
+    const remainingTime = Math.ceil(((user.lockUntil as Date).getTime() - Date.now()) / 60000);
+    await recordAuditEvent({ req, actorType: 'user', actorId: user._id.toString(), actorEmail: email, action: 'user.login_failed', success: false, metadata: { reason: 'account_locked' } });
+    throw new LockedError('Account locked. Try again after 15 minutes.', { remainingTime });
+  }
+
   const valid = await user.comparePassword(password);
   if (!valid) {
+    await user.incrementLoginAttempts();
     await recordAuditEvent({ req, actorType: 'user', actorId: user._id.toString(), actorEmail: email, action: 'user.login_failed', success: false, metadata: { reason: 'bad_password' } });
     throw new UnauthorizedError('Invalid credentials');
   }
+
+  await user.resetLoginAttempts();
 
   await recordAuditEvent({ req, actorType: 'user', actorId: user._id.toString(), actorEmail: user.email, action: 'user.login_success', success: true });
 

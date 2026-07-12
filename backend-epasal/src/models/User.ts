@@ -25,10 +25,18 @@ export interface IUser extends Document {
   }>;
   isFirstLogin?: boolean;
   savedCart?: Array<any>;
+  loginAttempts: number;
+  lockUntil: Date | null;
+  readonly isLocked: boolean;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(password: string): Promise<boolean>;
+  incrementLoginAttempts(): Promise<void>;
+  resetLoginAttempts(): Promise<void>;
 }
+
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 const UserSchema = new Schema<IUser>(
   {
@@ -50,6 +58,12 @@ UserSchema.add({
   savedAddresses: { type: Array, default: [] },
   isFirstLogin: { type: Boolean, default: true },
   savedCart: { type: Array, default: [] },
+  loginAttempts: { type: Number, default: 0 },
+  lockUntil: { type: Date, default: null },
+});
+
+UserSchema.virtual('isLocked').get(function (this: IUser) {
+  return !!(this.lockUntil && this.lockUntil.getTime() > Date.now());
 });
 
 // Hash password before saving
@@ -69,6 +83,22 @@ UserSchema.pre('save', async function (next) {
 UserSchema.methods.comparePassword = async function (password: string): Promise<boolean> {
   const user = this as unknown as IUser;
   return bcrypt.compare(password, user.password);
+};
+
+UserSchema.methods.incrementLoginAttempts = async function (): Promise<void> {
+  const user = this as unknown as IUser;
+  user.loginAttempts += 1;
+  if (user.loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+    user.lockUntil = new Date(Date.now() + LOCK_DURATION_MS);
+  }
+  await user.save();
+};
+
+UserSchema.methods.resetLoginAttempts = async function (): Promise<void> {
+  const user = this as unknown as IUser;
+  user.loginAttempts = 0;
+  user.lockUntil = null;
+  await user.save();
 };
 
 // email index is already created by unique:true on the field above

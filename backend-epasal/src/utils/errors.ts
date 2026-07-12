@@ -43,6 +43,12 @@ export class ForbiddenError extends AppError {
   }
 }
 
+export class LockedError extends AppError {
+  constructor(message: string = 'Account locked', details?: unknown) {
+    super(message, 423, details);
+  }
+}
+
 export class NotFoundError extends AppError {
   constructor(message: string = 'Resource not found') {
     super(message, 404);
