@@ -132,6 +132,15 @@ router.post('/user/login', loginLimiter, validateRequest({
   }),
 }), userController.login);
 
+// Google Sign-In — body carries the ID token from Google Identity Services,
+// verified server-side against Google's public keys (no redirect/client-secret
+// flow needed). Reuses loginLimiter since it's a login-adjacent endpoint.
+router.post('/google', loginLimiter, validateRequest({
+  body: Joi.object({
+    credential: Joi.string().required(),
+  }),
+}), userController.googleLogin);
+
 router.post('/refresh', refreshLimiter, authController.refresh);
 router.post('/logout', authController.logout);
 

@@ -12,6 +12,9 @@ export interface IAdmin extends Document {
   loginAttempts: number;
   lockUntil: Date | null;
   readonly isLocked: boolean;
+  mfaSecret?: string;
+  mfaEnabled: boolean;
+  mfaBackupCodes?: string[];
   createdAt: Date;
   updatedAt: Date;
   comparePassword(password: string): Promise<boolean>;
@@ -69,6 +72,18 @@ const AdminSchema = new Schema<IAdmin>(
     lockUntil: {
       type: Date,
       default: null,
+    },
+    mfaSecret: {
+      type: String,
+      select: false,
+    },
+    mfaEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    mfaBackupCodes: {
+      type: [String],
+      select: false,
     },
   },
   {

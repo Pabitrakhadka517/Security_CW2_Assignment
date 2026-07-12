@@ -8,6 +8,7 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_user_secret'
 process.env.JWT_ADMIN_SECRET = process.env.JWT_ADMIN_SECRET || 'test_admin_secret'
 process.env.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'test_user_refresh'
 process.env.JWT_ADMIN_REFRESH_SECRET = process.env.JWT_ADMIN_REFRESH_SECRET || 'test_admin_refresh'
+process.env.MFA_PENDING_SECRET = process.env.MFA_PENDING_SECRET || 'test_mfa_pending_secret'
 process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/epasaley_test'
 
 // No real Mongo in CI/sandbox: make DB operations fail fast instead of buffering

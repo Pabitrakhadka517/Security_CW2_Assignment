@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import authRoutes from './auth.routes';
+import mfaRoutes from './mfa.routes';
 import productRoutes from './product.routes';
 import orderRoutes from './order.routes';
 import categoryRoutes from './category.routes';
@@ -13,6 +14,7 @@ const router = Router();
 
 // Mount all routes
 router.use('/auth', authRoutes);
+router.use('/auth/mfa', mfaRoutes);
 router.use('/products', productRoutes);
 router.use('/orders', orderRoutes);
 router.use('/categories', categoryRoutes);

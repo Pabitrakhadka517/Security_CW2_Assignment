@@ -4,7 +4,9 @@ import bcrypt from 'bcryptjs';
 export interface IUser extends Document {
   name: string;
   email: string;
-  password: string;
+  password?: string;
+  googleId?: string;
+  authProvider: 'local' | 'google';
   isActive: boolean;
   favorites: string[];
   phone?: string;
@@ -28,6 +30,9 @@ export interface IUser extends Document {
   loginAttempts: number;
   lockUntil: Date | null;
   readonly isLocked: boolean;
+  mfaSecret?: string;
+  mfaEnabled: boolean;
+  mfaBackupCodes?: string[];
   createdAt: Date;
   updatedAt: Date;
   comparePassword(password: string): Promise<boolean>;
@@ -42,7 +47,15 @@ const UserSchema = new Schema<IUser>(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
-    password: { type: String, required: true, minlength: 6, select: false },
+    // Google-only accounts have no password — Google already verified identity.
+    password: {
+      type: String,
+      minlength: 6,
+      select: false,
+      required: function (this: IUser) { return !this.googleId; },
+    },
+    googleId: { type: String, select: false, unique: true, sparse: true },
+    authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
     isActive: { type: Boolean, default: true },
       favorites: { type: [String], default: [], index: true },
   },
@@ -60,6 +73,9 @@ UserSchema.add({
   savedCart: { type: Array, default: [] },
   loginAttempts: { type: Number, default: 0 },
   lockUntil: { type: Date, default: null },
+  mfaSecret: { type: String, select: false },
+  mfaEnabled: { type: Boolean, default: false },
+  mfaBackupCodes: { type: [String], select: false },
 });
 
 UserSchema.virtual('isLocked').get(function (this: IUser) {
@@ -69,8 +85,9 @@ UserSchema.virtual('isLocked').get(function (this: IUser) {
 // Hash password before saving
 UserSchema.pre('save', async function (next) {
   const user = this as unknown as IUser;
-  // if password not modified, continue
+  // if password not modified (or never set, e.g. a Google-only account), continue
   if (typeof user.isModified === 'function' && !user.isModified('password')) return next();
+  if (!user.password) return next();
   try {
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(user.password, salt);
@@ -82,6 +99,8 @@ UserSchema.pre('save', async function (next) {
 
 UserSchema.methods.comparePassword = async function (password: string): Promise<boolean> {
   const user = this as unknown as IUser;
+  // Google-only accounts have no password hash to compare against.
+  if (!user.password) return false;
   return bcrypt.compare(password, user.password);
 };
 

@@ -5,7 +5,6 @@ import orderService from '../services/order.service';
 import { Product } from '../models/Product';
 import { sendSuccess } from '../utils/responseHelper';
 import { uploadImage } from '../middlewares/upload';
-import bcrypt from 'bcryptjs';
 import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/errors';
 import { recordAuditEvent } from '../services/auditLog.service';
 
@@ -53,7 +52,7 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response) =>
     // current password even though the caller already holds a valid access
     // token, the same way changePassword does.
     if (!currentPassword) throw new BadRequestError('Current password is required to change email');
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    const isMatch = await user.comparePassword(currentPassword);
     if (!isMatch) throw new BadRequestError('Current password is incorrect');
 
     const exists = await User.findOne({ email: email.toLowerCase(), _id: { $ne: user._id } });
@@ -213,7 +212,7 @@ export const changePassword = asyncHandler(async (req: Request, res: Response) =
   const user = await User.findById(userId).select('+password');
   if (!user) throw new NotFoundError('User not found');
 
-  const isMatch = await bcrypt.compare(currentPassword, user.password);
+  const isMatch = await user.comparePassword(currentPassword);
   if (!isMatch) throw new BadRequestError('Current password is incorrect');
 
   user.password = newPassword;

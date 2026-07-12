@@ -60,4 +60,35 @@ export const decodeToken = (token: string): any => {
   return jwt.decode(token);
 };
 
+interface MFAPendingPayload {
+  userId: string;
+  purpose: 'mfa-pending';
+}
+
+/**
+ * Short-lived token issued after credential + lockout checks pass but before
+ * the TOTP/backup-code step, so a stolen access token can never be minted
+ * without also clearing MFA. Signed with its own secret (not JWT_SECRET) so
+ * it can't be confused with — or replayed as — a normal access token.
+ */
+export const generateMFAPendingToken = (userId: string): string => {
+  const secret = ensureSecret(process.env.MFA_PENDING_SECRET, 'MFA pending secret');
+  const payload: MFAPendingPayload = { userId, purpose: 'mfa-pending' };
+  return jwt.sign(payload, secret, { expiresIn: '5m' });
+};
+
+export const verifyMFAPendingToken = (token: string): MFAPendingPayload => {
+  const secret = ensureSecret(process.env.MFA_PENDING_SECRET, 'MFA pending secret');
+  let decoded: any;
+  try {
+    decoded = jwt.verify(token, secret);
+  } catch (e) {
+    throw new Error('Invalid or expired MFA session');
+  }
+  if (decoded.purpose !== 'mfa-pending') {
+    throw new Error('Invalid MFA session token');
+  }
+  return decoded as MFAPendingPayload;
+};
+
 // no default export; functions exported above
