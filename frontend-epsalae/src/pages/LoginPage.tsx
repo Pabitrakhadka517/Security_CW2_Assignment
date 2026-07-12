@@ -33,6 +33,8 @@ const LoginPage: React.FC = () => {
   const [mfaError, setMfaError]               = useState('');
   const [mfaAttemptsUsed, setMfaAttemptsUsed] = useState(0);
 
+  const showExpiredBanner = new URLSearchParams(location.search).get('reason') === 'expired';
+
   useEffect(() => {
     if (isUser) navigate(returnTo, { replace: true });
   }, [isUser, navigate, returnTo]);
@@ -247,6 +249,13 @@ const LoginPage: React.FC = () => {
             <>
               <h1 className="text-2xl font-bold text-gray-900 mb-1">Sign in</h1>
               <p className="text-gray-500 text-sm mb-8">Welcome back! Enter your credentials to continue.</p>
+
+              {showExpiredBanner && (
+                <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl px-4 py-3 mb-5 text-sm">
+                  <AlertCircle size={15} className="shrink-0" />
+                  <span>Your password has expired. Please log in and update your password.</span>
+                </div>
+              )}
 
               {error && (
                 <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-5 text-sm">

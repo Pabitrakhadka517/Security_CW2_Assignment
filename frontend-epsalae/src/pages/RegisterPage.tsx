@@ -1,23 +1,37 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { User, Mail, Phone, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, ShoppingBag, ArrowRight } from 'lucide-react';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import toast from 'react-hot-toast';
 import { authEndpoints } from '@/components/api/userapi';
 import { useUserAuth } from '@/components/store/authstore';
+import PasswordStrengthMeter from '@/components/ui/PasswordStrengthMeter';
+import PasswordRules from '@/components/ui/PasswordRules';
 
-function getStrength(p: string) {
-  if (!p) return null;
-  let s = 0;
-  if (p.length >= 8) s++;
-  if (/[A-Z]/.test(p) && /[a-z]/.test(p)) s++;
-  if (/[0-9]/.test(p)) s++;
-  if (/[^a-zA-Z0-9]/.test(p)) s++;
-  if (s < 2) return { label: 'Weak',   color: 'bg-red-500',     w: 'w-1/4' };
-  if (s < 3) return { label: 'Fair',   color: 'bg-yellow-500',  w: 'w-2/4' };
-  if (s < 4) return { label: 'Good',   color: 'bg-blue-500',    w: 'w-3/4' };
-  return       { label: 'Strong', color: 'bg-emerald-500', w: 'w-full' };
-}
+const registerSchema = z
+  .object({
+    firstName: z.string().trim().min(2, 'At least 2 characters'),
+    lastName: z.string().trim().min(2, 'At least 2 characters'),
+    email: z.string().trim().email('Enter a valid email'),
+    phone: z.string().regex(/^[0-9\-\+\(\)\s]{7,15}$/, '7–15 digit phone number'),
+    password: z
+      .string()
+      .min(12, 'Minimum 12 characters')
+      .regex(/[A-Z]/, 'Must contain uppercase')
+      .regex(/[a-z]/, 'Must contain lowercase')
+      .regex(/[0-9]/, 'Must contain a number')
+      .regex(/[^A-Za-z0-9]/, 'Must contain special character'),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: 'Passwords do not match',
+    path: ['confirmPassword'],
+  });
+
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const inputCls = (err?: string) =>
   `w-full py-2.5 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-400 text-sm transition focus:outline-none focus:ring-2 focus:bg-white disabled:opacity-50 ${
@@ -26,61 +40,51 @@ const inputCls = (err?: string) =>
       : 'border-gray-200 focus:ring-[#1A3C8A]/10 focus:border-[#1A3C8A]/40'
   }`;
 
-interface FormData { firstName: string; lastName: string; email: string; phone: string; password: string; confirmPassword: string; }
-type FormErrors = Partial<FormData & { api: string }>;
-
 const RegisterPage: React.FC = () => {
   const navigate  = useNavigate();
   const location  = useLocation();
   const { isUser, loginUser } = useUserAuth();
   const returnTo: string = (location.state as any)?.returnTo || '/account';
 
-  const [form, setForm]           = useState<FormData>({ firstName: '', lastName: '', email: '', phone: '', password: '', confirmPassword: '' });
-  const [showPwd, setShowPwd]     = useState(false);
-  const [showConf, setShowConf]   = useState(false);
-  const [loading, setLoading]     = useState(false);
-  const [errors, setErrors]       = useState<FormErrors>({});
-  const [success, setSuccess]     = useState(false);
+  const [showPwd, setShowPwd]   = React.useState(false);
+  const [showConf, setShowConf] = React.useState(false);
+  const [loading, setLoading]   = React.useState(false);
+  const [apiError, setApiError] = React.useState('');
+  const [success, setSuccess]   = React.useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: { firstName: '', lastName: '', email: '', phone: '', password: '', confirmPassword: '' },
+  });
+
+  const password = watch('password');
 
   useEffect(() => { if (isUser) navigate(returnTo, { replace: true }); }, [isUser, navigate, returnTo]);
 
-  const setField = (k: keyof FormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm(f => ({ ...f, [k]: e.target.value }));
-    setErrors(p => ({ ...p, [k]: '', api: '' }));
-  };
-
-  const validate = (): boolean => {
-    const e: FormErrors = {};
-    if (!form.firstName.trim() || form.firstName.trim().length < 2) e.firstName = 'At least 2 characters';
-    if (!form.lastName.trim()  || form.lastName.trim().length  < 2) e.lastName  = 'At least 2 characters';
-    if (!form.email) e.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) e.email = 'Enter a valid email';
-    if (!form.phone) e.phone = 'Phone is required';
-    else if (!/^[0-9\-\+\(\)\s]{7,15}$/.test(form.phone)) e.phone = '7–15 digit phone number';
-    if (!form.password) e.password = 'Password is required';
-    else if (form.password.length < 6) e.password = 'At least 6 characters';
-    if (!form.confirmPassword) e.confirmPassword = 'Please confirm your password';
-    else if (form.password !== form.confirmPassword) e.confirmPassword = 'Passwords do not match';
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const onSubmit = async (values: RegisterFormValues) => {
     setLoading(true);
+    setApiError('');
     try {
       await authEndpoints.register({
-        name:     `${form.firstName.trim()} ${form.lastName.trim()}`,
-        email:    form.email.trim().toLowerCase(),
-        phone:    form.phone.trim(),
-        password: form.password,
+        name:     `${values.firstName.trim()} ${values.lastName.trim()}`,
+        email:    values.email.trim().toLowerCase(),
+        phone:    values.phone.trim(),
+        password: values.password,
       });
       setSuccess(true);
       toast.success('Account created! Please sign in.');
       setTimeout(() => navigate('/login', { state: { returnTo } }), 1800);
     } catch (err: any) {
-      setErrors(p => ({ ...p, api: err?.response?.data?.message || 'Registration failed. Try again.' }));
+      const details = err?.response?.data?.details?.errors;
+      const message = Array.isArray(details) && details.length
+        ? details.join(', ')
+        : err?.response?.data?.message || 'Registration failed. Try again.';
+      setApiError(message);
     } finally {
       setLoading(false);
     }
@@ -98,13 +102,12 @@ const RegisterPage: React.FC = () => {
       toast.success('Welcome!');
       navigate(returnTo, { replace: true });
     } catch (err: any) {
-      setErrors(p => ({ ...p, api: err?.response?.data?.message || err?.message || 'Google sign-in failed. Please try again.' }));
+      setApiError(err?.response?.data?.message || err?.message || 'Google sign-in failed. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  const strength  = getStrength(form.password);
   const isDisabled = loading || success;
 
   return (
@@ -171,31 +174,34 @@ const RegisterPage: React.FC = () => {
             </div>
           ) : (
             <>
-              {errors.api && (
+              {apiError && (
                 <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-5 text-sm">
                   <AlertCircle size={15} className="shrink-0" />
-                  <span>{errors.api}</span>
+                  <span>{apiError}</span>
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-3.5" noValidate>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5" noValidate>
                 {/* Name row */}
                 <div className="grid grid-cols-2 gap-3">
-                  {[
-                    { id: 'firstName', label: 'First name', placeholder: 'Ram',   key: 'firstName' as const, ac: 'given-name' },
-                    { id: 'lastName',  label: 'Last name',  placeholder: 'Sharma', key: 'lastName'  as const, ac: 'family-name' },
-                  ].map(({ id, label, placeholder, key, ac }) => (
-                    <div key={id}>
-                      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-1.5">{label}</label>
-                      <div className="relative">
-                        <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                        <input id={id} value={form[key]} onChange={setField(key)} placeholder={placeholder}
-                          disabled={isDisabled} autoComplete={ac}
-                          className={`${inputCls(errors[key])} pl-9 pr-3`} />
-                      </div>
-                      {errors[key] && <p className="mt-1 text-xs text-red-500">{errors[key]}</p>}
+                  <div>
+                    <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1.5">First name</label>
+                    <div className="relative">
+                      <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                      <input id="firstName" placeholder="Ram" disabled={isDisabled} autoComplete="given-name"
+                        className={`${inputCls(errors.firstName?.message)} pl-9 pr-3`} {...register('firstName')} />
                     </div>
-                  ))}
+                    {errors.firstName && <p className="mt-1 text-xs text-red-500">{errors.firstName.message}</p>}
+                  </div>
+                  <div>
+                    <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1.5">Last name</label>
+                    <div className="relative">
+                      <User size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                      <input id="lastName" placeholder="Sharma" disabled={isDisabled} autoComplete="family-name"
+                        className={`${inputCls(errors.lastName?.message)} pl-9 pr-3`} {...register('lastName')} />
+                    </div>
+                    {errors.lastName && <p className="mt-1 text-xs text-red-500">{errors.lastName.message}</p>}
+                  </div>
                 </div>
 
                 {/* Email */}
@@ -203,11 +209,10 @@ const RegisterPage: React.FC = () => {
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
                   <div className="relative">
                     <Mail size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                    <input id="email" type="email" value={form.email} onChange={setField('email')}
-                      placeholder="you@example.com" disabled={isDisabled} autoComplete="email"
-                      className={`${inputCls(errors.email)} pl-9 pr-4`} />
+                    <input id="email" type="email" placeholder="you@example.com" disabled={isDisabled} autoComplete="email"
+                      className={`${inputCls(errors.email?.message)} pl-9 pr-4`} {...register('email')} />
                   </div>
-                  {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
+                  {errors.email && <p className="mt-1 text-xs text-red-500">{errors.email.message}</p>}
                 </div>
 
                 {/* Phone */}
@@ -215,11 +220,10 @@ const RegisterPage: React.FC = () => {
                   <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1.5">Phone number</label>
                   <div className="relative">
                     <Phone size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                    <input id="phone" type="tel" value={form.phone} onChange={setField('phone')}
-                      placeholder="98XXXXXXXX" disabled={isDisabled} autoComplete="tel"
-                      className={`${inputCls(errors.phone)} pl-9 pr-4`} />
+                    <input id="phone" type="tel" placeholder="98XXXXXXXX" disabled={isDisabled} autoComplete="tel"
+                      className={`${inputCls(errors.phone?.message)} pl-9 pr-4`} {...register('phone')} />
                   </div>
-                  {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone}</p>}
+                  {errors.phone && <p className="mt-1 text-xs text-red-500">{errors.phone.message}</p>}
                 </div>
 
                 {/* Password */}
@@ -227,24 +231,17 @@ const RegisterPage: React.FC = () => {
                   <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
                   <div className="relative">
                     <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                    <input id="password" type={showPwd ? 'text' : 'password'} value={form.password}
-                      onChange={setField('password')} placeholder="Min. 6 characters"
-                      disabled={isDisabled} autoComplete="new-password"
-                      className={`${inputCls(errors.password)} pl-9 pr-10`} />
+                    <input id="password" type={showPwd ? 'text' : 'password'}
+                      placeholder="Min. 12 characters" disabled={isDisabled} autoComplete="new-password"
+                      className={`${inputCls(errors.password?.message)} pl-9 pr-10`} {...register('password')} />
                     <button type="button" onClick={() => setShowPwd(v => !v)} disabled={isDisabled}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
                       {showPwd ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
                   </div>
-                  {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password}</p>}
-                  {strength && !errors.password && (
-                    <div className="mt-1.5">
-                      <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full transition-all ${strength.color} ${strength.w}`} />
-                      </div>
-                      <p className="text-xs text-gray-400 mt-0.5">{strength.label} password</p>
-                    </div>
-                  )}
+                  {errors.password && <p className="mt-1 text-xs text-red-500">{errors.password.message}</p>}
+                  <PasswordStrengthMeter password={password} />
+                  <PasswordRules password={password} />
                 </div>
 
                 {/* Confirm password */}
@@ -252,16 +249,15 @@ const RegisterPage: React.FC = () => {
                   <label htmlFor="confirm" className="block text-sm font-medium text-gray-700 mb-1.5">Confirm password</label>
                   <div className="relative">
                     <Lock size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                    <input id="confirm" type={showConf ? 'text' : 'password'} value={form.confirmPassword}
-                      onChange={setField('confirmPassword')} placeholder="Re-enter password"
-                      disabled={isDisabled} autoComplete="new-password"
-                      className={`${inputCls(errors.confirmPassword)} pl-9 pr-10`} />
+                    <input id="confirm" type={showConf ? 'text' : 'password'}
+                      placeholder="Re-enter password" disabled={isDisabled} autoComplete="new-password"
+                      className={`${inputCls(errors.confirmPassword?.message)} pl-9 pr-10`} {...register('confirmPassword')} />
                     <button type="button" onClick={() => setShowConf(v => !v)} disabled={isDisabled}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
                       {showConf ? <EyeOff size={14} /> : <Eye size={14} />}
                     </button>
                   </div>
-                  {errors.confirmPassword && <p className="mt-1 text-xs text-red-500">{errors.confirmPassword}</p>}
+                  {errors.confirmPassword && <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>}
                 </div>
 
                 <button type="submit" disabled={isDisabled}
@@ -283,7 +279,7 @@ const RegisterPage: React.FC = () => {
               <div className="mt-4 flex justify-center">
                 <GoogleLogin
                   onSuccess={handleGoogleSuccess}
-                  onError={() => setErrors(p => ({ ...p, api: 'Google sign-in failed. Please try again.' }))}
+                  onError={() => setApiError('Google sign-in failed. Please try again.')}
                   theme="outline"
                   size="large"
                   shape="pill"

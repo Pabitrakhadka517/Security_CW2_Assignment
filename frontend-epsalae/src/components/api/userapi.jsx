@@ -46,6 +46,19 @@ userApi.interceptors.response.use(
     const original = error.config || {};
     const status = error.response?.status;
 
+    // Password has expired (90-day policy) — no amount of retrying fixes
+    // this, so drop the session immediately and send the user to log back
+    // in and set a new password.
+    if (status === 403 && error.response?.data?.code === 'PASSWORD_EXPIRED') {
+      try { useUserAuth.getState().logoutUser(); } catch (e) {}
+      try {
+        if (!window.location.pathname.startsWith('/login')) {
+          window.location.href = '/login?reason=expired';
+        }
+      } catch (e) {}
+      return Promise.reject(error);
+    }
+
     if (status === 401 && !original._retried && !original.skipAuthRetry) {
       original._retried = true;
       if (!String(original.url || '').includes('/auth/refresh')) {
