@@ -2,6 +2,7 @@ import { Router } from 'express';
 import orderController from '../controllers/order.controller';
 import { validateRequest } from '../middlewares/validateRequest';
 import { requireAdmin, requireAuth, optionalAuth } from '../middlewares/authMiddleware';
+import { checkPasswordExpiry } from '../middlewares/passwordExpiry';
 import {
   createOrderSchema,
   updateOrderStatusSchema,
@@ -79,6 +80,7 @@ router.get(
 router.get(
   '/my/:id',
   requireAuth,
+  checkPasswordExpiry,
   validateRequest(getOrderByIdSchema),
   orderController.getMyOrderById
 );

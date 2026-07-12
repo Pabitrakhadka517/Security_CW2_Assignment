@@ -7,6 +7,7 @@ import { sendSuccess } from '../utils/responseHelper';
 import { uploadImage } from '../middlewares/upload';
 import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/errors';
 import { recordAuditEvent } from '../services/auditLog.service';
+import { validatePasswordChange } from '../services/password.service';
 
 /**
  * User-facing profile endpoints.
@@ -205,18 +206,16 @@ export const changePassword = asyncHandler(async (req: Request, res: Response) =
   if (!currentPassword || !newPassword) {
     throw new BadRequestError('Current password and new password are required');
   }
-  if (newPassword.length < 6) {
-    throw new BadRequestError('New password must be at least 6 characters');
-  }
 
-  const user = await User.findById(userId).select('+password');
+  const user = await User.findById(userId).select('+password +passwordHistory');
   if (!user) throw new NotFoundError('User not found');
 
-  const isMatch = await user.comparePassword(currentPassword);
-  if (!isMatch) throw new BadRequestError('Current password is incorrect');
+  const validation = await validatePasswordChange(user, currentPassword, newPassword);
+  if (!validation.valid) throw new BadRequestError(validation.error);
 
   user.password = newPassword;
   await user.save();
+  await user.updatePasswordHistory(user.password as string);
   await recordAuditEvent({ req, actorType: 'user', actorId: userId, actorEmail: user.email, action: 'user.password_changed', success: true, targetType: 'user', targetId: userId });
 
   sendSuccess(res, 200, 'Password changed successfully');

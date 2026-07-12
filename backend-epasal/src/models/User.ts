@@ -33,12 +33,21 @@ export interface IUser extends Document {
   mfaSecret?: string;
   mfaEnabled: boolean;
   mfaBackupCodes?: string[];
+  passwordHistory?: string[];
+  passwordChangedAt: Date;
+  passwordExpiresAt: Date;
+  mustChangePassword: boolean;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(password: string): Promise<boolean>;
   incrementLoginAttempts(): Promise<void>;
   resetLoginAttempts(): Promise<void>;
+  checkPasswordReuse(newPassword: string): Promise<boolean>;
+  updatePasswordHistory(newHash: string): Promise<void>;
 }
+
+const PASSWORD_EXPIRY_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
+const PASSWORD_HISTORY_LIMIT = 5;
 
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
@@ -76,6 +85,11 @@ UserSchema.add({
   mfaSecret: { type: String, select: false },
   mfaEnabled: { type: Boolean, default: false },
   mfaBackupCodes: { type: [String], select: false },
+  // Last 5 password hashes (most recent last), kept to block password reuse.
+  passwordHistory: { type: [String], select: false, default: [] },
+  passwordChangedAt: { type: Date, default: Date.now },
+  passwordExpiresAt: { type: Date, default: () => new Date(Date.now() + PASSWORD_EXPIRY_MS) },
+  mustChangePassword: { type: Boolean, default: false },
 });
 
 UserSchema.virtual('isLocked').get(function (this: IUser) {
@@ -117,6 +131,25 @@ UserSchema.methods.resetLoginAttempts = async function (): Promise<void> {
   const user = this as unknown as IUser;
   user.loginAttempts = 0;
   user.lockUntil = null;
+  await user.save();
+};
+
+UserSchema.methods.checkPasswordReuse = async function (newPassword: string): Promise<boolean> {
+  const user = this as unknown as IUser;
+  const history = user.passwordHistory || [];
+  for (const oldHash of history) {
+    if (await bcrypt.compare(newPassword, oldHash)) return true;
+  }
+  return false;
+};
+
+UserSchema.methods.updatePasswordHistory = async function (newHash: string): Promise<void> {
+  const user = this as unknown as IUser;
+  const history = user.passwordHistory || [];
+  user.passwordHistory = [...history, newHash].slice(-PASSWORD_HISTORY_LIMIT);
+  user.passwordChangedAt = new Date();
+  user.passwordExpiresAt = new Date(Date.now() + PASSWORD_EXPIRY_MS);
+  user.mustChangePassword = false;
   await user.save();
 };
 

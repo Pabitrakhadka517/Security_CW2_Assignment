@@ -5,6 +5,7 @@ import * as userController from '../controllers/user.controller';
 import { validateRequest } from '../middlewares/validateRequest';
 import { requireAdmin } from '../middlewares/authMiddleware';
 import { loginLimiter, registerLimiter, refreshLimiter, accountChangeLimiter } from '../middlewares/rateLimiter';
+import { strongPasswordSchema } from '../validations/password.validation';
 
 const router = Router();
 
@@ -121,7 +122,7 @@ router.post('/register', registerLimiter, validateRequest({
     phone: Joi.string().pattern(/^[0-9\-\+\(\)\s]{7,15}$/).optional().messages({
       'string.pattern.base': 'Phone number must be 7-15 digits',
     }),
-    password: Joi.string().min(6).required(),
+    password: strongPasswordSchema,
   }),
 }), userController.register);
 

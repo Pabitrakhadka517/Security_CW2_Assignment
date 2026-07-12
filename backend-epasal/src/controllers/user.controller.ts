@@ -8,6 +8,7 @@ import { asyncHandler } from '../middlewares/asyncHandler';
 import { RefreshToken } from '../models/RefreshToken';
 import { refreshCookieOptions } from '../utils/cookieOptions';
 import { recordAuditEvent } from '../services/auditLog.service';
+import { validatePasswordComplexity } from '../services/password.service';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -62,10 +63,16 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   const exists = await User.findOne({ email });
   if (exists) throw new BadRequestError('Email already registered');
 
+  const complexity = validatePasswordComplexity(password);
+  if (!complexity.valid) throw new BadRequestError('Password does not meet complexity requirements', { errors: complexity.errors });
+
   const userData: any = { name, email, password };
   if (phone) userData.phone = phone;
 
   const user = await User.create(userData);
+  // Seed password history with the hash the pre-save hook just produced,
+  // so the very first change-password call can already check reuse against it.
+  await user.updatePasswordHistory(user.password as string);
   await recordAuditEvent({ req, actorType: 'user', actorId: user._id.toString(), actorEmail: user.email, action: 'user.register', success: true, targetType: 'user', targetId: user._id.toString() });
 
   res.status(201).json({ success: true, message: 'User registered', data: { id: user._id, name: user.name, email: user.email } });

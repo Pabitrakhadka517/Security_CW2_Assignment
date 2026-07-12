@@ -224,5 +224,21 @@ export interface ICreateBannerBody {
   isActive?: boolean;
 }
 
+// Password Policy Types
+export interface IPasswordStrengthResult {
+  valid: boolean;
+  score: number;
+  feedback: string[];
+}
+
+export interface IPasswordComplexityResult {
+  valid: boolean;
+  errors: string[];
+}
+
+export interface IPasswordChangeResult {
+  valid: boolean;
+  error: string;
+}
 
 
