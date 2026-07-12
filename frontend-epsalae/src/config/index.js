@@ -27,6 +27,9 @@ export const API_URL = `${API_BASE_URL}/api/v1`;
 export const APP_NAME = import.meta.env.VITE_APP_NAME || 'Epasaley';
 export const APP_DESCRIPTION = import.meta.env.VITE_APP_DESCRIPTION || "Nepal's Trusted Online Store";
 
+// Google Sign-In OAuth Client ID — must match the backend's GOOGLE_CLIENT_ID.
+export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
 // ============================================================
 // CURRENCY — Single source of truth for money formatting.
 // The platform targets Nepal, so the currency is always Rupees (Rs.).

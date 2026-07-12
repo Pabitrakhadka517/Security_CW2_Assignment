@@ -1,7 +1,136 @@
-import { useState } from 'react'
-import { Eye, EyeOff, Lock, ShieldCheck, CheckCircle2, AlertCircle } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { Eye, EyeOff, Lock, ShieldCheck, ShieldOff, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { profileEndpoints } from '@/components/api/userapi'
+import { profileEndpoints, mfaEndpoints } from '@/components/api/userapi'
+
+function MFASection() {
+  const [checking, setChecking] = useState(true)
+  const [mfaEnabled, setMfaEnabled] = useState(false)
+  const [showDisable, setShowDisable] = useState(false)
+  const [disableForm, setDisableForm] = useState({ password: '', token: '' })
+  const [disabling, setDisabling] = useState(false)
+  const [disableError, setDisableError] = useState(null)
+
+  useEffect(() => {
+    let cancelled = false
+    mfaEndpoints.status()
+      .then((res) => {
+        if (cancelled) return
+        setMfaEnabled(!!(res.data?.data?.mfaEnabled ?? res.data?.mfaEnabled))
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setChecking(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const handleDisable = async (e) => {
+    e.preventDefault()
+    setDisableError(null)
+    if (!disableForm.password || !disableForm.token) {
+      setDisableError('Password and verification code are required')
+      return
+    }
+    setDisabling(true)
+    try {
+      await mfaEndpoints.disable(disableForm)
+      setMfaEnabled(false)
+      setShowDisable(false)
+      setDisableForm({ password: '', token: '' })
+      toast.success('MFA disabled successfully')
+    } catch (err) {
+      const msg = err?.response?.data?.message || 'Failed to disable MFA'
+      setDisableError(msg)
+    } finally {
+      setDisabling(false)
+    }
+  }
+
+  return (
+    <div className="mt-10 max-w-md border-t border-slate-100 pt-8">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+          <ShieldCheck className="w-4 h-4 text-slate-700" />
+        </div>
+        <div>
+          <h4 className="text-base font-semibold text-slate-900">Two-Factor Authentication</h4>
+          <p className="text-xs text-slate-500">Use an authenticator app for extra login security.</p>
+        </div>
+      </div>
+
+      {checking ? (
+        <Loader2 className="h-4 w-4 animate-spin text-slate-400" />
+      ) : mfaEnabled ? (
+        <div className="space-y-4">
+          <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-3 text-sm">
+            <ShieldCheck size={16} className="shrink-0" />
+            <span>MFA is active on your account.</span>
+          </div>
+
+          {!showDisable ? (
+            <button
+              onClick={() => setShowDisable(true)}
+              className="w-full py-3 border border-red-200 text-red-600 hover:bg-red-50 font-semibold rounded-xl text-sm transition"
+            >
+              Disable MFA
+            </button>
+          ) : (
+            <form onSubmit={handleDisable} className="space-y-3">
+              {disableError && (
+                <div role="alert" className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl">
+                  {disableError}
+                </div>
+              )}
+              <input
+                type="password"
+                placeholder="Current password"
+                value={disableForm.password}
+                onChange={(e) => setDisableForm((f) => ({ ...f, password: e.target.value }))}
+                disabled={disabling}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-400 disabled:opacity-50"
+              />
+              <input
+                type="text"
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="6-digit authenticator code"
+                value={disableForm.token}
+                onChange={(e) => setDisableForm((f) => ({ ...f, token: e.target.value }))}
+                disabled={disabling}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-mono tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-400 disabled:opacity-50"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowDisable(false); setDisableError(null) }}
+                  disabled={disabling}
+                  className="flex-1 py-3 border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold rounded-xl text-sm transition disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={disabling}
+                  className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-sm transition disabled:opacity-60 flex items-center justify-center gap-2"
+                >
+                  <ShieldOff size={14} />
+                  {disabling ? 'Disabling…' : 'Confirm Disable'}
+                </button>
+              </div>
+            </form>
+          )}
+        </div>
+      ) : (
+        <Link
+          to="/account/security/mfa-setup"
+          className="block w-full text-center py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-sm transition"
+        >
+          Enable MFA
+        </Link>
+      )}
+    </div>
+  )
+}
 
 export default function SecurityPage() {
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
@@ -145,6 +274,8 @@ export default function SecurityPage() {
             ) : 'Change Password'}
           </button>
         </form>
+
+        <MFASection />
       </div>
     </div>
   )

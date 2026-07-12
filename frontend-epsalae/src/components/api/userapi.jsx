@@ -12,6 +12,10 @@ const userApi = axios.create({
 });
 
 userApi.interceptors.request.use((config) => {
+  // Don't clobber a caller-supplied Authorization header (e.g. the MFA
+  // challenge endpoint, which authenticates with a one-off mfaPendingToken
+  // instead of the stored session token).
+  if (config.headers.Authorization) return config;
   const token = localStorage.getItem('userToken');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
@@ -42,7 +46,7 @@ userApi.interceptors.response.use(
     const original = error.config || {};
     const status = error.response?.status;
 
-    if (status === 401 && !original._retried) {
+    if (status === 401 && !original._retried && !original.skipAuthRetry) {
       original._retried = true;
       if (!String(original.url || '').includes('/auth/refresh')) {
         try {
@@ -72,6 +76,23 @@ export const authEndpoints = {
   login: (payload) => userApi.post('/auth/user/login', payload),
   register: (payload) => userApi.post('/auth/register', payload),
   logout: () => userApi.post('/auth/logout'),
+  // MFA challenge (step 2 of login) authenticates with the short-lived
+  // mfaPendingToken, not the normal Bearer session — pass it explicitly
+  // rather than relying on the request interceptor's stored userToken.
+  mfaChallenge: (payload, mfaPendingToken) => userApi.post('/auth/mfa/challenge', payload, {
+    headers: { Authorization: `Bearer ${mfaPendingToken}` },
+    skipAuthRetry: true,
+  }),
+  // Google Sign-In — `credential` is the ID token from Google Identity
+  // Services, verified server-side. Bypasses MFA by design (see backend).
+  google: (credential) => userApi.post('/auth/google', { credential }),
+};
+
+export const mfaEndpoints = {
+  status: () => userApi.get('/auth/mfa/status'),
+  setup: () => userApi.post('/auth/mfa/setup'),
+  verifySetup: (payload) => userApi.post('/auth/mfa/verify-setup', payload),
+  disable: (payload) => userApi.post('/auth/mfa/disable', payload),
 };
 
 export const profileEndpoints = {

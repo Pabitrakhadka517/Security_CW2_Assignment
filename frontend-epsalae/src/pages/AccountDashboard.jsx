@@ -4,6 +4,7 @@ import OrdersPage from './AccountOrders'
 import AddressesPage from './AccountAddresses'
 import WishlistPage from './AccountWishlist'
 import SecurityPage from './AccountSecurity'
+import MFASetupPage from './AccountMFASetup'
 import OrderInvoice from './OrderInvoice'
 import { User, ShoppingBag, MapPin, Heart, LogOut, Lock } from 'lucide-react'
 import { useUserAuth } from '@/components/store/authstore'
@@ -75,6 +76,7 @@ export default function AccountDashboard() {
               <Route path="addresses" element={<AddressesPage />} />
               <Route path="wishlist" element={<WishlistPage />} />
               <Route path="security" element={<SecurityPage />} />
+              <Route path="security/mfa-setup" element={<MFASetupPage />} />
             </Routes>
           </main>
         </div>

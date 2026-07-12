@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { User, Mail, Phone, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, ShoppingBag, ArrowRight } from 'lucide-react';
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import toast from 'react-hot-toast';
 import { authEndpoints } from '@/components/api/userapi';
 import { useUserAuth } from '@/components/store/authstore';
@@ -31,7 +32,7 @@ type FormErrors = Partial<FormData & { api: string }>;
 const RegisterPage: React.FC = () => {
   const navigate  = useNavigate();
   const location  = useLocation();
-  const { isUser } = useUserAuth();
+  const { isUser, loginUser } = useUserAuth();
   const returnTo: string = (location.state as any)?.returnTo || '/account';
 
   const [form, setForm]           = useState<FormData>({ firstName: '', lastName: '', email: '', phone: '', password: '', confirmPassword: '' });
@@ -80,6 +81,24 @@ const RegisterPage: React.FC = () => {
       setTimeout(() => navigate('/login', { state: { returnTo } }), 1800);
     } catch (err: any) {
       setErrors(p => ({ ...p, api: err?.response?.data?.message || 'Registration failed. Try again.' }));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    if (!credentialResponse.credential) return;
+    setLoading(true);
+    try {
+      const res  = await authEndpoints.google(credentialResponse.credential);
+      const data = res.data?.data || res.data || {};
+      const token = data.token || data.accessToken;
+      if (!token) throw new Error(data?.message || 'Google sign-in failed');
+      loginUser(token, data.user);
+      toast.success('Welcome!');
+      navigate(returnTo, { replace: true });
+    } catch (err: any) {
+      setErrors(p => ({ ...p, api: err?.response?.data?.message || err?.message || 'Google sign-in failed. Please try again.' }));
     } finally {
       setLoading(false);
     }
@@ -254,6 +273,24 @@ const RegisterPage: React.FC = () => {
                   )}
                 </button>
               </form>
+
+              <div className="mt-5 flex items-center gap-3">
+                <div className="h-px flex-1 bg-gray-200" />
+                <span className="text-xs text-gray-400">OR</span>
+                <div className="h-px flex-1 bg-gray-200" />
+              </div>
+
+              <div className="mt-4 flex justify-center">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={() => setErrors(p => ({ ...p, api: 'Google sign-in failed. Please try again.' }))}
+                  theme="outline"
+                  size="large"
+                  shape="pill"
+                  text="signup_with"
+                  width="384"
+                />
+              </div>
 
               <div className="mt-5 pt-5 border-t border-gray-100 text-center">
                 <p className="text-sm text-gray-500">
