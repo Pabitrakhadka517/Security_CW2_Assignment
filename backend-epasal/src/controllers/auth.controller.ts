@@ -294,6 +294,7 @@ export const getMyActivity = asyncHandler(async (req: Request, res: Response) =>
     action: entry.action,
     status: entry.status,
     ipAddress: entry.ipAddress,
+    userAgent: entry.userAgent,
     timestamp: entry.timestamp,
     metadata: entry.metadata,
   }));
