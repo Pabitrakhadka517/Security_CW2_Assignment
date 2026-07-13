@@ -33,7 +33,16 @@ const LoginPage: React.FC = () => {
   const [mfaError, setMfaError]               = useState('');
   const [mfaAttemptsUsed, setMfaAttemptsUsed] = useState(0);
 
-  const showExpiredBanner = new URLSearchParams(location.search).get('reason') === 'expired';
+  const reason = new URLSearchParams(location.search).get('reason');
+  const showExpiredBanner = reason === 'expired';
+
+  const REASON_MESSAGES: Record<string, string> = {
+    session_expired: 'Your session has expired. Please sign in again.',
+    idle_timeout: 'You were logged out due to inactivity.',
+    password_changed: 'Password changed. Please sign in with your new password.',
+    mfa_changed: 'MFA settings changed. Please sign in again.',
+  };
+  const reasonMessage = reason ? REASON_MESSAGES[reason] : undefined;
 
   useEffect(() => {
     if (isUser) navigate(returnTo, { replace: true });
@@ -254,6 +263,13 @@ const LoginPage: React.FC = () => {
                 <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl px-4 py-3 mb-5 text-sm">
                   <AlertCircle size={15} className="shrink-0" />
                   <span>Your password has expired. Please log in and update your password.</span>
+                </div>
+              )}
+
+              {!showExpiredBanner && reasonMessage && (
+                <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl px-4 py-3 mb-5 text-sm">
+                  <AlertCircle size={15} className="shrink-0" />
+                  <span>{reasonMessage}</span>
                 </div>
               )}
 

@@ -256,7 +256,7 @@ export default function SecurityPage() {
       // Force re-login with the new password — the old access token stays
       // valid until it expires, but the session no longer matches reality.
       logoutUser()
-      navigate('/login')
+      navigate('/login?reason=password_changed')
     } catch (err) {
       const status = err?.response?.status
       const data = err?.response?.data
