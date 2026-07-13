@@ -14,6 +14,44 @@ import { randomUUID } from 'crypto';
 import mongoSanitize from 'express-mongo-sanitize';
 import hpp from 'hpp';
 import { helmetConfig, swaggerCsp, permissionsPolicy } from './config/helmet.config';
+import { encryptionService } from './services/encryption.service';
+
+// ===========================================
+// ENCRYPTION KEY VALIDATION (fail fast on bad config)
+// ===========================================
+// Runs at module load — before server.ts ever calls app.listen() — so a
+// missing/malformed encryption key crashes startup instead of surfacing
+// later as a cryptic decrypt failure on the first request that touches PII.
+function validateEncryptionKey(): void {
+  const key = process.env.ENCRYPTION_KEY;
+
+  if (!key) {
+    throw new Error('FATAL: ENCRYPTION_KEY not set in environment');
+  }
+
+  if (key.length !== 64) {
+    throw new Error(`FATAL: ENCRYPTION_KEY must be 64 hex chars (32 bytes). Current length: ${key.length}`);
+  }
+
+  if (!/^[a-f0-9]+$/i.test(key)) {
+    throw new Error('FATAL: ENCRYPTION_KEY must be hex encoded');
+  }
+
+  const testValue = 'key-validation-test';
+  try {
+    const encrypted = encryptionService.encrypt(testValue);
+    const decrypted = encryptionService.decrypt(encrypted);
+    if (decrypted !== testValue) {
+      throw new Error('Roundtrip test failed');
+    }
+  } catch (err) {
+    throw new Error(`FATAL: Encryption key validation failed: ${err}`);
+  }
+
+  logger.info('[Security] Encryption key validated successfully');
+}
+
+validateEncryptionKey();
 
 // ===========================================
 // CREATE EXPRESS APP

@@ -120,5 +120,35 @@ Notes:
 - The server will echo back the validated `Origin` as `Access-Control-Allow-Origin` and will set `Access-Control-Allow-Credentials: true` when the origin is allowed.
 
 
+## 🔐 Generating Encryption Keys
+
+Phone numbers and address fields (`User.phone`, `User.address`, `User.savedAddresses`, `Order.phone`, `Order.address`) are encrypted at rest with AES-256-GCM — see `src/services/encryption.service.ts`. Email, name, and order metadata (status, amounts, ids) stay plaintext since they're needed for lookup, search, and queries.
+
+Generate a key:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
+
+Set it as `ENCRYPTION_KEY` in your `.env` (64 hex characters). Use a **different** key per environment — never reuse the dev key in production, and never commit a real key to version control.
+
+```
+ENCRYPTION_KEY=<64 hex chars>
+ENCRYPTION_KEY_VERSION=1
+ENCRYPTION_KEY_V0=          # only set during a key rotation
+```
+
+The server validates `ENCRYPTION_KEY` on startup (`src/app.ts`) and refuses to boot if it's missing, the wrong length, or fails a roundtrip encrypt/decrypt test.
+
+**Rotating a key** — generate a new key, move the current `ENCRYPTION_KEY` value to `ENCRYPTION_KEY_V0`, set the new value as `ENCRYPTION_KEY`, bump `ENCRYPTION_KEY_VERSION`, then run the migration during a maintenance window:
+
+```bash
+npm run rotate:encryption-key -- --dry-run   # preview
+npm run rotate:encryption-key                # apply
+```
+
+Once every document is confirmed migrated, remove `ENCRYPTION_KEY_V0`.
+
+
 =======
 >>>>>>> 2c2c863173173d7de050db6af1c4df25f5c749fb
