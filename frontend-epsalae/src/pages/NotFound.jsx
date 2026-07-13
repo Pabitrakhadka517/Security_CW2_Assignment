@@ -26,7 +26,7 @@ export default function NotFound() {
   }, [navigate, isHovering])
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-white to-green-50 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-teal-50 via-white to-green-50 px-4">
       <div className="text-center max-w-lg">
         {/* Animated 404 */}
         <div className="relative mb-8">
@@ -42,7 +42,7 @@ export default function NotFound() {
           </div>
           
           {/* 404 Number with animation */}
-          <h1 className="text-9xl font-black text-transparent bg-clip-text bg-gradient-to-r from-teal-500 to-green-500 animate-pulse">
+          <h1 className="text-9xl font-black text-transparent bg-clip-text bg-linear-to-r from-teal-500 to-green-500 animate-pulse">
             404
           </h1>
           
@@ -88,7 +88,7 @@ export default function NotFound() {
           </button>
           <button
             onClick={() => navigate('/')}
-            className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-teal-500 to-green-500 text-white rounded-xl font-semibold hover:from-teal-600 hover:to-green-600 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-linear-to-r from-teal-500 to-green-500 text-white rounded-xl font-semibold hover:from-teal-600 hover:to-green-600 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl"
           >
             <Home size={20} />
             Go to Homepage

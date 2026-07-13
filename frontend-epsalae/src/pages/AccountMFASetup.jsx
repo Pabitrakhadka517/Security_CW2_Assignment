@@ -78,14 +78,14 @@ export default function AccountMFASetup() {
 
   if (checkingStatus) {
     return (
-      <div className="rounded-[2rem] bg-white p-8 shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)] flex items-center justify-center">
+      <div className="rounded-4xl bg-white p-8 shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)] flex items-center justify-center">
         <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
       </div>
     )
   }
 
   return (
-    <div className="rounded-[2rem] bg-white p-5 shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)] sm:p-8">
+    <div className="rounded-4xl bg-white p-5 shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)] sm:p-8">
       <div className="flex items-center gap-3 mb-1">
         <div className="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center shrink-0">
           <ShieldCheck className="w-5 h-5 text-white" />
