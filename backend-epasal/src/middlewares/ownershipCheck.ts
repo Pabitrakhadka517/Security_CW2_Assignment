@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as auditService from '../services/audit.service';
 import { createAuditContext } from './auditLogger';
+import { alertService } from '../services/alert.service';
 
 /**
  * Generic IDOR guard for routes where a URL param directly names the
@@ -37,6 +38,16 @@ export function requireOwnership(paramName: string = 'id', resourceType: string 
           endpoint: req.path,
           method: req.method,
         },
+      });
+
+      void alertService.triggerAlert({
+        type: 'IDOR_ATTEMPT',
+        riskLevel: 'HIGH',
+        message: `User attempted to access another user's ${resourceType}`,
+        ipAddress: req.ip || 'unknown',
+        userId: requesterId,
+        metadata: { requestedId: requestedId, endpoint: req.path },
+        timestamp: new Date(),
       });
 
       res.status(403).json({

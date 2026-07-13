@@ -85,7 +85,7 @@ const corsOptions: cors.CorsOptions = {
     return callback(null, false);
   },
   methods: 'GET,POST,PUT,DELETE,PATCH,OPTIONS',
-  allowedHeaders: 'Content-Type,Authorization,X-Requested-With,Accept,Origin',
+  allowedHeaders: 'Content-Type,Authorization,X-Requested-With,Accept,Origin,X-Client-Role',
   credentials: true,
   optionsSuccessStatus: 200,
   maxAge: 86400,

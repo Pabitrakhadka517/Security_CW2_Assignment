@@ -1,6 +1,7 @@
 import { AuditLog, AuditAction, AuditStatus, AuditRiskLevel, AuditUserRole, IAuditLog } from '../models/AuditLog';
 import { logger } from '../utils/logger';
 import { sanitizeForLog } from '../utils/sanitize';
+import { alertService } from './alert.service';
 
 export interface AuditLogEntry {
   userId?: string | null;
@@ -120,6 +121,15 @@ export const detectSuspiciousActivity = async (ipAddress: string, userId?: strin
         riskLevel: 'CRITICAL',
         metadata: { reason: 'brute_force', failedAttempts: failedFromIp, windowMinutes: 15 },
       });
+      await alertService.triggerAlert({
+        type: 'BRUTE_FORCE_DETECTED',
+        riskLevel: 'CRITICAL',
+        message: `${failedFromIp} failed logins from IP in 15 minutes`,
+        ipAddress,
+        userId: userId || undefined,
+        metadata: { failedCount: failedFromIp },
+        timestamp: new Date(),
+      });
     }
 
     // 2. Credential stuffing: 3+ distinct accounts targeted from this IP in 5 minutes.
@@ -137,6 +147,15 @@ export const detectSuspiciousActivity = async (ipAddress: string, userId?: strin
         ipAddress,
         riskLevel: 'HIGH',
         metadata: { reason: 'credential_stuffing', distinctAccounts: distinctCount, windowMinutes: 5 },
+      });
+      await alertService.triggerAlert({
+        type: 'CREDENTIAL_STUFFING_DETECTED',
+        riskLevel: 'CRITICAL',
+        message: `${distinctCount} different accounts targeted from same IP`,
+        ipAddress,
+        userId: userId || undefined,
+        metadata: { uniqueTargets: distinctCount },
+        timestamp: new Date(),
       });
     }
 
@@ -164,6 +183,15 @@ export const detectSuspiciousActivity = async (ipAddress: string, userId?: strin
             reason: 'login_success_after_failed_attempts_different_ip',
             failedAttempts: failuresFromOtherIps.length,
           },
+        });
+        await alertService.triggerAlert({
+          type: 'ACCOUNT_TAKEOVER_ATTEMPT',
+          riskLevel: 'HIGH',
+          message: 'Successful login after multiple failures from a different IP',
+          ipAddress,
+          userId,
+          metadata: { previousFailures: failuresFromOtherIps.length },
+          timestamp: new Date(),
         });
       }
     }

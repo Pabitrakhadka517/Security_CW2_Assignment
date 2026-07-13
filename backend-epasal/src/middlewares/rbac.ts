@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import * as auditService from '../services/audit.service';
 import { createAuditContext } from './auditLogger';
+import { alertService } from '../services/alert.service';
 
 /**
  * Permission matrix — the single source of truth for what each role may do.
@@ -92,6 +93,16 @@ export function requirePermission(permission: Permission) {
           endpoint: req.path,
           method: req.method,
         },
+      });
+
+      void alertService.triggerAlert({
+        type: 'PRIVILEGE_ESCALATION',
+        riskLevel: 'CRITICAL',
+        message: 'User attempted to access a restricted resource',
+        ipAddress: req.ip || 'unknown',
+        userId: req.user?.id,
+        metadata: { permission, endpoint: req.path },
+        timestamp: new Date(),
       });
 
       res.status(403).json({

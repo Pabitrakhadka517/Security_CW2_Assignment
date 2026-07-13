@@ -9,6 +9,7 @@ import * as auditService from '../services/audit.service';
 import { createAuditContext } from '../middlewares/auditLogger';
 import { validatePasswordComplexity } from '../services/password.service';
 import * as sessionService from '../services/session.service';
+import { alertService } from '../services/alert.service';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -89,6 +90,16 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     const remainingTime = Math.ceil(((user.lockUntil as Date).getTime() - Date.now()) / 60000);
     await auditService.log({ ...ctx, userId: user._id.toString(), userEmail: email, userRole: 'user', action: 'LOGIN_BLOCKED_LOCKOUT', status: 'BLOCKED', riskLevel: 'HIGH', metadata: { lockUntil: user.lockUntil } });
     await auditService.detectSuspiciousActivity(ctx.ipAddress, user._id.toString());
+    await alertService.triggerAlert({
+      type: 'ACCOUNT_LOCKED',
+      riskLevel: 'HIGH',
+      message: 'Account locked after repeated failed login attempts',
+      ipAddress: ctx.ipAddress,
+      userId: user._id.toString(),
+      userEmail: email,
+      metadata: { lockUntil: user.lockUntil },
+      timestamp: new Date(),
+    });
     throw new LockedError('Account locked. Try again after 15 minutes.', { remainingTime });
   }
 

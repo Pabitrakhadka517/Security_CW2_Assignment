@@ -12,6 +12,7 @@ import bulkRoutes from './bulk.routes';
 import auditRoutes from './audit.routes';
 import securityRoutes from './security.routes';
 import adminSessionRoutes from './adminSession.routes';
+import adminAlertsRoutes from './adminAlerts.routes';
 
 const router = Router();
 
@@ -35,6 +36,8 @@ router.use('/admin/bulk', bulkRoutes);
 router.use('/admin/audit', auditRoutes);
 // Admin session monitoring/force-revoke for any user
 router.use('/admin/sessions', adminSessionRoutes);
+// Admin alert-delivery test endpoint (email/Slack)
+router.use('/admin/alerts', adminAlertsRoutes);
 // CSP violation reporting (browsers POST here automatically, no auth)
 router.use('/security', securityRoutes);
 

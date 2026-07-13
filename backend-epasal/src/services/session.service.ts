@@ -54,7 +54,9 @@ export const createSession = async (
       oldest.revoked = true;
       oldest.revokedAt = new Date();
       oldest.revokedReason = 'new_login_limit';
-      await oldest.save();
+      // Only validate the fields actually being changed — legacy rows that
+      // predate ipAddress/deviceId being required must still be revocable.
+      await oldest.save({ validateModifiedOnly: true });
 
       await auditService.log({
         ...ctx,
@@ -109,7 +111,7 @@ export const validateSession = async (refreshToken: string, req: Request): Promi
     session.revoked = true;
     session.revokedAt = now;
     session.revokedReason = 'session_expired';
-    await session.save();
+    await session.save({ validateModifiedOnly: true });
     return { valid: false, reason: 'session_expired' };
   }
 
@@ -125,7 +127,7 @@ export const validateSession = async (refreshToken: string, req: Request): Promi
       session.revoked = true;
       session.revokedAt = now;
       session.revokedReason = 'password_changed';
-      await session.save();
+      await session.save({ validateModifiedOnly: true });
       return { valid: false, reason: 'password_changed' };
     }
   }
@@ -146,7 +148,7 @@ export const validateSession = async (refreshToken: string, req: Request): Promi
   }
 
   session.lastUsedAt = now;
-  await session.save();
+  await session.save({ validateModifiedOnly: true });
 
   return { valid: true, session, deviceMismatch };
 };
@@ -157,7 +159,7 @@ export const revokeSession = async (sessionId: string, reason: RevokedReason | s
   session.revoked = true;
   session.revokedAt = new Date();
   session.revokedReason = reason as RevokedReason;
-  await session.save();
+  await session.save({ validateModifiedOnly: true });
 };
 
 export const revokeAllUserSessions = async (

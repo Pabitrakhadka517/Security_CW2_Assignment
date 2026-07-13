@@ -10,6 +10,7 @@ import * as auditService from '../services/audit.service';
 import { createAuditContext } from '../middlewares/auditLogger';
 import { sendSuccess } from '../utils/responseHelper';
 import * as sessionService from '../services/session.service';
+import { alertService } from '../services/alert.service';
 
 /**
  * LOGIN ENDPOINT - Get JWT token with Email + Password
@@ -47,6 +48,16 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
     const remainingTime = Math.ceil(((admin.lockUntil as Date).getTime() - Date.now()) / 60000);
     await auditService.log({ ...ctx, userId: admin._id.toString(), userEmail: email, userRole: 'admin', action: 'LOGIN_BLOCKED_LOCKOUT', status: 'BLOCKED', riskLevel: 'HIGH', metadata: { lockUntil: admin.lockUntil } });
     await auditService.detectSuspiciousActivity(ctx.ipAddress, admin._id.toString());
+    await alertService.triggerAlert({
+      type: 'ACCOUNT_LOCKED',
+      riskLevel: 'HIGH',
+      message: 'Account locked after repeated failed login attempts',
+      ipAddress: ctx.ipAddress,
+      userId: admin._id.toString(),
+      userEmail: email,
+      metadata: { lockUntil: admin.lockUntil },
+      timestamp: new Date(),
+    });
     throw new LockedError('Account locked. Try again after 15 minutes.', { remainingTime });
   }
 
@@ -146,7 +157,9 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
 
   existing.revoked = true;
   existing.replacedBy = newHash;
-  await existing.save();
+  // Only validate the fields actually being changed — legacy rows that
+  // predate ipAddress/deviceId being required must still be revocable.
+  await existing.save({ validateModifiedOnly: true });
 
   await RefreshToken.create({
     tokenHash: newHash,
