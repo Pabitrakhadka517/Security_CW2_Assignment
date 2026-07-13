@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../middlewares/asyncHandler';
 import couponService from '../services/coupon.service';
 import { sendSuccess, sendPaginatedResponse } from '../utils/responseHelper';
+import * as auditService from '../services/audit.service';
+import { createAuditContext } from '../middlewares/auditLogger';
 
 export class CouponController {
   /**
@@ -39,6 +41,14 @@ export class CouponController {
    */
   createCoupon = asyncHandler(async (req: Request, res: Response) => {
     const coupon = await couponService.createCoupon(req.body);
+
+    await auditService.log({
+      ...createAuditContext(req),
+      action: 'ADMIN_COUPON_CREATED',
+      status: 'SUCCESS',
+      riskLevel: 'LOW',
+      metadata: { code: (coupon as any)?.code },
+    });
 
     sendSuccess(res, 201, 'Coupon created successfully', coupon);
   });

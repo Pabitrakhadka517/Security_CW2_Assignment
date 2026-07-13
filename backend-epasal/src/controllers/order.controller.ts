@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { asyncHandler } from '../middlewares/asyncHandler';
 import orderService from '../services/order.service';
 import { sendSuccess, sendPaginatedResponse } from '../utils/responseHelper';
-import { recordAuditEvent } from '../services/auditLog.service';
+import * as auditService from '../services/audit.service';
+import { createAuditContext } from '../middlewares/auditLogger';
 
 export class OrderController {
   /**
@@ -56,6 +57,14 @@ export class OrderController {
     // user_id comes ONLY from a verified JWT (optionalAuth) — never the body.
     const order = await orderService.createOrder(req.body, req.user?.id ?? null);
 
+    await auditService.log({
+      ...createAuditContext(req),
+      action: 'ORDER_CREATED',
+      status: 'SUCCESS',
+      riskLevel: 'LOW',
+      metadata: { orderId: (order as any)?.id, totalAmount: (order as any)?.totalAmount },
+    });
+
     sendSuccess(res, 201, 'Order created successfully', order);
   });
 
@@ -71,16 +80,12 @@ export class OrderController {
     const previousOrder = await orderService.getOrderById(id);
     const order = await orderService.updateOrderStatus(id, status, { note, location });
 
-    await recordAuditEvent({
-      req,
-      actorType: 'admin',
-      actorId: req.user?.id ?? null,
-      actorEmail: req.user?.email ?? null,
-      action: 'order.status_changed',
-      success: true,
-      targetType: 'order',
-      targetId: id,
-      metadata: { from: (previousOrder as any)?.status ?? null, to: status, note, location },
+    await auditService.log({
+      ...createAuditContext(req),
+      action: status === 'cancelled' ? 'ORDER_CANCELLED' : 'ADMIN_ORDER_STATUS_CHANGED',
+      status: 'SUCCESS',
+      riskLevel: 'LOW',
+      metadata: { orderId: id, from: (previousOrder as any)?.status ?? null, to: status, note, location },
     });
 
     sendSuccess(res, 200, 'Order status updated successfully', order);

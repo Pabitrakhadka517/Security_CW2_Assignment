@@ -6,7 +6,9 @@ import { BadRequestError, UnauthorizedError, LockedError } from '../utils/errors
 import { asyncHandler } from '../middlewares/asyncHandler';
 import { RefreshToken } from '../models/RefreshToken';
 import { refreshCookieOptions } from '../utils/cookieOptions';
-import { recordAuditEvent } from '../services/auditLog.service';
+import * as auditService from '../services/audit.service';
+import { createAuditContext } from '../middlewares/auditLogger';
+import { sendSuccess } from '../utils/responseHelper';
 
 /**
  * LOGIN ENDPOINT - Get JWT token with Email + Password
@@ -18,6 +20,7 @@ import { recordAuditEvent } from '../services/auditLog.service';
  */
 export const login = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
+  const ctx = createAuditContext(req);
 
   // Validation
   if (!email || !password) {
@@ -28,18 +31,21 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
   const admin = await Admin.findOne({ email }).select('+password');
 
   if (!admin) {
-    await recordAuditEvent({ req, actorType: 'admin', actorEmail: email, action: 'admin.login_failed', success: false, metadata: { reason: 'no_such_account' } });
+    await auditService.log({ ...ctx, userEmail: email, userRole: 'admin', action: 'ADMIN_LOGIN_FAILED', status: 'FAILURE', riskLevel: 'MEDIUM', metadata: { reason: 'no_such_account' } });
+    await auditService.detectSuspiciousActivity(ctx.ipAddress);
     throw new UnauthorizedError('Invalid email or password');
   }
 
   if (!admin.isActive) {
-    await recordAuditEvent({ req, actorType: 'admin', actorId: admin._id.toString(), actorEmail: email, action: 'admin.login_failed', success: false, metadata: { reason: 'inactive_account' } });
+    await auditService.log({ ...ctx, userId: admin._id.toString(), userEmail: email, userRole: 'admin', action: 'ADMIN_LOGIN_FAILED', status: 'FAILURE', riskLevel: 'MEDIUM', metadata: { reason: 'inactive_account' } });
+    await auditService.detectSuspiciousActivity(ctx.ipAddress, admin._id.toString());
     throw new UnauthorizedError('Admin account is inactive');
   }
 
   if (admin.isLocked) {
     const remainingTime = Math.ceil(((admin.lockUntil as Date).getTime() - Date.now()) / 60000);
-    await recordAuditEvent({ req, actorType: 'admin', actorId: admin._id.toString(), actorEmail: email, action: 'admin.login_failed', success: false, metadata: { reason: 'account_locked' } });
+    await auditService.log({ ...ctx, userId: admin._id.toString(), userEmail: email, userRole: 'admin', action: 'LOGIN_BLOCKED_LOCKOUT', status: 'BLOCKED', riskLevel: 'HIGH', metadata: { lockUntil: admin.lockUntil } });
+    await auditService.detectSuspiciousActivity(ctx.ipAddress, admin._id.toString());
     throw new LockedError('Account locked. Try again after 15 minutes.', { remainingTime });
   }
 
@@ -47,7 +53,8 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
   const isPasswordValid = await admin.comparePassword(password);
   if (!isPasswordValid) {
     await admin.incrementLoginAttempts();
-    await recordAuditEvent({ req, actorType: 'admin', actorId: admin._id.toString(), actorEmail: email, action: 'admin.login_failed', success: false, metadata: { reason: 'bad_password' } });
+    await auditService.log({ ...ctx, userId: admin._id.toString(), userEmail: email, userRole: 'admin', action: 'ADMIN_LOGIN_FAILED', status: 'FAILURE', riskLevel: 'MEDIUM', metadata: { reason: 'bad_password', attemptNumber: admin.loginAttempts } });
+    await auditService.detectSuspiciousActivity(ctx.ipAddress, admin._id.toString());
     throw new UnauthorizedError('Invalid email or password');
   }
 
@@ -57,7 +64,8 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
   admin.lastLogin = new Date();
   await admin.save();
 
-  await recordAuditEvent({ req, actorType: 'admin', actorId: admin._id.toString(), actorEmail: admin.email, action: 'admin.login_success', success: true });
+  await auditService.log({ ...ctx, userId: admin._id.toString(), userEmail: admin.email, userRole: admin.role as any, action: 'ADMIN_LOGIN_SUCCESS', status: 'SUCCESS', riskLevel: 'LOW' });
+  await auditService.detectSuspiciousActivity(ctx.ipAddress, admin._id.toString());
 
   // Generate access and refresh tokens
   const payload = {
@@ -111,12 +119,17 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
  * POST /api/v1/auth/refresh
  */
 export const refresh = asyncHandler(async (req: Request, res: Response) => {
+  const ctx = createAuditContext(req);
   const token = req.cookies?.refreshToken || req.body.refreshToken;
-  if (!token) throw new UnauthorizedError('No refresh token provided');
+  if (!token) {
+    await auditService.log({ ...ctx, action: 'TOKEN_REFRESH_FAILED', status: 'FAILURE', riskLevel: 'LOW', metadata: { reason: 'no_token_provided' } });
+    throw new UnauthorizedError('No refresh token provided');
+  }
 
   const hash = crypto.createHash('sha256').update(token).digest('hex');
   const existing = await RefreshToken.findOne({ tokenHash: hash });
   if (!existing || existing.revoked || (existing.expiresAt && existing.expiresAt < new Date())) {
+    await auditService.log({ ...ctx, action: 'TOKEN_REFRESH_FAILED', status: 'FAILURE', riskLevel: 'MEDIUM', metadata: { reason: 'invalid_or_expired_token' } });
     throw new UnauthorizedError('Invalid or expired refresh token');
   }
 
@@ -155,6 +168,8 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
   // Set cookie
   const maxAge = newExpiresAt.getTime() - Date.now();
   res.cookie('refreshToken', newRefreshToken, refreshCookieOptions(maxAge));
+
+  await auditService.log({ ...ctx, userId: payload.id, userEmail: payload.email, userRole: effectiveRole, action: 'TOKEN_REFRESH', status: 'SUCCESS', riskLevel: 'LOW' });
 
   // Return both `token` and `accessToken` for backward compatibility.
   res.json({ success: true, data: { token: accessToken, accessToken } });
@@ -200,7 +215,7 @@ export const updateAdminProfile = asyncHandler(async (req: Request, res: Respons
     const previousEmail = admin.email;
     admin.email = email.toLowerCase().trim();
     await admin.save();
-    await recordAuditEvent({ req, actorType: 'admin', actorId: adminId, actorEmail: admin.email, action: 'admin.email_changed', success: true, targetType: 'admin', targetId: adminId, metadata: { from: previousEmail, to: admin.email } });
+    await auditService.log({ ...createAuditContext(req), userId: adminId, userEmail: admin.email, userRole: 'admin', action: 'PROFILE_UPDATED', status: 'SUCCESS', riskLevel: 'MEDIUM', metadata: { from: previousEmail, to: admin.email } });
     res.json({ success: true, message: 'Profile updated', data: { id: admin._id, name: admin.name, email: admin.email } });
     return;
   }
@@ -225,11 +240,14 @@ export const changeAdminPassword = asyncHandler(async (req: Request, res: Respon
   if (!admin) throw new UnauthorizedError('Admin not found');
 
   const isMatch = await admin.comparePassword(currentPassword);
-  if (!isMatch) throw new BadRequestError('Current password is incorrect');
+  if (!isMatch) {
+    await auditService.log({ ...createAuditContext(req), userId: adminId, userEmail: admin.email, userRole: 'admin', action: 'PASSWORD_CHANGE_FAILED', status: 'FAILURE', riskLevel: 'MEDIUM', metadata: { reason: 'incorrect_current_password' } });
+    throw new BadRequestError('Current password is incorrect');
+  }
 
   admin.password = newPassword;
   await admin.save();
-  await recordAuditEvent({ req, actorType: 'admin', actorId: adminId, actorEmail: admin.email, action: 'admin.password_changed', success: true, targetType: 'admin', targetId: adminId });
+  await auditService.log({ ...createAuditContext(req), userId: adminId, userEmail: admin.email, userRole: 'admin', action: 'PASSWORD_CHANGED', status: 'SUCCESS', riskLevel: 'MEDIUM' });
   res.json({ success: true, message: 'Password changed successfully' });
 });
 
@@ -245,12 +263,13 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
     if (existing) {
       existing.revoked = true;
       await existing.save();
-      await recordAuditEvent({
-        req,
-        actorType: existing.role === 'admin' ? 'admin' : 'user',
-        actorId: existing.userId,
-        action: existing.role === 'admin' ? 'admin.logout' : 'user.logout',
-        success: true,
+      await auditService.log({
+        ...createAuditContext(req),
+        userId: existing.userId,
+        userRole: existing.role === 'admin' ? 'admin' : 'user',
+        action: 'LOGOUT',
+        status: 'SUCCESS',
+        riskLevel: 'LOW',
       });
     }
   }
@@ -258,4 +277,26 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
   // Clear cookie
   res.clearCookie('refreshToken', refreshCookieOptions());
   res.json({ success: true, message: 'Logged out' });
+});
+
+/**
+ * GET /api/v1/auth/me/activity
+ * Returns the logged-in user's own recent security activity — never another
+ * user's, since userId always comes from the verified access token (req.user),
+ * never a client-supplied value.
+ */
+export const getMyActivity = asyncHandler(async (req: Request, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) throw new UnauthorizedError('Authentication required');
+
+  const logs = await auditService.getRecentActivity(userId, 20);
+  const safeLogs = logs.map((entry: any) => ({
+    action: entry.action,
+    status: entry.status,
+    ipAddress: entry.ipAddress,
+    timestamp: entry.timestamp,
+    metadata: entry.metadata,
+  }));
+
+  sendSuccess(res, 200, 'Activity retrieved', safeLogs);
 });

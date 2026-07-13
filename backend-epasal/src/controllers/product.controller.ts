@@ -3,6 +3,8 @@ import { asyncHandler } from '../middlewares/asyncHandler';
 import productService from '../services/product.service';
 import { sendSuccess, sendPaginatedResponse } from '../utils/responseHelper';
 import { uploadImage, deleteImage } from '../middlewares/upload';
+import * as auditService from '../services/audit.service';
+import { createAuditContext } from '../middlewares/auditLogger';
 
 // ===========================================
 // PRODUCT CONTROLLER
@@ -51,6 +53,15 @@ export class ProductController {
     }
 
     const product = await productService.createProduct(req.body, imageUrl);
+
+    await auditService.log({
+      ...createAuditContext(req),
+      action: 'ADMIN_PRODUCT_CREATED',
+      status: 'SUCCESS',
+      riskLevel: 'LOW',
+      metadata: { productId: (product as any)?.id, name: (product as any)?.name },
+    });
+
     sendSuccess(res, 201, 'Product created successfully', product);
   });
 
@@ -68,6 +79,15 @@ export class ProductController {
     }
 
     const product = await productService.updateProduct(id, req.body, imageUrl);
+
+    await auditService.log({
+      ...createAuditContext(req),
+      action: 'ADMIN_PRODUCT_UPDATED',
+      status: 'SUCCESS',
+      riskLevel: 'LOW',
+      metadata: { productId: id },
+    });
+
     sendSuccess(res, 200, 'Product updated successfully', product);
   });
 
@@ -81,6 +101,15 @@ export class ProductController {
     }
 
     const result = await productService.deleteProduct(id);
+
+    await auditService.log({
+      ...createAuditContext(req),
+      action: 'ADMIN_PRODUCT_DELETED',
+      status: 'SUCCESS',
+      riskLevel: 'MEDIUM',
+      metadata: { productId: id },
+    });
+
     sendSuccess(res, 200, result.message);
   });
 

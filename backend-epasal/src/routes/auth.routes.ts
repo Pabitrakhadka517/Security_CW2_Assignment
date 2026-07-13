@@ -3,7 +3,7 @@ import Joi from 'joi';
 import * as authController from '../controllers/auth.controller';
 import * as userController from '../controllers/user.controller';
 import { validateRequest } from '../middlewares/validateRequest';
-import { requireAdmin } from '../middlewares/authMiddleware';
+import { requireAdmin, requireAuth } from '../middlewares/authMiddleware';
 import { loginLimiter, registerLimiter, refreshLimiter, accountChangeLimiter } from '../middlewares/rateLimiter';
 import { strongPasswordSchema } from '../validations/password.validation';
 
@@ -144,6 +144,9 @@ router.post('/google', loginLimiter, validateRequest({
 
 router.post('/refresh', refreshLimiter, authController.refresh);
 router.post('/logout', authController.logout);
+
+// Logged-in user's own recent security activity (never another user's).
+router.get('/me/activity', requireAuth, authController.getMyActivity);
 
 // Admin profile management
 router.get('/admin/me', requireAdmin, authController.getAdminProfile);

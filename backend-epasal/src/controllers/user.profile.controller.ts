@@ -6,7 +6,8 @@ import { Product } from '../models/Product';
 import { sendSuccess } from '../utils/responseHelper';
 import { uploadImage } from '../middlewares/upload';
 import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/errors';
-import { recordAuditEvent } from '../services/auditLog.service';
+import * as auditService from '../services/audit.service';
+import { createAuditContext } from '../middlewares/auditLogger';
 import { validatePasswordChange } from '../services/password.service';
 
 /**
@@ -68,9 +69,16 @@ export const updateProfile = asyncHandler(async (req: Request, res: Response) =>
   if (Array.isArray(savedAddresses)) user.savedAddresses = savedAddresses;
   await user.save();
 
-  if (changingEmail) {
-    await recordAuditEvent({ req, actorType: 'user', actorId: userId, actorEmail: user.email, action: 'user.email_changed', success: true, targetType: 'user', targetId: userId, metadata: { from: previousEmail, to: user.email } });
-  }
+  await auditService.log({
+    ...createAuditContext(req),
+    userId,
+    userEmail: user.email,
+    userRole: 'user',
+    action: 'PROFILE_UPDATED',
+    status: 'SUCCESS',
+    riskLevel: changingEmail ? 'MEDIUM' : 'LOW',
+    metadata: changingEmail ? { emailChanged: true, from: previousEmail, to: user.email } : { fields: Object.keys(req.body || {}) },
+  });
 
   sendSuccess(res, 200, 'Profile updated', {
     id: user._id,
@@ -92,6 +100,8 @@ export const uploadAvatar = asyncHandler(async (req: Request, res: Response) => 
   const avatarUrl = await uploadImage(req.file, 'users/avatars');
   user.avatarUrl = avatarUrl;
   await user.save();
+
+  await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'AVATAR_UPDATED', status: 'SUCCESS', riskLevel: 'LOW' });
 
   sendSuccess(res, 200, 'Avatar uploaded', { avatarUrl });
 });
@@ -177,6 +187,8 @@ export const addSavedAddress = asyncHandler(async (req: Request, res: Response) 
   user.savedAddresses.push({ label, addressLine, city, postalCode, country, phone });
   await user.save();
 
+  await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'ADDRESS_ADDED', status: 'SUCCESS', riskLevel: 'LOW' });
+
   sendSuccess(res, 201, 'Address added', { savedAddresses: user.savedAddresses });
 });
 
@@ -196,6 +208,8 @@ export const removeSavedAddress = asyncHandler(async (req: Request, res: Respons
   user.markModified('savedAddresses');
   await user.save();
 
+  await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'ADDRESS_DELETED', status: 'SUCCESS', riskLevel: 'LOW' });
+
   sendSuccess(res, 200, 'Address removed', { savedAddresses: user.savedAddresses });
 });
 
@@ -211,12 +225,15 @@ export const changePassword = asyncHandler(async (req: Request, res: Response) =
   if (!user) throw new NotFoundError('User not found');
 
   const validation = await validatePasswordChange(user, currentPassword, newPassword);
-  if (!validation.valid) throw new BadRequestError(validation.error);
+  if (!validation.valid) {
+    await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'PASSWORD_CHANGE_FAILED', status: 'FAILURE', riskLevel: 'MEDIUM', metadata: { reason: validation.error } });
+    throw new BadRequestError(validation.error);
+  }
 
   user.password = newPassword;
   await user.save();
   await user.updatePasswordHistory(user.password as string);
-  await recordAuditEvent({ req, actorType: 'user', actorId: userId, actorEmail: user.email, action: 'user.password_changed', success: true, targetType: 'user', targetId: userId });
+  await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'PASSWORD_CHANGED', status: 'SUCCESS', riskLevel: 'MEDIUM' });
 
   sendSuccess(res, 200, 'Password changed successfully');
 });
@@ -241,7 +258,9 @@ export const getSavedCart = asyncHandler(async (req: Request, res: Response) => 
 });
 
 // ── Admin: get all users with their wishlists (populated) ────────────────────
-export const adminGetAllWishlists = asyncHandler(async (_req: Request, res: Response) => {
+export const adminGetAllWishlists = asyncHandler(async (req: Request, res: Response) => {
+  await auditService.log({ ...createAuditContext(req), action: 'ADMIN_USER_VIEWED', status: 'SUCCESS', riskLevel: 'LOW', metadata: { view: 'wishlists' } });
+
   const users = await User.find({ 'favorites.0': { $exists: true } })
     .lean()
     .select('name email avatarUrl favorites createdAt');

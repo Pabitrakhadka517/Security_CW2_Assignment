@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '../models/User';
+import * as auditService from '../services/audit.service';
+import { createAuditContext } from './auditLogger';
 
 /**
  * Blocks access to protected user routes once a password has expired (90-day
@@ -29,6 +31,13 @@ export const checkPasswordExpiry = async (
 
     const isExpired = user.mustChangePassword || user.passwordExpiresAt.getTime() < Date.now();
     if (isExpired) {
+      await auditService.log({
+        ...createAuditContext(req),
+        action: 'PASSWORD_EXPIRED',
+        status: 'BLOCKED',
+        riskLevel: 'LOW',
+        metadata: { mustChangePassword: user.mustChangePassword },
+      });
       res.status(403).json({
         success: false,
         code: 'PASSWORD_EXPIRED',

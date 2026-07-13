@@ -7,7 +7,8 @@ import { BadRequestError, UnauthorizedError, LockedError } from '../utils/errors
 import { asyncHandler } from '../middlewares/asyncHandler';
 import { RefreshToken } from '../models/RefreshToken';
 import { refreshCookieOptions } from '../utils/cookieOptions';
-import { recordAuditEvent } from '../services/auditLog.service';
+import * as auditService from '../services/audit.service';
+import { createAuditContext } from '../middlewares/auditLogger';
 import { validatePasswordComplexity } from '../services/password.service';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -73,7 +74,7 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   // Seed password history with the hash the pre-save hook just produced,
   // so the very first change-password call can already check reuse against it.
   await user.updatePasswordHistory(user.password as string);
-  await recordAuditEvent({ req, actorType: 'user', actorId: user._id.toString(), actorEmail: user.email, action: 'user.register', success: true, targetType: 'user', targetId: user._id.toString() });
+  await auditService.log({ ...createAuditContext(req), userId: user._id.toString(), userEmail: user.email, userRole: 'user', action: 'REGISTER', status: 'SUCCESS', riskLevel: 'LOW' });
 
   res.status(201).json({ success: true, message: 'User registered', data: { id: user._id, name: user.name, email: user.email } });
 });
@@ -81,27 +82,32 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
   if (!email || !password) throw new BadRequestError('Email and password are required');
+  const ctx = createAuditContext(req);
 
   const user = await User.findOne({ email }).select('+password');
   if (!user) {
-    await recordAuditEvent({ req, actorType: 'user', actorEmail: email, action: 'user.login_failed', success: false, metadata: { reason: 'no_such_account' } });
+    await auditService.log({ ...ctx, userEmail: email, userRole: 'user', action: 'LOGIN_FAILED', status: 'FAILURE', riskLevel: 'MEDIUM', metadata: { reason: 'no_such_account' } });
+    await auditService.detectSuspiciousActivity(ctx.ipAddress);
     throw new UnauthorizedError('Invalid credentials');
   }
   if (!user.isActive) {
-    await recordAuditEvent({ req, actorType: 'user', actorId: user._id.toString(), actorEmail: email, action: 'user.login_failed', success: false, metadata: { reason: 'inactive_account' } });
+    await auditService.log({ ...ctx, userId: user._id.toString(), userEmail: email, userRole: 'user', action: 'LOGIN_FAILED', status: 'FAILURE', riskLevel: 'MEDIUM', metadata: { reason: 'inactive_account' } });
+    await auditService.detectSuspiciousActivity(ctx.ipAddress, user._id.toString());
     throw new UnauthorizedError('User account inactive');
   }
 
   if (user.isLocked) {
     const remainingTime = Math.ceil(((user.lockUntil as Date).getTime() - Date.now()) / 60000);
-    await recordAuditEvent({ req, actorType: 'user', actorId: user._id.toString(), actorEmail: email, action: 'user.login_failed', success: false, metadata: { reason: 'account_locked' } });
+    await auditService.log({ ...ctx, userId: user._id.toString(), userEmail: email, userRole: 'user', action: 'LOGIN_BLOCKED_LOCKOUT', status: 'BLOCKED', riskLevel: 'HIGH', metadata: { lockUntil: user.lockUntil } });
+    await auditService.detectSuspiciousActivity(ctx.ipAddress, user._id.toString());
     throw new LockedError('Account locked. Try again after 15 minutes.', { remainingTime });
   }
 
   const valid = await user.comparePassword(password);
   if (!valid) {
     await user.incrementLoginAttempts();
-    await recordAuditEvent({ req, actorType: 'user', actorId: user._id.toString(), actorEmail: email, action: 'user.login_failed', success: false, metadata: { reason: 'bad_password' } });
+    await auditService.log({ ...ctx, userId: user._id.toString(), userEmail: email, userRole: 'user', action: 'LOGIN_FAILED', status: 'FAILURE', riskLevel: 'MEDIUM', metadata: { reason: 'bad_password', attemptNumber: user.loginAttempts } });
+    await auditService.detectSuspiciousActivity(ctx.ipAddress, user._id.toString());
     throw new UnauthorizedError('Invalid credentials');
   }
 
@@ -110,7 +116,6 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   // MFA-enabled accounts don't get an access token yet — only a short-lived
   // pending token that's only good for the /auth/mfa/challenge step.
   if (user.mfaEnabled) {
-    await recordAuditEvent({ req, actorType: 'user', actorId: user._id.toString(), actorEmail: user.email, action: 'user.login_mfa_pending', success: true });
     const mfaPendingToken = generateMFAPendingToken(user._id.toString());
     res.status(200).json({
       success: true,
@@ -121,7 +126,8 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     return;
   }
 
-  await recordAuditEvent({ req, actorType: 'user', actorId: user._id.toString(), actorEmail: user.email, action: 'user.login_success', success: true });
+  await auditService.log({ ...ctx, userId: user._id.toString(), userEmail: user.email, userRole: 'user', action: 'LOGIN_SUCCESS', status: 'SUCCESS', riskLevel: 'LOW', metadata: { loginMethod: 'email_password' } });
+  await auditService.detectSuspiciousActivity(ctx.ipAddress, user._id.toString());
 
   await issueUserSession(req, res, user);
 });
@@ -167,13 +173,15 @@ export const googleLogin = asyncHandler(async (req: Request, res: Response) => {
       await user.save();
     } else {
       user = await User.create({ name, email, googleId, authProvider: 'google', isActive: true });
-      await recordAuditEvent({ req, actorType: 'user', actorId: user._id.toString(), actorEmail: user.email, action: 'user.register', success: true, targetType: 'user', targetId: user._id.toString(), metadata: { provider: 'google' } });
+      await auditService.log({ ...createAuditContext(req), userId: user._id.toString(), userEmail: user.email, userRole: 'user', action: 'REGISTER', status: 'SUCCESS', riskLevel: 'LOW', metadata: { provider: 'google' } });
     }
   }
 
   if (!user.isActive) throw new UnauthorizedError('User account inactive');
 
-  await recordAuditEvent({ req, actorType: 'user', actorId: user._id.toString(), actorEmail: user.email, action: 'user.login_success', success: true, metadata: { provider: 'google' } });
+  const ctx = createAuditContext(req);
+  await auditService.log({ ...ctx, userId: user._id.toString(), userEmail: user.email, userRole: 'user', action: 'LOGIN_SUCCESS', status: 'SUCCESS', riskLevel: 'LOW', metadata: { loginMethod: 'google' } });
+  await auditService.detectSuspiciousActivity(ctx.ipAddress, user._id.toString());
 
   await issueUserSession(req, res, user);
 });

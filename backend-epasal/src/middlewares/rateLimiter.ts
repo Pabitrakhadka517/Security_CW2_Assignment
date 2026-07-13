@@ -1,5 +1,7 @@
 import rateLimit from 'express-rate-limit';
 import { Request, Response } from 'express';
+import * as auditService from '../services/audit.service';
+import { createAuditContext } from './auditLogger';
 
 /**
  * Rate limiters for sensitive/abusable endpoints.
@@ -30,6 +32,18 @@ export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   limit: 10,
   skipSuccessfulRequests: true,
+  handler: (req: Request, res: Response) => {
+    const ctx = createAuditContext(req);
+    void auditService.log({
+      ...ctx,
+      userEmail: req.body?.email ?? null,
+      action: 'LOGIN_BLOCKED_RATE_LIMIT',
+      status: 'BLOCKED',
+      riskLevel: 'HIGH',
+      metadata: { path: req.path },
+    });
+    rateLimitHandler(req, res);
+  },
 });
 
 /** Registration — cap account-creation spam per IP. */

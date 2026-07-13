@@ -3,7 +3,8 @@ import { User } from '../models/User';
 import { asyncHandler } from '../middlewares/asyncHandler';
 import { BadRequestError, UnauthorizedError } from '../utils/errors';
 import { verifyMFAPendingToken } from '../utils/tokenGenerator';
-import { recordAuditEvent } from '../services/auditLog.service';
+import * as auditService from '../services/audit.service';
+import { createAuditContext } from '../middlewares/auditLogger';
 import { issueUserSession } from './user.controller';
 import {
   generateMFASecret,
@@ -61,7 +62,7 @@ export const verifySetup = asyncHandler(async (req: Request, res: Response) => {
   user.mfaBackupCodes = backupCodes.map(hashBackupCode);
   await user.save();
 
-  await recordAuditEvent({ req, actorType: 'user', actorId: userId, actorEmail: user.email, action: 'user.mfa_enabled', success: true });
+  await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'MFA_ENABLED', status: 'SUCCESS', riskLevel: 'LOW' });
 
   res.json({ success: true, message: 'MFA enabled successfully', data: { backupCodes } });
 });
@@ -91,7 +92,7 @@ export const disableMFA = asyncHandler(async (req: Request, res: Response) => {
   user.mfaBackupCodes = [];
   await user.save();
 
-  await recordAuditEvent({ req, actorType: 'user', actorId: userId, actorEmail: user.email, action: 'user.mfa_disabled', success: true });
+  await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'MFA_DISABLED', status: 'SUCCESS', riskLevel: 'MEDIUM' });
 
   res.json({ success: true, message: 'MFA disabled successfully' });
 });
@@ -147,14 +148,22 @@ export const mfaChallenge = asyncHandler(async (req: Request, res: Response) => 
     verified = verifyTOTP(user.mfaSecret, token);
   }
 
+  const ctx = createAuditContext(req);
+
   if (!verified) {
     await user.incrementLoginAttempts();
-    await recordAuditEvent({ req, actorType: 'user', actorId: user._id.toString(), actorEmail: user.email, action: 'user.mfa_challenge_failed', success: false });
+    await auditService.log({ ...ctx, userId: user._id.toString(), userEmail: user.email, userRole: 'user', action: 'MFA_CHALLENGE_FAILED', status: 'FAILURE', riskLevel: 'HIGH' });
+    await auditService.detectSuspiciousActivity(ctx.ipAddress, user._id.toString());
     throw new UnauthorizedError('Invalid MFA code');
   }
 
   await user.resetLoginAttempts();
-  await recordAuditEvent({ req, actorType: 'user', actorId: user._id.toString(), actorEmail: user.email, action: 'user.login_success', success: true, metadata: { mfa: true, usedBackupCode: !!useBackupCode } });
+  await auditService.log({ ...ctx, userId: user._id.toString(), userEmail: user.email, userRole: 'user', action: 'MFA_CHALLENGE_SUCCESS', status: 'SUCCESS', riskLevel: 'LOW', metadata: { usedBackupCode: !!useBackupCode } });
+  if (useBackupCode) {
+    await auditService.log({ ...ctx, userId: user._id.toString(), userEmail: user.email, userRole: 'user', action: 'MFA_BACKUP_CODE_USED', status: 'SUCCESS', riskLevel: 'MEDIUM' });
+  }
+  await auditService.log({ ...ctx, userId: user._id.toString(), userEmail: user.email, userRole: 'user', action: 'LOGIN_SUCCESS', status: 'SUCCESS', riskLevel: 'LOW', metadata: { loginMethod: 'email_password', mfa: true, usedBackupCode: !!useBackupCode } });
+  await auditService.detectSuspiciousActivity(ctx.ipAddress, user._id.toString());
 
   await issueUserSession(req, res, user);
 });

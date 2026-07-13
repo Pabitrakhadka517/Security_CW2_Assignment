@@ -9,6 +9,7 @@ import couponRoutes from './coupon.routes';
 import userRoutes from './user.routes';
 import saleCategoryRoutes from './saleCategory.routes';
 import bulkRoutes from './bulk.routes';
+import auditRoutes from './audit.routes';
 
 const router = Router();
 
@@ -28,6 +29,8 @@ router.use('/user', userRoutes);
 router.use('/sale-categories', saleCategoryRoutes);
 // Admin bulk upload (CSV/XLSX/JSON + optional images ZIP)
 router.use('/admin/bulk', bulkRoutes);
+// Admin security audit log dashboard
+router.use('/admin/audit', auditRoutes);
 
 // Health check route
 router.get('/health', (_req, res) => {
