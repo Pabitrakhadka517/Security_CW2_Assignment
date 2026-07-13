@@ -40,8 +40,8 @@ function Sidebar() {
   }
 
   return (
-    <aside className="rounded-[2rem] bg-white p-4 shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)] lg:sticky lg:top-8">
-      <div className="rounded-[1.5rem] bg-[linear-gradient(135deg,_rgba(26,60,138,0.08),_rgba(255,107,53,0.08))] p-5">
+    <aside className="rounded-4xl bg-white p-4 shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)] lg:sticky lg:top-8">
+      <div className="rounded-3xl bg-[linear-gradient(135deg,rgba(26,60,138,0.08),rgba(255,107,53,0.08))] p-5">
         <p className="text-xs font-semibold uppercase tracking-[0.28em] text-slate-400">Account</p>
         <h2 className="mt-1.5 text-xl font-semibold tracking-tight text-slate-900">Dashboard</h2>
       </div>
@@ -66,7 +66,7 @@ function Sidebar() {
 
 export default function AccountDashboard() {
   return (
-    <div className="min-h-screen bg-[linear-gradient(180deg,_#ffffff_0%,_#f8fbff_52%,_#eef3ff_100%)] px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
+    <div className="min-h-screen bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_52%,#eef3ff_100%)] px-3 py-4 sm:px-6 sm:py-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-[240px_1fr]">
           <Sidebar />
