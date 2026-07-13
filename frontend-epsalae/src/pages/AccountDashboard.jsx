@@ -5,8 +5,9 @@ import AddressesPage from './AccountAddresses'
 import WishlistPage from './AccountWishlist'
 import SecurityPage from './AccountSecurity'
 import MFASetupPage from './AccountMFASetup'
+import ActivityPage from './AccountActivity'
 import OrderInvoice from './OrderInvoice'
-import { User, ShoppingBag, MapPin, Heart, LogOut, Lock } from 'lucide-react'
+import { User, ShoppingBag, MapPin, Heart, LogOut, Lock, Activity } from 'lucide-react'
 import { useUserAuth } from '@/components/store/authstore'
 import { authEndpoints } from '@/components/api/userapi'
 import toast from 'react-hot-toast'
@@ -17,6 +18,7 @@ const navItems = [
   { to: '/account/addresses', icon: MapPin, label: 'Saved Addresses' },
   { to: '/account/wishlist', icon: Heart, label: 'Wishlist' },
   { to: '/account/security', icon: Lock, label: 'Security' },
+  { to: '/account/activity', icon: Activity, label: 'Activity Log' },
 ]
 
 const linkCls = ({ isActive }) =>
@@ -77,6 +79,7 @@ export default function AccountDashboard() {
               <Route path="wishlist" element={<WishlistPage />} />
               <Route path="security" element={<SecurityPage />} />
               <Route path="security/mfa-setup" element={<MFASetupPage />} />
+              <Route path="activity" element={<ActivityPage />} />
             </Routes>
           </main>
         </div>

@@ -4,7 +4,7 @@ import api from '../api/base';
 import { UploadCloud,
   LayoutDashboard, Package, ShoppingCart, Tag, Percent,
   Image, LogOut, ExternalLink, X, BadgePercent,
-  Heart, ShoppingBag, ChevronRight, ChevronDown,
+  Heart, ShoppingBag, ChevronRight, ChevronDown, ShieldAlert,
 } from 'lucide-react';
 import { useState } from 'react';
 import logo from '../../assets/weblogo.png';
@@ -43,6 +43,12 @@ const NAV_SECTIONS = [
     title: 'Customers',
     items: [
       { path: '/admin/wishlists', label: 'Wishlists', icon: Heart },
+    ],
+  },
+  {
+    title: 'Security',
+    items: [
+      { path: '/admin/security', label: 'Security Dashboard', icon: ShieldAlert },
     ],
   },
 ];
