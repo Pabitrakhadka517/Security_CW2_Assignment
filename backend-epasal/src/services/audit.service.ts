@@ -2,6 +2,7 @@ import { AuditLog, AuditAction, AuditStatus, AuditRiskLevel, AuditUserRole, IAud
 import { logger } from '../utils/logger';
 import { sanitizeForLog } from '../utils/sanitize';
 import { alertService } from './alert.service';
+import { ipListService } from './ipList.service';
 
 export interface AuditLogEntry {
   userId?: string | null;
@@ -106,13 +107,15 @@ export const detectSuspiciousActivity = async (ipAddress: string, userId?: strin
     const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000);
     const fiveMinAgo = new Date(Date.now() - 5 * 60 * 1000);
 
-    // 1. Brute force: 10+ failed logins from this IP in 15 minutes.
+    // 1. Brute force: N+ failed logins from this IP in 15 minutes
+    // (N = IP_AUTO_BLOCK_THRESHOLD, default 10).
     const failedFromIp = await AuditLog.countDocuments({
       ipAddress,
       action: 'LOGIN_FAILED',
       timestamp: { $gte: fifteenMinAgo },
     });
-    if (failedFromIp >= 10) {
+    const bruteForceThreshold = parseInt(process.env.IP_AUTO_BLOCK_THRESHOLD ?? '10', 10);
+    if (failedFromIp >= bruteForceThreshold) {
       await log({
         userId: userId || null,
         action: 'SUSPICIOUS_ACTIVITY',
@@ -129,6 +132,12 @@ export const detectSuspiciousActivity = async (ipAddress: string, userId?: strin
         userId: userId || undefined,
         metadata: { failedCount: failedFromIp },
         timestamp: new Date(),
+      });
+      // Enforcement: actually block the IP, not just alert on it.
+      await ipListService.autoBlockIP({
+        ip: ipAddress,
+        reason: `Automated block: ${failedFromIp} failed logins in 15 minutes (threshold: ${bruteForceThreshold})`,
+        userId,
       });
     }
 
@@ -156,6 +165,11 @@ export const detectSuspiciousActivity = async (ipAddress: string, userId?: strin
         userId: userId || undefined,
         metadata: { uniqueTargets: distinctCount },
         timestamp: new Date(),
+      });
+      // Enforcement: actually block the IP, not just alert on it.
+      await ipListService.autoBlockIP({
+        ip: ipAddress,
+        reason: `Automated block: credential stuffing detected (${distinctCount} accounts targeted in 5 minutes)`,
       });
     }
 

@@ -13,6 +13,7 @@ import auditRoutes from './audit.routes';
 import securityRoutes from './security.routes';
 import adminSessionRoutes from './adminSession.routes';
 import adminAlertsRoutes from './adminAlerts.routes';
+import ipManagementRoutes from './ipManagement.routes';
 
 const router = Router();
 
@@ -38,6 +39,8 @@ router.use('/admin/audit', auditRoutes);
 router.use('/admin/sessions', adminSessionRoutes);
 // Admin alert-delivery test endpoint (email/Slack)
 router.use('/admin/alerts', adminAlertsRoutes);
+// Admin IP allow/block list management
+router.use('/admin/ip', ipManagementRoutes);
 // CSP violation reporting (browsers POST here automatically, no auth)
 router.use('/security', securityRoutes);
 

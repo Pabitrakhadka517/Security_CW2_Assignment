@@ -15,6 +15,7 @@ import mongoSanitize from 'express-mongo-sanitize';
 import hpp from 'hpp';
 import { helmetConfig, swaggerCsp, permissionsPolicy } from './config/helmet.config';
 import { encryptionService } from './services/encryption.service';
+import { ipFilter } from './middlewares/ipFilter';
 
 // ===========================================
 // ENCRYPTION KEY VALIDATION (fail fast on bad config)
@@ -100,6 +101,13 @@ app.options('*', cors(corsOptions));
 // 2. TRUST PROXY (Required for Render/Heroku)
 // ===========================================
 app.set('trust proxy', 1);
+
+// ===========================================
+// 2b. IP ALLOW/BLOCK LIST (separate enforcement layer on top of rate limiting)
+// ===========================================
+// Must run after trust proxy (needs the real client IP) and before rate
+// limiters/routes, so a blocked IP never consumes a rate-limit slot.
+app.use(ipFilter);
 
 // ===========================================
 // 3. SECURITY MIDDLEWARE
