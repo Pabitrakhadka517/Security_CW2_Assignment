@@ -41,6 +41,35 @@
     
     <!-- DNS Prefetch -->
     <link rel="dns-prefetch" href="https://images.unsplash.com" />
+
+    <!-- Referrer Policy -->
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+
+    <!--
+      X-Frame-Options and X-Content-Type-Options are NOT recognized as
+      meta http-equiv values by any browser — they only take effect as real
+      HTTP response headers, which is why they're set in netlify.toml /
+      vercel.json instead of here.
+    -->
+
+    <!--
+      Fallback CSP for this SPA. The real enforcement point is the
+      HTTP header set in netlify.toml / vercel.json (meta-tag CSP silently
+      ignores `frame-ancestors` and `report-uri` per spec, so those two
+      directives only work from the header version). Keep the two in sync.
+    -->
+    <meta http-equiv="Content-Security-Policy"
+          content="
+            default-src 'self';
+            script-src 'self' 'unsafe-inline' https://hcaptcha.com https://*.hcaptcha.com;
+            style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+            font-src 'self' https://fonts.gstatic.com;
+            img-src 'self' data: https://res.cloudinary.com https://images.unsplash.com https://hcaptcha.com https://*.hcaptcha.com;
+            connect-src 'self' %VITE_API_BASE_URL% https://hcaptcha.com https://*.hcaptcha.com;
+            frame-src https://hcaptcha.com https://*.hcaptcha.com;
+            object-src 'none';
+            base-uri 'self';
+          ">
   </head>
   <body>
     <div id="root">

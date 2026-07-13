@@ -8,7 +8,7 @@ import { useUserAuth } from '@/components/store/authstore';
 const userApi = axios.create({
   baseURL: API_URL,
   withCredentials: true,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
 });
 
 userApi.interceptors.request.use((config) => {

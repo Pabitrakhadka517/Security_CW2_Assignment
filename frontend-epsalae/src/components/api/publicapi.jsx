@@ -6,7 +6,7 @@ import { API_URL } from '@/config';
 
 const publicApi = axios.create({
   baseURL: API_URL,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
 });
 
 export default publicApi;

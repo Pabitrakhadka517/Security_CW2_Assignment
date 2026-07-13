@@ -10,6 +10,7 @@ const api = axios.create({
   withCredentials: true, // send refreshToken cookie on /auth/refresh
   headers: {
     'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
   },
 });
 

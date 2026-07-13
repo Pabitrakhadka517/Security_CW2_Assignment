@@ -59,6 +59,12 @@ export default defineConfig({
     port: 5174,
     strictPort: false,
     open: true,
+    headers: {
+      'X-Frame-Options': 'DENY',
+      'X-Content-Type-Options': 'nosniff',
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+    },
     proxy: {
       // Forward local /api requests to the local backend so there's no CORS in dev.
       '/api': {
