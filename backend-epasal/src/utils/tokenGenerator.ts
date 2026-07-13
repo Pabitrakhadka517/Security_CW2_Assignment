@@ -33,24 +33,21 @@ export const generateRefreshToken = (payload: TokenPayload, expiresIn?: string):
   return jwt.sign(payload as jwt.JwtPayload, secret, { expiresIn: expiry } as any);
 };
 
+// Deliberately let jwt.verify's own errors (TokenExpiredError, JsonWebTokenError,
+// NotBeforeError) propagate as-is instead of collapsing them into a generic
+// Error — callers (authMiddleware) need to distinguish "expired" from
+// "invalid" so an expired access token can trigger a client-side refresh
+// instead of a hard logout.
 export const verifyAccessToken = (token: string, isAdmin: boolean = false): TokenPayload => {
   const secretEnv = getSecret(isAdmin, 'access');
   const secret = ensureSecret(secretEnv, 'JWT secret');
-  try {
-    return jwt.verify(token, secret) as TokenPayload;
-  } catch (e) {
-    throw new Error('Invalid or expired access token');
-  }
+  return jwt.verify(token, secret) as TokenPayload;
 };
 
 export const verifyRefreshToken = (token: string, isAdmin: boolean = false): TokenPayload => {
   const secretEnv = getSecret(isAdmin, 'refresh');
   const secret = ensureSecret(secretEnv, 'JWT refresh secret');
-  try {
-    return jwt.verify(token, secret) as TokenPayload;
-  } catch (e) {
-    throw new Error('Invalid or expired refresh token');
-  }
+  return jwt.verify(token, secret) as TokenPayload;
 };
 
 /**

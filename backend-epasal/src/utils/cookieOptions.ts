@@ -20,6 +20,13 @@ export const refreshCookieOptions = (maxAge?: number): CookieOptions => {
     sameSite,
     path: '/api/v1/auth',
   };
+  // Leading-dot COOKIE_DOMAIN (e.g. ".epasaley.com") shares the cookie across
+  // subdomains. Only set in production — in dev the API and frontend are
+  // usually on different hosts/ports where a fixed domain would just break
+  // the cookie outright.
+  if (process.env.NODE_ENV === 'production' && process.env.COOKIE_DOMAIN) {
+    opts.domain = process.env.COOKIE_DOMAIN;
+  }
   if (maxAge !== undefined) opts.maxAge = maxAge;
   return opts;
 };

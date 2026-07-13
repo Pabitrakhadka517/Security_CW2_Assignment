@@ -32,8 +32,11 @@ export class BadRequestError extends AppError {
 }
 
 export class UnauthorizedError extends AppError {
-  constructor(message: string = 'Unauthorized') {
+  public code?: string;
+
+  constructor(message: string = 'Unauthorized', code?: string) {
     super(message, 401);
+    this.code = code;
   }
 }
 

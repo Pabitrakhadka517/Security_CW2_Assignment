@@ -9,6 +9,7 @@ import { refreshCookieOptions } from '../utils/cookieOptions';
 import * as auditService from '../services/audit.service';
 import { createAuditContext } from '../middlewares/auditLogger';
 import { sendSuccess } from '../utils/responseHelper';
+import * as sessionService from '../services/session.service';
 
 /**
  * LOGIN ENDPOINT - Get JWT token with Email + Password
@@ -77,21 +78,12 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
 
-  // Store hashed refresh token in DB
-  const hash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-  const decoded: any = decodeToken(refreshToken) || {};
-  const expiresAt = decoded.exp ? new Date(decoded.exp * 1000) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-
-  await RefreshToken.create({
-    tokenHash: hash,
-    userId: admin._id.toString(),
-    role: 'admin',
-    expiresAt,
-    revoked: false,
-  });
+  // Track the session (device fingerprint, concurrent-session limit, absolute
+  // expiry) instead of writing the RefreshToken row directly.
+  const session = await sessionService.createSession(admin._id.toString(), 'admin', req, refreshToken);
 
   // Set httpOnly cookie for refresh token
-  const maxAge = expiresAt.getTime() - Date.now();
+  const maxAge = (session.expiresAt as Date).getTime() - Date.now();
   res.cookie('refreshToken', refreshToken, refreshCookieOptions(maxAge));
 
   // Return access token to client
@@ -126,12 +118,12 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
     throw new UnauthorizedError('No refresh token provided');
   }
 
-  const hash = crypto.createHash('sha256').update(token).digest('hex');
-  const existing = await RefreshToken.findOne({ tokenHash: hash });
-  if (!existing || existing.revoked || (existing.expiresAt && existing.expiresAt < new Date())) {
-    await auditService.log({ ...ctx, action: 'TOKEN_REFRESH_FAILED', status: 'FAILURE', riskLevel: 'MEDIUM', metadata: { reason: 'invalid_or_expired_token' } });
+  const result = await sessionService.validateSession(token, req);
+  if (!result.valid || !result.session) {
+    await auditService.log({ ...ctx, action: 'TOKEN_REFRESH_FAILED', status: 'FAILURE', riskLevel: 'MEDIUM', metadata: { reason: result.reason || 'invalid_or_expired_token' } });
     throw new UnauthorizedError('Invalid or expired refresh token');
   }
+  const existing = result.session;
 
   // Derive role from the stored record so we verify against the correct secret.
   // Falls back to 'user' for legacy rows that pre-date the role column.
@@ -144,7 +136,9 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
   // Use the stored role as the source of truth; the JWT payload role is a hint.
   const effectiveRole: 'admin' | 'user' = (payload.role as any) || storedRole;
 
-  // Rotate: create new refresh token and revoke old one
+  // Rotate: create new refresh token and revoke old one. The new row carries
+  // forward the session's device identity and absolute expiry unchanged —
+  // rotation refreshes activity, it must never extend the 7-day hard ceiling.
   const newRefreshToken = generateRefreshToken({ id: payload.id, email: payload.email, role: effectiveRole });
   const newHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
   const newDecoded: any = decodeToken(newRefreshToken) || {};
@@ -160,6 +154,12 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
     role: storedRole,
     expiresAt: newExpiresAt,
     revoked: false,
+    deviceId: existing.deviceId,
+    deviceName: existing.deviceName,
+    ipAddress: ctx.ipAddress,
+    userAgent: ctx.userAgent,
+    lastUsedAt: new Date(),
+    absoluteExpiry: existing.absoluteExpiry,
   });
 
   // Issue new access token
@@ -171,8 +171,14 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
 
   await auditService.log({ ...ctx, userId: payload.id, userEmail: payload.email, userRole: effectiveRole, action: 'TOKEN_REFRESH', status: 'SUCCESS', riskLevel: 'LOW' });
 
+  const data: Record<string, unknown> = { token: accessToken, accessToken };
+  if (result.deviceMismatch) {
+    data.deviceMismatch = true;
+    data.warning = 'Session accessed from new device';
+  }
+
   // Return both `token` and `accessToken` for backward compatibility.
-  res.json({ success: true, data: { token: accessToken, accessToken } });
+  res.json({ success: true, data });
 });
 
 /**
@@ -248,6 +254,15 @@ export const changeAdminPassword = asyncHandler(async (req: Request, res: Respon
   admin.password = newPassword;
   await admin.save();
   await auditService.log({ ...createAuditContext(req), userId: adminId, userEmail: admin.email, userRole: 'admin', action: 'PASSWORD_CHANGED', status: 'SUCCESS', riskLevel: 'MEDIUM' });
+
+  // A changed password invalidates every other session — keep the one making
+  // this request alive so the admin isn't logged out by their own change.
+  const currentSessionId = await sessionService.resolveCurrentSessionId(req, adminId);
+  const revokedCount = await sessionService.revokeAllUserSessions(adminId, 'password_changed', currentSessionId);
+  if (revokedCount > 0) {
+    await auditService.log({ ...createAuditContext(req), userId: adminId, userEmail: admin.email, userRole: 'admin', action: 'LOGOUT', status: 'SUCCESS', riskLevel: 'LOW', metadata: { reason: 'password_changed', revokedSessions: revokedCount } });
+  }
+
   res.json({ success: true, message: 'Password changed successfully' });
 });
 
@@ -261,8 +276,7 @@ export const logout = asyncHandler(async (req: Request, res: Response) => {
     const hash = crypto.createHash('sha256').update(token).digest('hex');
     const existing = await RefreshToken.findOne({ tokenHash: hash });
     if (existing) {
-      existing.revoked = true;
-      await existing.save();
+      await sessionService.revokeSession(existing._id.toString(), 'logout');
       await auditService.log({
         ...createAuditContext(req),
         userId: existing.userId,

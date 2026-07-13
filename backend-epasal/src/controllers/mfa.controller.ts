@@ -6,6 +6,7 @@ import { verifyMFAPendingToken } from '../utils/tokenGenerator';
 import * as auditService from '../services/audit.service';
 import { createAuditContext } from '../middlewares/auditLogger';
 import { issueUserSession } from './user.controller';
+import * as sessionService from '../services/session.service';
 import {
   generateMFASecret,
   generateQRCode,
@@ -64,6 +65,13 @@ export const verifySetup = asyncHandler(async (req: Request, res: Response) => {
 
   await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'MFA_ENABLED', status: 'SUCCESS', riskLevel: 'LOW' });
 
+  // Force re-login everywhere (including this device) — a stolen access
+  // token from before MFA was enabled must not survive the change.
+  const revokedCount = await sessionService.revokeAllUserSessions(userId, 'mfa_changed');
+  if (revokedCount > 0) {
+    await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'LOGOUT', status: 'SUCCESS', riskLevel: 'LOW', metadata: { reason: 'mfa_changed', revokedSessions: revokedCount } });
+  }
+
   res.json({ success: true, message: 'MFA enabled successfully', data: { backupCodes } });
 });
 
@@ -93,6 +101,14 @@ export const disableMFA = asyncHandler(async (req: Request, res: Response) => {
   await user.save();
 
   await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'MFA_DISABLED', status: 'SUCCESS', riskLevel: 'MEDIUM' });
+
+  // Force re-login everywhere — disabling MFA is itself a sensitive change,
+  // and any session opened while MFA was on should not silently continue
+  // in a now-weaker-auth state.
+  const revokedCount = await sessionService.revokeAllUserSessions(userId, 'mfa_changed');
+  if (revokedCount > 0) {
+    await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'LOGOUT', status: 'SUCCESS', riskLevel: 'LOW', metadata: { reason: 'mfa_changed', revokedSessions: revokedCount } });
+  }
 
   res.json({ success: true, message: 'MFA disabled successfully' });
 });

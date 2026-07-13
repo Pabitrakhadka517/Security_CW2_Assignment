@@ -186,6 +186,12 @@ export const errorHandler = (
     body.details = err.details;
   }
 
+  // Machine-readable error code (e.g. TOKEN_EXPIRED) so the frontend can
+  // branch on it without parsing the human-readable message.
+  if (err instanceof AppError && (err as any).code) {
+    body.code = (err as any).code;
+  }
+
   if (process.env.NODE_ENV !== 'production') {
     body.error = { name: err.name, code: (err as any).code };
   }

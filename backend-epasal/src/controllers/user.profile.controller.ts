@@ -10,6 +10,7 @@ import { BadRequestError, NotFoundError, UnauthorizedError } from '../utils/erro
 import * as auditService from '../services/audit.service';
 import { createAuditContext } from '../middlewares/auditLogger';
 import { validatePasswordChange } from '../services/password.service';
+import * as sessionService from '../services/session.service';
 
 /**
  * User-facing profile endpoints.
@@ -236,7 +237,14 @@ export const changePassword = asyncHandler(async (req: Request, res: Response) =
   await user.updatePasswordHistory(user.password as string);
   await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'PASSWORD_CHANGED', status: 'SUCCESS', riskLevel: 'MEDIUM' });
 
-  sendSuccess(res, 200, 'Password changed successfully');
+  // Invalidate every other session — keep the one making this request alive.
+  const currentSessionId = await sessionService.resolveCurrentSessionId(req, userId);
+  const revokedCount = await sessionService.revokeAllUserSessions(userId, 'password_changed', currentSessionId);
+  if (revokedCount > 0) {
+    await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'LOGOUT', status: 'SUCCESS', riskLevel: 'LOW', metadata: { reason: 'password_changed', revokedSessions: revokedCount } });
+  }
+
+  sendSuccess(res, 200, 'Password changed successfully', { revokedSessions: revokedCount });
 });
 
 export const mergeCart = asyncHandler(async (req: Request, res: Response) => {

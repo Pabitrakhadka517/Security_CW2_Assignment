@@ -49,6 +49,10 @@ export const authenticate = (isAdmin: boolean = false) => {
     } catch (error) {
       if (error instanceof UnauthorizedError || error instanceof ForbiddenError) {
         next(error);
+      } else if (error instanceof Error && error.name === 'TokenExpiredError') {
+        // Distinguished from a merely invalid token so the frontend can
+        // silently call /auth/refresh instead of forcing a full re-login.
+        next(new UnauthorizedError('Access token expired', 'TOKEN_EXPIRED'));
       } else {
         next(new UnauthorizedError('Invalid or expired token'));
       }

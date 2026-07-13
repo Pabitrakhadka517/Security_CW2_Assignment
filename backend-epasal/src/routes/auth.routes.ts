@@ -2,6 +2,7 @@ import { Router } from 'express';
 import Joi from 'joi';
 import * as authController from '../controllers/auth.controller';
 import * as userController from '../controllers/user.controller';
+import * as sessionController from '../controllers/session.controller';
 import { validateRequest } from '../middlewares/validateRequest';
 import { requireAdmin, requireAuth } from '../middlewares/authMiddleware';
 import { loginLimiter, registerLimiter, refreshLimiter, accountChangeLimiter } from '../middlewares/rateLimiter';
@@ -158,6 +159,14 @@ router.post('/logout', authController.logout);
 
 // Logged-in user's own recent security activity (never another user's).
 router.get('/me/activity', requireAuth, authController.getMyActivity);
+
+// Session management — view/revoke the caller's own active sessions across
+// devices. Mounted under /auth (not /user) since admins use these too.
+router.get('/sessions', requireAuth, sessionController.listMySessions);
+router.delete('/sessions', requireAuth, sessionController.revokeOtherSessions);
+router.delete('/sessions/:sessionId', requireAuth, validateRequest({
+  params: Joi.object({ sessionId: Joi.string().hex().length(24).required() }),
+}), sessionController.revokeMySession);
 
 // Admin profile management
 router.get('/admin/me', requireAdmin, authController.getAdminProfile);

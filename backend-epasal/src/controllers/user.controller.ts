@@ -1,15 +1,14 @@
 import { Request, Response } from 'express';
-import crypto from 'crypto';
 import { OAuth2Client } from 'google-auth-library';
 import { User, IUser } from '../models/User';
-import { generateAccessToken, generateRefreshToken, decodeToken, generateMFAPendingToken } from '../utils/tokenGenerator';
+import { generateAccessToken, generateRefreshToken, generateMFAPendingToken } from '../utils/tokenGenerator';
 import { BadRequestError, UnauthorizedError, LockedError } from '../utils/errors';
 import { asyncHandler } from '../middlewares/asyncHandler';
-import { RefreshToken } from '../models/RefreshToken';
 import { refreshCookieOptions } from '../utils/cookieOptions';
 import * as auditService from '../services/audit.service';
 import { createAuditContext } from '../middlewares/auditLogger';
 import { validatePasswordComplexity } from '../services/password.service';
+import * as sessionService from '../services/session.service';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -19,24 +18,14 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
  * Shared by the normal login path and the post-MFA-challenge path so token
  * issuance logic lives in exactly one place.
  */
-export const issueUserSession = async (_req: Request, res: Response, user: IUser): Promise<void> => {
+export const issueUserSession = async (req: Request, res: Response, user: IUser): Promise<void> => {
   const payload = { id: user._id.toString(), email: user.email, role: 'user' as const };
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
 
-  const hash = crypto.createHash('sha256').update(refreshToken).digest('hex');
-  const decoded: any = decodeToken(refreshToken) || {};
-  const expiresAt = decoded.exp ? new Date(decoded.exp * 1000) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const session = await sessionService.createSession(user._id.toString(), 'user', req, refreshToken);
 
-  await RefreshToken.create({
-    tokenHash: hash,
-    userId: user._id.toString(),
-    role: 'user',
-    expiresAt,
-    revoked: false,
-  });
-
-  res.cookie('refreshToken', refreshToken, refreshCookieOptions(expiresAt.getTime() - Date.now()));
+  res.cookie('refreshToken', refreshToken, refreshCookieOptions((session.expiresAt as Date).getTime() - Date.now()));
 
   const needsOnboarding = !!(user.isFirstLogin || !user.name || !user.email || !user.address || !user.phone);
 
