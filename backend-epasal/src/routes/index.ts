@@ -10,6 +10,7 @@ import userRoutes from './user.routes';
 import saleCategoryRoutes from './saleCategory.routes';
 import bulkRoutes from './bulk.routes';
 import auditRoutes from './audit.routes';
+import securityRoutes from './security.routes';
 
 const router = Router();
 
@@ -31,6 +32,8 @@ router.use('/sale-categories', saleCategoryRoutes);
 router.use('/admin/bulk', bulkRoutes);
 // Admin security audit log dashboard
 router.use('/admin/audit', auditRoutes);
+// CSP violation reporting (browsers POST here automatically, no auth)
+router.use('/security', securityRoutes);
 
 // Health check route
 router.get('/health', (_req, res) => {

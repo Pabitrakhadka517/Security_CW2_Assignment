@@ -1,7 +1,6 @@
 import express, { Application, Request, Response, NextFunction } from 'express'; // NextFunction used by middlewares above
 
 import cors from 'cors';
-import helmet from 'helmet';
 import compression from 'compression';
 import { errorHandler, notFoundHandler } from './middlewares/errorHandler';
 import { dbReady } from './middlewares/dbReady';
@@ -14,6 +13,7 @@ import { logger } from './utils/logger';
 import { randomUUID } from 'crypto';
 import mongoSanitize from 'express-mongo-sanitize';
 import hpp from 'hpp';
+import { helmetConfig, swaggerCsp, permissionsPolicy } from './config/helmet.config';
 
 // ===========================================
 // CREATE EXPRESS APP
@@ -66,38 +66,37 @@ app.set('trust proxy', 1);
 // ===========================================
 // 3. SECURITY MIDDLEWARE
 // ===========================================
-// This API only ever serves JSON (the Swagger UI pages below are the one
-// exception and get their own, more permissive CSP applied just before they're
-// mounted) so the default policy can be maximally strict: no scripts, no
-// styles, no framing, nothing embeddable.
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'none'"],
-      frameAncestors: ["'none'"],
-      baseUri: ["'none'"],
-    },
-  },
-  crossOriginEmbedderPolicy: false,
-  crossOriginResourcePolicy: { policy: 'cross-origin' },
-}));
+// Full config (CSP, HSTS, Permissions-Policy, etc.) lives in
+// ./config/helmet.config.ts — see that file for the justification behind
+// each directive. `swaggerCsp` overrides just the CSP header on the doc
+// routes below, since Swagger UI needs inline scripts/styles.
+app.use(helmetConfig);
+app.use(permissionsPolicy);
 
-// Swagger UI ships inline <script>/<style> tags, so it needs a looser policy
-// than the rest of the API. Applied only to the doc routes, overriding the
-// strict default set above.
-const swaggerCsp = helmet.contentSecurityPolicy({
-  directives: {
-    defaultSrc: ["'self'"],
-    styleSrc: ["'self'", "'unsafe-inline'"],
-    scriptSrc: ["'self'", "'unsafe-inline'"],
-    imgSrc: ["'self'", 'data:', 'https:'],
-    connectSrc: ["'self'"],
-  },
+// Additional headers not covered by Helmet.
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // Defense in depth — Helmet already hides X-Powered-By by default.
+  res.removeHeader('X-Powered-By');
+
+  // Sensitive JSON must never be cached by browsers or intermediate proxies.
+  if (req.path.startsWith('/api/')) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+  }
+
+  next();
 });
 
 // ===========================================
 // 4. BODY PARSERS
 // ===========================================
+// Browsers POST CSP violation reports with Content-Type: application/csp-report,
+// which the generic JSON parser below won't match — parse it here, scoped to
+// just that route, before the catch-all parsers run.
+app.use('/api/v1/security/csp-report', express.json({ type: 'application/csp-report' }));
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
