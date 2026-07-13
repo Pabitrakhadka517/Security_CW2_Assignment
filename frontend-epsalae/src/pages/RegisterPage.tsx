@@ -10,6 +10,7 @@ import { authEndpoints } from '@/components/api/userapi';
 import { useUserAuth } from '@/components/store/authstore';
 import PasswordStrengthMeter from '@/components/ui/PasswordStrengthMeter';
 import PasswordRules from '@/components/ui/PasswordRules';
+import CaptchaWidget from '@/components/ui/CaptchaWidget';
 
 const registerSchema = z
   .object({
@@ -51,6 +52,12 @@ const RegisterPage: React.FC = () => {
   const [loading, setLoading]   = React.useState(false);
   const [apiError, setApiError] = React.useState('');
   const [success, setSuccess]   = React.useState(false);
+  const [captchaToken, setCaptchaToken] = React.useState<string | null>(null);
+  const captchaRef = React.useRef<any>(null);
+  const resetCaptcha = () => {
+    captchaRef.current?.resetCaptcha();
+    setCaptchaToken(null);
+  };
 
   const {
     register,
@@ -75,6 +82,7 @@ const RegisterPage: React.FC = () => {
         email:    values.email.trim().toLowerCase(),
         phone:    values.phone.trim(),
         password: values.password,
+        captchaToken,
       });
       setSuccess(true);
       toast.success('Account created! Please sign in.');
@@ -85,6 +93,7 @@ const RegisterPage: React.FC = () => {
         ? details.join(', ')
         : err?.response?.data?.message || 'Registration failed. Try again.';
       setApiError(message);
+      resetCaptcha();
     } finally {
       setLoading(false);
     }
@@ -260,7 +269,15 @@ const RegisterPage: React.FC = () => {
                   {errors.confirmPassword && <p className="mt-1 text-xs text-red-500">{errors.confirmPassword.message}</p>}
                 </div>
 
-                <button type="submit" disabled={isDisabled}
+                <div className="flex justify-center">
+                  <CaptchaWidget
+                    ref={captchaRef}
+                    onVerify={(token: string) => setCaptchaToken(token)}
+                    onExpire={() => setCaptchaToken(null)}
+                  />
+                </div>
+
+                <button type="submit" disabled={isDisabled || !captchaToken}
                   className="w-full flex items-center justify-center gap-2 py-2.5 mt-1 bg-[#1A3C8A] hover:bg-[#142f6e] text-white font-semibold rounded-xl text-sm transition shadow-md shadow-blue-900/20 disabled:opacity-60 disabled:cursor-not-allowed">
                   {loading ? (
                     <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creating account…</>
