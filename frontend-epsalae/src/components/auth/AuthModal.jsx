@@ -4,8 +4,10 @@ import toast from 'react-hot-toast'
 import { authEndpoints, profileEndpoints } from '../api/userapi'
 import { useUserAuth } from '@/components/store/authstore'
 import { useCart } from '@/store/cartstore'
+import CaptchaWidget from '@/components/ui/CaptchaWidget'
 
 const MAX_LOGIN_ATTEMPTS = 5
+const CAPTCHA_AFTER_ATTEMPTS = 2
 
 const formatCountdown = (totalSeconds) => {
   const minutes = Math.floor(totalSeconds / 60)
@@ -26,6 +28,17 @@ export default function AuthModal({ open, onClose, onSuccess }) {
   const { loginUser } = useUserAuth()
   const { cart } = useCart()
   const navigate = useNavigate()
+
+  // CAPTCHA — always required for registration, only required for login once
+  // the backend (or the local failed-attempt count) signals a brute-force risk.
+  const [captchaToken, setCaptchaToken] = useState(null)
+  const [requiresCaptcha, setRequiresCaptcha] = useState(false)
+  const captchaRef = useRef(null)
+
+  const resetCaptcha = () => {
+    captchaRef.current?.resetCaptcha()
+    setCaptchaToken(null)
+  }
 
   // MFA challenge (step 2 of login). The pending token lives ONLY in this
   // component's state — never localStorage/sessionStorage — since it's a
@@ -61,6 +74,7 @@ export default function AuthModal({ open, onClose, onSuccess }) {
   const switchMode = (nextMode) => {
     setAuthError(null)
     setMode(nextMode)
+    resetCaptcha()
   }
 
   if (!open) return null
@@ -79,6 +93,8 @@ export default function AuthModal({ open, onClose, onSuccess }) {
 
     loginUser(token, user)
     setFailedAttempts(0)
+    setRequiresCaptcha(false)
+    resetCaptcha()
     setMfaPendingToken(null)
     setMfaCode('')
     setMfaError(null)
@@ -102,10 +118,16 @@ export default function AuthModal({ open, onClose, onSuccess }) {
     setLoading(true)
     setAuthError(null)
     try {
-      const res = await authEndpoints.login({ email, password })
+      const payload = requiresCaptcha ? { email, password, captchaToken } : { email, password }
+      const res = await authEndpoints.login(payload)
       // Backend now returns: { success, message, data: { token, accessToken, user, needsOnboarding } }
       // or, when MFA is enabled: { success, requiresMFA, data: { requiresMFA, mfaPendingToken } }
       const data = res.data?.data || res.data || {}
+
+      // Credentials (and CAPTCHA, if it was required) passed — reset the
+      // CAPTCHA gate whether or not an MFA challenge follows.
+      setRequiresCaptcha(false)
+      resetCaptcha()
 
       if (data.requiresMFA) {
         setMfaPendingToken(data.mfaPendingToken)
@@ -116,17 +138,28 @@ export default function AuthModal({ open, onClose, onSuccess }) {
       await completeLogin(data, res)
     } catch (err) {
       const status = err.response?.status
+      const body = err.response?.data
 
       if (status === 423) {
-        const remainingTime = err.response?.data?.details?.remainingTime ?? 15
+        const remainingTime = body?.details?.remainingTime ?? 15
         setAuthError(`Your account is locked. Please try again in ${remainingTime} minutes.`)
         startLockoutCountdown(remainingTime)
       } else if (status === 429) {
         setAuthError('Too many login attempts. Please wait 15 minutes.')
+      } else if (body?.requiresCaptcha) {
+        setRequiresCaptcha(true)
+        setAuthError(body?.message || 'Please complete the verification below to continue signing in.')
       } else {
-        setAuthError(err.response?.data?.message || 'Invalid credentials')
-        setFailedAttempts((prev) => Math.min(prev + 1, MAX_LOGIN_ATTEMPTS))
+        setAuthError(body?.message || 'Invalid credentials')
+        setFailedAttempts((prev) => {
+          const next = Math.min(prev + 1, MAX_LOGIN_ATTEMPTS)
+          if (next >= CAPTCHA_AFTER_ATTEMPTS) setRequiresCaptcha(true)
+          return next
+        })
       }
+
+      // CAPTCHA tokens are single-use — always reset after any submission attempt.
+      resetCaptcha()
     } finally {
       setLoading(false)
     }
@@ -171,12 +204,13 @@ export default function AuthModal({ open, onClose, onSuccess }) {
   const doRegister = async () => {
     setLoading(true)
     try {
-      await authEndpoints.register({ name, email, password })
+      await authEndpoints.register({ name, email, password, captchaToken })
       toast.success('Registration successful. Please login.')
       setMode('login')
     } catch (err) {
       toast.error(err.response?.data?.message || 'Registration failed')
     } finally {
+      resetCaptcha()
       setLoading(false)
     }
   }
@@ -256,9 +290,22 @@ export default function AuthModal({ open, onClose, onSuccess }) {
               </p>
             )}
 
+            {requiresCaptcha && (
+              <div className="space-y-2">
+                <p className="text-sm text-gray-600">
+                  Please complete the verification below to continue signing in.
+                </p>
+                <CaptchaWidget
+                  ref={captchaRef}
+                  onVerify={(token) => setCaptchaToken(token)}
+                  onExpire={() => setCaptchaToken(null)}
+                />
+              </div>
+            )}
+
             <button
               onClick={doLogin}
-              disabled={loading || lockoutSeconds > 0}
+              disabled={loading || lockoutSeconds > 0 || (requiresCaptcha && !captchaToken)}
               className="w-full px-4 py-3 flex items-center justify-center gap-2 text-white bg-blue-700 rounded disabled:opacity-60"
             >
               {loading && (
@@ -278,7 +325,12 @@ export default function AuthModal({ open, onClose, onSuccess }) {
             <input value={name} onChange={(e)=>setName(e.target.value)} placeholder="Full name" className="w-full p-3 border rounded" />
             <input value={email} onChange={(e)=>setEmail(e.target.value)} placeholder="Email" className="w-full p-3 border rounded" />
             <input type="password" value={password} onChange={(e)=>setPassword(e.target.value)} placeholder="Password" className="w-full p-3 border rounded" />
-            <button onClick={doRegister} disabled={loading} className="w-full px-4 py-3 text-white bg-green-600 rounded disabled:opacity-60">{loading ? 'Creating account…' : 'Create account'}</button>
+            <CaptchaWidget
+              ref={captchaRef}
+              onVerify={(token) => setCaptchaToken(token)}
+              onExpire={() => setCaptchaToken(null)}
+            />
+            <button onClick={doRegister} disabled={loading || !captchaToken} className="w-full px-4 py-3 text-white bg-green-600 rounded disabled:opacity-60">{loading ? 'Creating account…' : 'Create account'}</button>
             <p className="text-sm text-center">Already have an account? <button onClick={()=>switchMode('login')} className="text-blue-600">Sign in</button></p>
           </div>
         )}
