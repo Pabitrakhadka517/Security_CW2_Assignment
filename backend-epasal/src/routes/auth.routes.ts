@@ -5,6 +5,8 @@ import * as userController from '../controllers/user.controller';
 import { validateRequest } from '../middlewares/validateRequest';
 import { requireAdmin, requireAuth } from '../middlewares/authMiddleware';
 import { loginLimiter, registerLimiter, refreshLimiter, accountChangeLimiter } from '../middlewares/rateLimiter';
+import { requireCaptcha } from '../middlewares/captcha';
+import { conditionalCaptcha } from '../middlewares/conditionalCaptcha';
 import { strongPasswordSchema } from '../validations/password.validation';
 
 const router = Router();
@@ -115,6 +117,9 @@ router.post('/login', loginLimiter, validateRequest({
 }), authController.login);
 
 // User registration and login
+// CAPTCHA is always required on registration — account creation is cheap to
+// automate and there's no "loginAttempts" signal to gate on like there is
+// for login.
 router.post('/register', registerLimiter, validateRequest({
   body: Joi.object({
     name: Joi.string().min(2).required(),
@@ -123,15 +128,21 @@ router.post('/register', registerLimiter, validateRequest({
       'string.pattern.base': 'Phone number must be 7-15 digits',
     }),
     password: strongPasswordSchema,
+    captchaToken: Joi.string().optional(),
   }),
-}), userController.register);
+}), requireCaptcha, userController.register);
 
+// CAPTCHA is only required once there's a brute-force signal (see
+// conditionalCaptcha) — always-on CAPTCHA here would hurt UX for the common
+// case of a correct password on the first try.
 router.post('/user/login', loginLimiter, validateRequest({
   body: Joi.object({
     email: Joi.string().email().required(),
     password: Joi.string().min(6).required(),
+    captchaToken: Joi.string().optional(),
+    forceCaptcha: Joi.boolean().optional(),
   }),
-}), userController.login);
+}), conditionalCaptcha, userController.login);
 
 // Google Sign-In — body carries the ID token from Google Identity Services,
 // verified server-side against Google's public keys (no redirect/client-secret
