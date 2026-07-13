@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, ShoppingBag, ArrowRight, ShieldCheck } from 'lucide-react';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
@@ -6,8 +6,11 @@ import toast from 'react-hot-toast';
 import { authEndpoints, profileEndpoints } from '@/components/api/userapi';
 import { useUserAuth } from '@/components/store/authstore';
 import { useCart } from '@/store/cartstore';
+import CaptchaWidget from '@/components/ui/CaptchaWidget';
 
 const MAX_MFA_ATTEMPTS = 5;
+const MAX_LOGIN_ATTEMPTS = 5;
+const CAPTCHA_AFTER_ATTEMPTS = 2;
 
 const LoginPage: React.FC = () => {
   const navigate   = useNavigate();
@@ -23,6 +26,18 @@ const LoginPage: React.FC = () => {
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState('');
   const [fieldErrors, setFieldErrors]   = useState<{ email?: string; password?: string }>({});
+
+  // CAPTCHA — required once the backend (or the local failed-attempt count)
+  // signals a brute-force risk. Token lives in component state only; hCaptcha
+  // tokens are single-use so the widget is reset after every submit attempt.
+  const [captchaToken, setCaptchaToken]     = useState<string | null>(null);
+  const [requiresCaptcha, setRequiresCaptcha] = useState(false);
+  const [loginAttempts, setLoginAttempts]   = useState(0);
+  const captchaRef = useRef<any>(null);
+  const resetCaptcha = () => {
+    captchaRef.current?.resetCaptcha();
+    setCaptchaToken(null);
+  };
 
   // MFA challenge (step 2 of login). Kept in component state only — never
   // localStorage/sessionStorage — since it's a short-lived, single-purpose
@@ -63,6 +78,9 @@ const LoginPage: React.FC = () => {
     const user  = data.user;
     if (!token) throw new Error(data?.message || 'Login failed');
     loginUser(token, user);
+    setLoginAttempts(0);
+    setRequiresCaptcha(false);
+    resetCaptcha();
     setMfaPendingToken(null);
     setMfaCode('');
     setMfaError('');
@@ -88,8 +106,13 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      const res  = await authEndpoints.login({ email, password });
+      const payload = requiresCaptcha ? { email, password, captchaToken } : { email, password };
+      const res  = await authEndpoints.login(payload);
       const data = res.data?.data || res.data || {};
+
+      // Credentials (and CAPTCHA, if it was required) passed.
+      setRequiresCaptcha(false);
+      resetCaptcha();
 
       if (data.requiresMFA) {
         setMfaPendingToken(data.mfaPendingToken);
@@ -98,7 +121,28 @@ const LoginPage: React.FC = () => {
 
       await completeLogin(data);
     } catch (err: any) {
-      setError(err?.response?.data?.message || err?.message || 'Incorrect email or password');
+      const status = err?.response?.status;
+      const body    = err?.response?.data;
+
+      if (status === 423) {
+        const remainingTime = body?.details?.remainingTime ?? 15;
+        setError(`Your account is locked. Please try again in ${remainingTime} minutes.`);
+      } else if (status === 429) {
+        setError('Too many login attempts. Please wait 15 minutes.');
+      } else if (body?.requiresCaptcha) {
+        setRequiresCaptcha(true);
+        setError(body?.message || 'Please complete the verification below to continue signing in.');
+      } else {
+        setError(body?.message || err?.message || 'Incorrect email or password');
+        setLoginAttempts(prev => {
+          const next = Math.min(prev + 1, MAX_LOGIN_ATTEMPTS);
+          if (next >= CAPTCHA_AFTER_ATTEMPTS) setRequiresCaptcha(true);
+          return next;
+        });
+      }
+
+      // hCaptcha tokens are single-use — always reset after any submission attempt.
+      resetCaptcha();
     } finally {
       setLoading(false);
     }
@@ -328,7 +372,26 @@ const LoginPage: React.FC = () => {
                   {fieldErrors.password && <p className="mt-1.5 text-xs text-red-500">{fieldErrors.password}</p>}
                 </div>
 
-                <button type="submit" disabled={loading}
+                {loginAttempts > 0 && loginAttempts < MAX_LOGIN_ATTEMPTS && (
+                  <p className="text-xs text-amber-600">
+                    {loginAttempts} of {MAX_LOGIN_ATTEMPTS} attempts used. Account locks after {MAX_LOGIN_ATTEMPTS} failures.
+                  </p>
+                )}
+
+                {requiresCaptcha && (
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-600">
+                      Please complete the verification below to continue signing in.
+                    </p>
+                    <CaptchaWidget
+                      ref={captchaRef}
+                      onVerify={(token: string) => setCaptchaToken(token)}
+                      onExpire={() => setCaptchaToken(null)}
+                    />
+                  </div>
+                )}
+
+                <button type="submit" disabled={loading || (requiresCaptcha && !captchaToken)}
                   className="w-full flex items-center justify-center gap-2 py-2.5 mt-1 bg-[#1A3C8A] hover:bg-[#142f6e] text-white font-semibold rounded-xl text-sm transition shadow-md shadow-blue-900/20 disabled:opacity-60 disabled:cursor-not-allowed">
                   {loading ? (
                     <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Signing in…</>
