@@ -1,10 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import {
   ShieldAlert, Lock, Globe, ArrowUpRight, ArrowDownRight,
-  Loader2, ChevronDown, ChevronUp, Flame,
+  Loader2, ChevronDown, ChevronUp, Flame, Ban,
 } from 'lucide-react';
 import { auditApi } from '../api/auditapi';
 import { useAuditStore } from '@/store/auditStore';
+import IPManagement from './IPManagement';
 
 const RISK_BADGE = {
   LOW: 'bg-gray-100 text-gray-600',
@@ -93,6 +94,7 @@ function EventRow({ event }) {
 export default function SecurityDashboard() {
   const { securitySummary, isLoading, fetchSecuritySummary } = useAuditStore();
   const [liveEvents, setLiveEvents] = useState([]);
+  const [activeTab, setActiveTab] = useState('overview');
 
   const pollLive = useCallback(async () => {
     try {
@@ -133,6 +135,28 @@ export default function SecurityDashboard() {
         <p className="text-sm text-gray-500">Login activity, suspicious behaviour, and audit trail — last 24 hours.</p>
       </div>
 
+      {/* Tab switcher */}
+      <div className="flex gap-1 border-b border-gray-100">
+        {[
+          { id: 'overview', label: 'Overview', icon: ShieldAlert },
+          { id: 'ip', label: 'IP Management', icon: Ban },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === tab.id ? 'border-[#FF6B35] text-[#FF6B35]' : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <tab.icon className="w-4 h-4" /> {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'ip' && <IPManagement />}
+
+      {activeTab === 'overview' && (
+      <>
       {/* Section 1 — Summary cards */}
       <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
         <SummaryCard
@@ -247,6 +271,8 @@ export default function SecurityDashboard() {
           )}
         </div>
       </div>
+      </>
+      )}
     </div>
   );
 }
