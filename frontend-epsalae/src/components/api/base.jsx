@@ -4,6 +4,7 @@
 // refresh httpOnly cookie reaches the backend.
 import axios from 'axios';
 import { API_URL } from '@/config';
+import { getRoleFromToken } from '@/utils/jwt';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -14,11 +15,17 @@ const api = axios.create({
   },
 });
 
-// Attach admin token on every request
+// Attach admin token on every request, plus a client-read role header. The
+// server never trusts X-Client-Role for authorization (it re-derives role
+// from the verified JWT on every request) — this only shows up in
+// server-side logs so a request whose claimed role doesn't match what the
+// token actually verifies to stands out.
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('adminToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    const role = getRoleFromToken(token);
+    if (role) config.headers['X-Client-Role'] = role;
   }
   return config;
 });

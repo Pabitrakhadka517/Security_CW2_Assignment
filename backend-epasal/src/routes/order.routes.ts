@@ -3,6 +3,7 @@ import orderController from '../controllers/order.controller';
 import { validateRequest } from '../middlewares/validateRequest';
 import { requireAdmin, requireAuth, optionalAuth } from '../middlewares/authMiddleware';
 import { checkPasswordExpiry } from '../middlewares/passwordExpiry';
+import { requirePermission } from '../middlewares/rbac';
 import {
   createOrderSchema,
   updateOrderStatusSchema,
@@ -77,9 +78,16 @@ router.get(
 );
 
 // Get one of MY orders - AUTHENTICATED USER (owner-checked)
+// NOTE: ownership is enforced by scoping the DB query itself to
+// `{ id, user_id: req.user.id }` (see order.service#getMyOrderById), not by
+// comparing a route param to req.user.id — that also means a mismatched
+// order id 404s instead of 403ing, so it can't be used as an existence
+// oracle for other people's orders. The controller separately logs an
+// IDOR_ATTEMPT audit event when the id exists under a different owner.
 router.get(
   '/my/:id',
   requireAuth,
+  requirePermission('order:read:own'),
   checkPasswordExpiry,
   validateRequest(getOrderByIdSchema),
   orderController.getMyOrderById
@@ -95,6 +103,7 @@ router.get(
 router.get(
   '/',
   requireAdmin,
+  requirePermission('order:read:any'),
   validateRequest(getOrdersQuerySchema),
   orderController.getOrders
 );
@@ -102,12 +111,14 @@ router.get(
 router.get(
   '/stats',
   requireAdmin,
+  requirePermission('order:read:any'),
   orderController.getOrderStatistics
 );
 
 router.get(
   '/status/:status',
   requireAdmin,
+  requirePermission('order:read:any'),
   validateRequest(getOrdersQuerySchema),
   orderController.getOrdersByStatus
 );
@@ -115,6 +126,7 @@ router.get(
 router.get(
   '/user/:userId',
   requireAdmin,
+  requirePermission('order:read:any'),
   validateRequest(getOrdersQuerySchema),
   orderController.getOrdersByUser
 );
@@ -122,6 +134,7 @@ router.get(
 router.get(
   '/:id',
   requireAdmin,
+  requirePermission('order:read:any'),
   validateRequest(getOrderByIdSchema),
   orderController.getOrderById
 );
@@ -129,6 +142,7 @@ router.get(
 router.get(
   '/:id/status',
   requireAdmin,
+  requirePermission('order:read:any'),
   validateRequest(getOrderByIdSchema),
   orderController.getOrderStatus
 );
@@ -136,6 +150,7 @@ router.get(
 router.put(
   '/:id/status',
   requireAdmin,
+  requirePermission('order:update:any'),
   validateRequest(updateOrderStatusSchema),
   orderController.updateOrderStatus
 );

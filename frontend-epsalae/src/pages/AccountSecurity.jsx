@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff, Lock, ShieldCheck, ShieldOff, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Lock, ShieldCheck, ShieldOff, CheckCircle2, AlertCircle, Loader2, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { profileEndpoints, mfaEndpoints } from '@/components/api/userapi'
 import { useUserAuth } from '@/components/store/authstore'
@@ -159,6 +159,65 @@ function MFASection() {
   )
 }
 
+function DataExportSection() {
+  const [exporting, setExporting] = useState(false)
+
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const res = await profileEndpoints.exportData()
+      const blob = new Blob([JSON.stringify(res.data, null, 2)], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'my-epasaley-data.json'
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      URL.revokeObjectURL(url)
+      toast.success('Your data export has started downloading')
+    } catch (err) {
+      if (err?.response?.status === 429) {
+        toast.error('You can only export your data 3 times per day')
+      } else {
+        toast.error(err?.response?.data?.message || 'Failed to export data')
+      }
+    } finally {
+      setExporting(false)
+    }
+  }
+
+  return (
+    <div className="mt-10 max-w-md border-t border-slate-100 pt-8">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+          <Download className="w-4 h-4 text-slate-700" />
+        </div>
+        <div>
+          <h4 className="text-base font-semibold text-slate-900">Download My Data</h4>
+          <p className="text-xs text-slate-500">Export a copy of your profile, orders, addresses and wishlist as JSON.</p>
+        </div>
+      </div>
+      <button
+        onClick={handleExport}
+        disabled={exporting}
+        className="w-full py-3 border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold rounded-xl text-sm transition disabled:opacity-50 flex items-center justify-center gap-2"
+      >
+        {exporting ? (
+          <>
+            <Loader2 size={14} className="animate-spin" /> Preparing export...
+          </>
+        ) : (
+          <>
+            <Download size={14} /> Download My Data
+          </>
+        )}
+      </button>
+      <p className="mt-2 text-[11px] text-slate-400">Limited to 3 exports per 24 hours. Never includes your password or MFA secrets.</p>
+    </div>
+  )
+}
+
 export default function SecurityPage() {
   const navigate = useNavigate()
   const { logoutUser } = useUserAuth()
@@ -298,6 +357,7 @@ export default function SecurityPage() {
         </form>
 
         <MFASection />
+        <DataExportSection />
       </div>
     </div>
   )

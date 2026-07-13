@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { asyncHandler } from '../middlewares/asyncHandler';
 import { User } from '../models/User';
+import { Order } from '../models/Order';
 import orderService from '../services/order.service';
 import { Product } from '../models/Product';
 import { sendSuccess } from '../utils/responseHelper';
@@ -255,6 +256,61 @@ export const getSavedCart = asyncHandler(async (req: Request, res: Response) => 
   const userId = requireUserId(req);
   const user = await User.findById(userId).lean().select('savedCart');
   sendSuccess(res, 200, 'Saved cart retrieved', (user as any)?.savedCart || []);
+});
+
+// ── Self-service data export (GDPR-aligned "right to data portability") ──────
+// Never includes credentials/secrets (passwordHash, MFA secret/backup codes,
+// lockout counters, password history, refresh tokens) — explicit allow-list
+// of fields below rather than a blanket .lean() dump, so a new sensitive
+// field added to the User schema later doesn't silently leak into exports.
+export const exportMyData = asyncHandler(async (req: Request, res: Response) => {
+  const userId = requireUserId(req);
+
+  const user = await User.findById(userId).lean().select('name email phone createdAt savedAddresses favorites');
+  if (!user) throw new NotFoundError('User not found');
+
+  const orders = await Order.find({ user_id: userId }).lean().select('id created_at totalAmount status items');
+
+  const productIds = [...new Set(((user as any).favorites || []) as string[])];
+  const wishlistProducts = productIds.length
+    ? await Product.find({ id: { $in: productIds } }).lean().select('id name')
+    : [];
+  const wishlistMap: Record<string, string> = {};
+  wishlistProducts.forEach((p: any) => { wishlistMap[String(p.id)] = p.name; });
+
+  const exportPayload = {
+    exportedAt: new Date().toISOString(),
+    profile: {
+      name: (user as any).name,
+      email: (user as any).email,
+      phone: (user as any).phone ?? null,
+      createdAt: (user as any).createdAt,
+    },
+    addresses: (user as any).savedAddresses || [],
+    orderHistory: orders.map((o: any) => ({
+      orderId: o.id,
+      date: o.created_at,
+      total: o.totalAmount,
+      status: o.status,
+      items: o.items,
+    })),
+    wishlist: productIds.map((id) => ({ productId: id, name: wishlistMap[id] ?? null })),
+  };
+
+  await auditService.log({
+    ...createAuditContext(req),
+    userId,
+    userEmail: (user as any).email,
+    userRole: 'user',
+    action: 'DATA_EXPORTED',
+    status: 'SUCCESS',
+    riskLevel: 'MEDIUM',
+    metadata: { orderCount: orders.length, addressCount: exportPayload.addresses.length },
+  });
+
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Content-Disposition', 'attachment; filename="my-data-export.json"');
+  res.status(200).send(JSON.stringify(exportPayload, null, 2));
 });
 
 // ── Admin: get all users with their wishlists (populated) ────────────────────

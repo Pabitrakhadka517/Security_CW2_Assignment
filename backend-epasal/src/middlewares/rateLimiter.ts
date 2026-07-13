@@ -73,3 +73,22 @@ export const couponLimiter = rateLimit({
   windowMs: 10 * 60 * 1000,
   limit: 30,
 });
+
+/**
+ * Personal data export — max 3 downloads per user per 24h, to prevent
+ * using the export endpoint to harvest a compromised account's data
+ * repeatedly or to hammer the DB with the aggregate export query.
+ * Keyed by user id (not IP) since the route is always authenticated.
+ */
+export const exportDataLimiter = rateLimit({
+  ...baseOptions,
+  windowMs: 24 * 60 * 60 * 1000,
+  limit: 3,
+  keyGenerator: (req: Request) => req.user?.id || req.ip || 'unknown',
+  handler: (_req: Request, res: Response) => {
+    res.status(429).json({
+      success: false,
+      message: 'You can only export your data 3 times per 24 hours. Please try again later.',
+    });
+  },
+});

@@ -3,6 +3,7 @@ import categoryController from '../controllers/category.controller';
 import { validateRequest } from '../middlewares/validateRequest';
 import { requireAdmin } from '../middlewares/authMiddleware';
 import { uploadSingle } from '../middlewares/upload';
+import { requirePermission } from '../middlewares/rbac';
 import {
   createCategorySchema,
   updateCategorySchema,
@@ -79,6 +80,7 @@ router.get(
 router.post(
   '/',
   requireAdmin,
+  requirePermission('category:create'),
   uploadSingle,
   validateRequest(createCategorySchema),
   categoryController.createCategory
@@ -87,6 +89,7 @@ router.post(
 router.put(
   '/:id',
   requireAdmin,
+  requirePermission('category:update:any'),
   uploadSingle,
   validateRequest(updateCategorySchema),
   categoryController.updateCategory
@@ -95,6 +98,7 @@ router.put(
 router.delete(
   '/:id',
   requireAdmin,
+  requirePermission('category:delete:any'),
   validateRequest(deleteCategorySchema),
   categoryController.deleteCategory
 );

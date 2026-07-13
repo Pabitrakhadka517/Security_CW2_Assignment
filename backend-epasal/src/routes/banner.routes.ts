@@ -3,6 +3,7 @@ import bannerController from '../controllers/banner.controller';
 import { validateRequest } from '../middlewares/validateRequest';
 import { requireAdmin } from '../middlewares/authMiddleware';
 import { uploadSingle } from '../middlewares/upload';
+import { requirePermission } from '../middlewares/rbac';
 import {
   createBannerSchema,
   updateBannerSchema,
@@ -74,6 +75,7 @@ router.get(
 router.post(
   '/',
   requireAdmin,
+  requirePermission('banner:create'),
   uploadSingle,
   validateRequest(createBannerSchema),
   bannerController.createBanner
@@ -82,6 +84,7 @@ router.post(
 router.put(
   '/:id',
   requireAdmin,
+  requirePermission('banner:update:any'),
   uploadSingle,
   validateRequest(updateBannerSchema),
   bannerController.updateBanner
@@ -90,6 +93,7 @@ router.put(
 router.delete(
   '/:id',
   requireAdmin,
+  requirePermission('banner:delete:any'),
   validateRequest(deleteBannerSchema),
   bannerController.deleteBanner
 );

@@ -19,6 +19,7 @@ import Navbar from './components/homepage/navbar'
 import SearchBar from './components/homepage/SearchBar'
 import Footer from './components/homepage/Footer'
 import NotFound from './pages/NotFound'
+import Forbidden from './pages/403'
 import ProfileSetup from './pages/ProfileSetup'
 import AccountDashboard from './pages/AccountDashboard'
 
@@ -150,6 +151,7 @@ function App() {
           <Route path="account/*" element={<UserProtectedRoute><AccountDashboard /></UserProtectedRoute>} />
           <Route path="order-success/:orderId" element={<OrderSuccess />} />
           <Route path="track-order" element={<TrackOrder />} />
+          <Route path="403" element={<Forbidden />} />
           {/* Bare slug → sale page (handles admin CTA links like /wintersale) */}
           <Route path=":slug" element={<SaleSlugRedirect />} />
           <Route path="*" element={<NotFound />} />

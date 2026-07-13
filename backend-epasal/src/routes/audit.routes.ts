@@ -3,6 +3,7 @@ import { asyncHandler } from '../middlewares/asyncHandler';
 import { requireAdmin } from '../middlewares/authMiddleware';
 import * as auditService from '../services/audit.service';
 import { sendSuccess } from '../utils/responseHelper';
+import { createAuditContext } from '../middlewares/auditLogger';
 
 const router = Router();
 
@@ -43,9 +44,20 @@ router.get('/summary', asyncHandler(async (_req: Request, res: Response) => {
 
 /**
  * GET /api/v1/admin/audit/user/:userId
+ * Viewing another person's activity trail is itself security-sensitive, so
+ * it leaves its own evidence trail of which admin looked at whom.
  */
 router.get('/user/:userId', asyncHandler(async (req: Request, res: Response) => {
   const { userId } = req.params;
+
+  await auditService.log({
+    ...createAuditContext(req),
+    action: 'ADMIN_USER_VIEWED',
+    status: 'SUCCESS',
+    riskLevel: 'LOW',
+    metadata: { viewedUserId: userId, view: 'audit_trail' },
+  });
+
   const result = await auditService.getSecurityEvents({ userId }, 1, 200);
   sendSuccess(res, 200, 'User audit logs retrieved', result);
 }));

@@ -3,6 +3,7 @@ import productController from '../controllers/product.controller';
 import { validateRequest } from '../middlewares/validateRequest';
 import { requireAdmin, optionalAuth } from '../middlewares/authMiddleware';
 import { uploadSingle } from '../middlewares/upload';
+import { requirePermission } from '../middlewares/rbac';
 import {
   createProductSchema,
   updateProductSchema,
@@ -88,6 +89,7 @@ router.get(
 router.post(
   '/',
   requireAdmin,
+  requirePermission('product:create'),
   uploadSingle,
   validateRequest(createProductSchema),
   productController.createProduct
@@ -96,6 +98,7 @@ router.post(
 router.put(
   '/:id',
   requireAdmin,
+  requirePermission('product:update:any'),
   uploadSingle,
   validateRequest(updateProductSchema),
   productController.updateProduct
@@ -104,6 +107,7 @@ router.put(
 router.delete(
   '/:id',
   requireAdmin,
+  requirePermission('product:delete:any'),
   validateRequest(deleteProductSchema),
   productController.deleteProduct
 );

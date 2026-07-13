@@ -1,5 +1,6 @@
 import { Navigate, useLocation } from 'react-router-dom'
 import { useUserAuth } from '@/components/store/authstore'
+import RBACGuard from './guards/RBACGuard'
 
 export default function UserProtectedRoute({ children }) {
   const { isUser } = useUserAuth()
@@ -9,15 +10,23 @@ export default function UserProtectedRoute({ children }) {
 
   if (!hasHydrated) return null
 
+  const loginRedirect = (
+    <Navigate
+      to="/login"
+      replace
+      state={{ returnTo: location.pathname + location.search }}
+    />
+  )
+
   if (!isUser) {
-    return (
-      <Navigate
-        to="/login"
-        replace
-        state={{ returnTo: location.pathname + location.search }}
-      />
-    )
+    return loginRedirect
   }
 
-  return children
+  // Defense-in-depth: also verify the stored userToken actually decodes to
+  // role 'user' and isn't expired.
+  return (
+    <RBACGuard requiredRole="user" fallback={loginRedirect}>
+      {children}
+    </RBACGuard>
+  )
 }

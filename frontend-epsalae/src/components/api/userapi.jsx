@@ -4,6 +4,7 @@
 import axios from 'axios';
 import { API_URL } from '@/config';
 import { useUserAuth } from '@/components/store/authstore';
+import { getRoleFromToken } from '@/utils/jwt';
 
 const userApi = axios.create({
   baseURL: API_URL,
@@ -17,7 +18,13 @@ userApi.interceptors.request.use((config) => {
   // instead of the stored session token).
   if (config.headers.Authorization) return config;
   const token = localStorage.getItem('userToken');
-  if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+    // Client-read role, for server-side log correlation only — the server
+    // always re-derives the real role from the verified token itself.
+    const role = getRoleFromToken(token);
+    if (role) config.headers['X-Client-Role'] = role;
+  }
   return config;
 });
 
@@ -127,6 +134,7 @@ export const profileEndpoints = {
   },
   orders: (q) => userApi.get('/user/orders', { params: q }),
   changePassword: (payload) => userApi.put('/user/profile/password', payload),
+  exportData: () => userApi.get('/user/export-data'),
 };
 
 export default userApi;

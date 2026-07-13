@@ -4,6 +4,7 @@ import orderService from '../services/order.service';
 import { sendSuccess, sendPaginatedResponse } from '../utils/responseHelper';
 import * as auditService from '../services/audit.service';
 import { createAuditContext } from '../middlewares/auditLogger';
+import { NotFoundError } from '../utils/errors';
 
 export class OrderController {
   /**
@@ -144,11 +145,39 @@ export class OrderController {
   /**
    * Get a single order owned by the authenticated user
    * GET /api/v1/orders/my/:id
+   *
+   * IDOR test evidence: the underlying query is scoped to
+   * `{ id, user_id: req.user.id }`, so an order id belonging to a different
+   * user 404s exactly like an order id that doesn't exist at all — no
+   * existence oracle. We still want an audit trail of the attempt, so on a
+   * 404 we do one extra unscoped lookup purely to tell "doesn't exist" apart
+   * from "exists but isn't yours" for the IDOR_ATTEMPT log; the HTTP
+   * response is identical (404) either way.
    */
   getMyOrderById = asyncHandler(async (req: Request, res: Response) => {
     const { id } = req.params;
-    const order = await orderService.getMyOrderById(id, req.user!.id);
-    sendSuccess(res, 200, 'Order retrieved successfully', order);
+    try {
+      const order = await orderService.getMyOrderById(id, req.user!.id);
+      sendSuccess(res, 200, 'Order retrieved successfully', order);
+    } catch (err) {
+      if (err instanceof NotFoundError) {
+        const actual = await orderService.getOrderById(id).catch(() => null);
+        if (actual) {
+          await auditService.log({
+            ...createAuditContext(req),
+            action: 'IDOR_ATTEMPT',
+            status: 'BLOCKED',
+            riskLevel: 'HIGH',
+            metadata: {
+              requestedOrderId: id,
+              orderOwnerId: (actual as any).user_id ?? null,
+              requesterId: req.user!.id,
+            },
+          });
+        }
+      }
+      throw err;
+    }
   });
 
   /**

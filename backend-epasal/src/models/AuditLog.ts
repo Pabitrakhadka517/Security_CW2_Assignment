@@ -29,6 +29,7 @@ export const AUDIT_ACTIONS = [
   'AVATAR_UPDATED',
   'ADDRESS_ADDED',
   'ADDRESS_DELETED',
+  'DATA_EXPORTED',
 
   // Admin events
   'ADMIN_LOGIN_SUCCESS',

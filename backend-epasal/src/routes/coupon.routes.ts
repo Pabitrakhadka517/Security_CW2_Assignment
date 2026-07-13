@@ -3,6 +3,7 @@ import couponController from '../controllers/coupon.controller';
 import { validateRequest } from '../middlewares/validateRequest';
 import { requireAdmin, optionalAuth } from '../middlewares/authMiddleware';
 import { couponLimiter } from '../middlewares/rateLimiter';
+import { requirePermission } from '../middlewares/rbac';
 import {
   createCouponSchema,
   updateCouponSchema,
@@ -94,6 +95,7 @@ router.get(
 router.post(
   '/',
   requireAdmin,
+  requirePermission('coupon:create'),
   validateRequest(createCouponSchema),
   couponController.createCoupon
 );
@@ -101,6 +103,7 @@ router.post(
 router.put(
   '/:code',
   requireAdmin,
+  requirePermission('coupon:update:any'),
   validateRequest(updateCouponSchema),
   couponController.updateCoupon
 );
@@ -108,6 +111,7 @@ router.put(
 router.delete(
   '/:code',
   requireAdmin,
+  requirePermission('coupon:delete:any'),
   validateRequest(deleteCouponSchema),
   couponController.deleteCoupon
 );
