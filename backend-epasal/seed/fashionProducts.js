@@ -5,10 +5,14 @@
  * reads this file, enriches each row with generated fields (id, SKU, slug,
  * stock, rating, timestamps, etc.) and writes the result to MongoDB.
  *
- * IMAGE_BANK holds real, verified-reachable Unsplash/Pexels photo URLs keyed
- * by garment/accessory type. Every URL was checked with an HTTP HEAD request
- * before being added here. `buildImageUrl()` in seedProducts.js appends size
- * query params so repeated use of the same base photo never produces two
+ * IMAGE_BANK holds real, verified-reachable Unsplash photo URLs keyed by
+ * garment/accessory type. Every URL was checked with an HTTP HEAD request
+ * before being added here. Only images.unsplash.com is used — that's the
+ * one third-party image host allowed by the app's CSP img-src directive
+ * (backend helmet.config.ts / frontend index.html + netlify.toml /
+ * vercel.json), so anything hosted elsewhere silently fails to render in
+ * the browser. `buildImageUrl()` in seedProducts.js appends size query
+ * params so repeated use of the same base photo never produces two
  * byte-identical URLs.
  */
 
@@ -46,12 +50,10 @@ const IMAGE_BANK = {
     'https://images.unsplash.com/photo-1551028719-00167b16eac5',
     'https://images.unsplash.com/photo-1591047139829-d91aecb6caea',
     'https://images.unsplash.com/photo-1601333144130-8cbb312386b6',
-    'https://images.pexels.com/photos/1082526/pexels-photo-1082526.jpeg',
   ],
   mens_jeans: [
     'https://images.unsplash.com/photo-1542272604-787c3835535d',
     'https://images.unsplash.com/photo-1555689502-c4b22d76c56f',
-    'https://images.pexels.com/photos/1082529/pexels-photo-1082529.jpeg',
     'https://images.unsplash.com/photo-1570308345368-f21d4b0d81a9',
   ],
   mens_chinos: [
@@ -114,7 +116,6 @@ const IMAGE_BANK = {
   womens_jeans: [
     'https://images.unsplash.com/photo-1475178626620-a4d074967452',
     'https://images.unsplash.com/photo-1541099649105-f69ad21f3246',
-    'https://images.pexels.com/photos/1447264/pexels-photo-1447264.jpeg',
   ],
   womens_skirt: [
     'https://images.unsplash.com/photo-1577900232427-18219b9166a0',
@@ -134,7 +135,6 @@ const IMAGE_BANK = {
   kids_boys: [
     'https://images.unsplash.com/photo-1471286174890-9c112ffca5b4',
     'https://images.unsplash.com/photo-1519238263530-99bdd11df2ea',
-    'https://images.pexels.com/photos/1620760/pexels-photo-1620760.jpeg',
   ],
   kids_girls: [
     'https://images.unsplash.com/photo-1518831959646-742c3a14ebf7',
@@ -154,8 +154,6 @@ const IMAGE_BANK = {
     'https://images.unsplash.com/photo-1542291026-7eec264c27ff',
     'https://images.unsplash.com/photo-1549298916-b41d501d3772',
     'https://images.unsplash.com/photo-1595950653106-6c9ebd614d3a',
-    'https://images.pexels.com/photos/1032110/pexels-photo-1032110.jpeg',
-    'https://images.pexels.com/photos/2529148/pexels-photo-2529148.jpeg',
   ],
   running_shoes: [
     'https://images.unsplash.com/photo-1483721310020-03333e577078',
@@ -187,14 +185,12 @@ const IMAGE_BANK = {
     'https://images.unsplash.com/photo-1508685096489-7aacd43bd3b1',
     'https://images.unsplash.com/photo-1524592094714-0f0654e20314',
     'https://images.unsplash.com/photo-1547996160-81dfa63595aa',
-    'https://images.pexels.com/photos/125779/pexels-photo-125779.jpeg',
   ],
   sunglasses: [
     'https://images.unsplash.com/photo-1508296695146-257a814070b4',
     'https://images.unsplash.com/photo-1511499767150-a48a237f0083',
     'https://images.unsplash.com/photo-1572635196237-14b3f281503f',
     'https://images.unsplash.com/photo-1577803645773-f96470509666',
-    'https://images.pexels.com/photos/701877/pexels-photo-701877.jpeg',
   ],
   caps: [
     'https://images.unsplash.com/photo-1517941823-815bea90d291',
@@ -206,7 +202,6 @@ const IMAGE_BANK = {
     'https://images.unsplash.com/photo-1548036328-c9fa89d128fa',
     'https://images.unsplash.com/photo-1584917865442-de89df76afd3',
     'https://images.unsplash.com/photo-1591561954557-26941169b49e',
-    'https://images.pexels.com/photos/1152077/pexels-photo-1152077.jpeg',
   ],
   wallets: [
     'https://images.unsplash.com/photo-1627123424574-724758594e93',
@@ -222,7 +217,6 @@ const IMAGE_BANK = {
   backpacks: [
     'https://images.unsplash.com/photo-1553062407-98eeb64c6a62',
     'https://images.unsplash.com/photo-1577733966973-d680bffd2e80',
-    'https://images.pexels.com/photos/2905238/pexels-photo-2905238.jpeg',
   ],
   scarves: [
     'https://images.unsplash.com/photo-1677478863154-55ecce8c7536',
@@ -234,7 +228,6 @@ const IMAGE_BANK = {
     'https://images.unsplash.com/photo-1573408301185-9146fe634ad0',
     'https://images.unsplash.com/photo-1599643477877-530eb83abc8e',
     'https://images.unsplash.com/photo-1611591437281-460bfbe1220a',
-    'https://images.pexels.com/photos/1454171/pexels-photo-1454171.jpeg',
   ],
   socks: [
     'https://images.unsplash.com/photo-1586350977771-b3b0abd50c82',
@@ -246,7 +239,6 @@ const IMAGE_BANK = {
     'https://images.unsplash.com/photo-1517836357463-d25dfeac3438',
     'https://images.unsplash.com/photo-1518611012118-696072aa579a',
     'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b',
-    'https://images.pexels.com/photos/1954524/pexels-photo-1954524.jpeg',
   ],
   trackpants: [
     'https://images.unsplash.com/photo-1518459031867-a89b944bffe4',

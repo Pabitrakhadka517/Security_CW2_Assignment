@@ -2,10 +2,16 @@
  * Fashion-store catalog seeder.
  * ----------------------------------------------------------------------------
  * This store sells fashion only, so every product/banner/sale image should
- * actually look like fashion — not a random placeholder photo. Uses
- * loremflickr.com with keyword tags (+ a stable numeric lock per product so
- * the same product always gets the same photo) instead of picsum's
- * unrelated random images.
+ * actually look like fashion — not a random placeholder photo. Picks a
+ * keyword-matched photo from a curated Unsplash pool (+ a stable numeric
+ * lock per product so the same product always gets the same photo).
+ *
+ * Only images.unsplash.com is used, since that's the one third-party image
+ * host allowed by the app's CSP img-src directive (backend helmet.config.ts
+ * / frontend index.html + netlify.toml / vercel.json). An earlier version of
+ * this script used loremflickr.com for its keyword-tag matching, but that
+ * domain isn't in the CSP allowlist, so every image it generated was
+ * silently blocked by the browser.
  *
  * Upserts by name/title: creates missing products/banners, and re-points the
  * image of any that already exist (e.g. the 3 fashion products from the
@@ -22,6 +28,7 @@ import { Category } from './models/Category';
 import { Product } from './models/Product';
 import { Banner } from './models/Banner';
 import { SaleCategory } from './models/SaleCategory';
+import { pickFashionImage } from './seed-fashion-images';
 
 dotenv.config();
 
@@ -31,10 +38,8 @@ const MONGO_URI = process.env.MONGODB_URI;
 // instead of a new random one on every request.
 const lock = (seed: string) => parseInt(crypto.createHash('md5').update(seed).digest('hex').slice(0, 8), 16) % 100000;
 
-const fashionImg = (keywords: string, seed: string, w = 900, h = 1100) => {
-  const tags = keywords.split(',').map((t) => encodeURIComponent(t.trim())).join(',');
-  return `https://loremflickr.com/${w}/${h}/${tags}?lock=${lock(seed)}`;
-};
+const fashionImg = (keywords: string, seed: string, w = 900, h = 1100) =>
+  pickFashionImage(keywords, lock(seed), w, h);
 
 const PRODUCTS = [
   // ── Men's clothing ────────────────────────────────────────────

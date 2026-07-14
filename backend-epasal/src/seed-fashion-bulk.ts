@@ -4,8 +4,10 @@
  * Generates many colour variants of a set of fashion product templates
  * (shirts, dresses, kurtis, sarees, sneakers, jewelry, ...) so the store has
  * a realistic-sized catalog (100+ products) instead of one item per style.
- * Each variant gets a keyword-matched, lock-stabilised loremflickr photo —
- * same approach as seed-fashion.ts.
+ * Each variant gets a keyword-matched, lock-stabilised photo from the
+ * curated Unsplash pool in seed-fashion-images.ts — same approach as
+ * seed-fashion.ts. (An earlier version used loremflickr.com, which isn't in
+ * the app's CSP img-src allowlist, so those images never actually rendered.)
  *
  * Idempotent: skips any product whose generated name already exists.
  *
@@ -17,6 +19,7 @@ import crypto from 'crypto';
 import productService from './services/product.service';
 import { Category } from './models/Category';
 import { Product } from './models/Product';
+import { pickFashionImage } from './seed-fashion-images';
 
 dotenv.config();
 
@@ -24,10 +27,8 @@ const MONGO_URI = process.env.MONGODB_URI;
 
 const lock = (seed: string) => parseInt(crypto.createHash('md5').update(seed).digest('hex').slice(0, 8), 16) % 100000;
 
-const fashionImg = (keywords: string, seed: string, w = 900, h = 1100) => {
-  const tags = keywords.split(',').map((t) => encodeURIComponent(t.trim())).join(',');
-  return `https://loremflickr.com/${w}/${h}/${tags}?lock=${lock(seed)}`;
-};
+const fashionImg = (keywords: string, seed: string, w = 900, h = 1100) =>
+  pickFashionImage(keywords, lock(seed), w, h);
 
 const COLORS = [
   'Black', 'White', 'Navy Blue', 'Maroon', 'Olive Green', 'Charcoal Grey',
