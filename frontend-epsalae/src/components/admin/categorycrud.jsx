@@ -272,7 +272,7 @@ export default function CategoryCrud() {
                   <tr key={cat._id || cat.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 overflow-hidden border border-gray-200 rounded-lg flex-shrink-0">
+                        <div className="w-10 h-10 overflow-hidden border border-gray-200 rounded-lg shrink-0">
                           {cat.imageUrl ? (
                             <img src={getImageUrl(cat.imageUrl)} alt={cat.name} className="object-cover w-full h-full" />
                           ) : (

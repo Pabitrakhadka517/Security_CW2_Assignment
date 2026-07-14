@@ -61,7 +61,7 @@ function StatusTimeline({ status, statusHistory = [] }) {
         const meta = statusMeta(step)
         const ts = histMap[step]
         return (
-          <div key={step} className="flex flex-1 flex-col items-center min-w-[60px] sm:min-w-[80px]">
+          <div key={step} className="flex flex-1 flex-col items-center min-w-[60px] sm:min-w-20">
             <div className="flex w-full items-center">
               <div className={`h-0.5 flex-1 ${i === 0 ? 'invisible' : done ? 'bg-slate-900' : 'bg-slate-200'}`} />
               <div className={`relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition-all ${
@@ -263,7 +263,7 @@ export default function OrdersPage() {
 
   if (loading) {
     return (
-      <div className="rounded-[2rem] bg-white p-5 shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)] sm:p-8">
+      <div className="rounded-4xl bg-white p-5 shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)] sm:p-8">
         <div className="h-8 w-48 animate-pulse rounded bg-slate-200" />
         <div className="mt-6 space-y-4">
           {[1, 2, 3].map(i => (

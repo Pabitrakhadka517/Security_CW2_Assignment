@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/Skeleton'
 
 function CardSkeleton() {
   return (
-    <div className="w-44 sm:w-56 flex-shrink-0 bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+    <div className="w-44 sm:w-56 shrink-0 bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
       <Skeleton className="aspect-square rounded-none" />
       <div className="p-3 space-y-2">
         <Skeleton className="h-3.5 w-full" />
@@ -61,11 +61,11 @@ export default function FeaturedCarousel() {
                   return (
                     <article
                       key={id}
-                      className="group w-44 sm:w-56 flex-shrink-0 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-lg hover:border-orange-100 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                      className="group w-44 sm:w-56 shrink-0 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-lg hover:border-orange-100 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                     >
                       <div className="relative aspect-square p-3 flex items-center justify-center bg-gray-50">
                         {hasOffer && (
-                          <span className="absolute top-2 left-2 z-10 px-2 py-0.5 text-[10px] font-extrabold text-white bg-gradient-to-r from-red-500 to-rose-600 rounded-md shadow">
+                          <span className="absolute top-2 left-2 z-10 px-2 py-0.5 text-[10px] font-extrabold text-white bg-linear-to-r from-red-500 to-rose-600 rounded-md shadow">
                             -{pct}%
                           </span>
                         )}
@@ -80,7 +80,7 @@ export default function FeaturedCarousel() {
                       <div className="p-3">
                         <h4
                           onClick={() => navigate(`/product/${id}`)}
-                          className="text-sm font-semibold text-gray-900 cursor-pointer line-clamp-2 group-hover:text-[#1A3C8A] transition-colors min-h-[2.5rem]"
+                          className="text-sm font-semibold text-gray-900 cursor-pointer line-clamp-2 group-hover:text-[#1A3C8A] transition-colors min-h-10"
                         >
                           {formatProductName(p.name)}
                         </h4>

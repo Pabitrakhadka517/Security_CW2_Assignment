@@ -215,8 +215,8 @@ export default function ProfileSetup() {
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
 
       {/* ── Personal Information ──────────────────────────────────── */}
-      <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)]">
-        <div className="border-b border-slate-100 bg-[linear-gradient(135deg,_rgba(26,60,138,0.07),_rgba(255,107,53,0.07))] px-4 py-4 sm:py-5">
+      <div className="overflow-hidden rounded-4xl bg-white shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)]">
+        <div className="border-b border-slate-100 bg-[linear-gradient(135deg,rgba(26,60,138,0.07),rgba(255,107,53,0.07))] px-4 py-4 sm:py-5">
           <h2 className="text-lg font-semibold text-slate-900">Personal Information</h2>
           <p className="mt-0.5 text-xs text-slate-500">Your name, contact details, and profile photo.</p>
         </div>
@@ -225,7 +225,7 @@ export default function ProfileSetup() {
           {/* Avatar */}
           <div className="flex flex-col items-center border-b border-slate-100 p-6 text-center lg:border-b-0 lg:border-r">
             <div className="relative">
-              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-[1.5rem] bg-[linear-gradient(135deg,_#1A3C8A,_#FF6B35)] text-2xl font-semibold text-white shadow-lg">
+              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl bg-[linear-gradient(135deg,#1A3C8A,#FF6B35)] text-2xl font-semibold text-white shadow-lg">
                 {avatarPreview
                   ? <img src={avatarPreview} alt="Avatar" className="h-full w-full object-cover" />
                   : initials || 'U'}
@@ -267,8 +267,8 @@ export default function ProfileSetup() {
       </div>
 
       {/* ── Shipping Address ──────────────────────────────────────── */}
-      <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)]">
-        <div className="border-b border-slate-100 bg-[linear-gradient(135deg,_rgba(26,60,138,0.07),_rgba(255,107,53,0.07))] px-4 py-4 sm:py-5">
+      <div className="overflow-hidden rounded-4xl bg-white shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)]">
+        <div className="border-b border-slate-100 bg-[linear-gradient(135deg,rgba(26,60,138,0.07),rgba(255,107,53,0.07))] px-4 py-4 sm:py-5">
           <h2 className="text-lg font-semibold text-slate-900">Shipping Address</h2>
           <p className="mt-0.5 text-xs text-slate-500">Autofilled at checkout. Must be within Nepal.</p>
         </div>

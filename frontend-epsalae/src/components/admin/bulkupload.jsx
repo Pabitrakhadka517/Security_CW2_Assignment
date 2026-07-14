@@ -271,7 +271,7 @@ export default function BulkUpload() {
                       <tr key={i} className="border-t border-gray-50">
                         <td className="px-4 py-2 font-mono font-bold text-gray-700">{e.row}</td>
                         <td className="px-4 py-2 font-semibold text-gray-700">{e.field}</td>
-                        <td className="px-4 py-2 text-gray-500 max-w-[160px] truncate" title={e.value}>{e.value || '—'}</td>
+                        <td className="px-4 py-2 text-gray-500 max-w-40 truncate" title={e.value}>{e.value || '—'}</td>
                         <td className="px-4 py-2 text-red-600">{e.message}</td>
                       </tr>
                     ))}

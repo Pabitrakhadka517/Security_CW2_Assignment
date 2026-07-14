@@ -163,14 +163,14 @@ export default function Cart() {
           animate={{ opacity: 1, y: 0 }}
           className="max-w-md text-center"
         >
-          <div className="w-24 h-24 bg-gradient-to-br from-gray-100 to-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner">
+          <div className="w-24 h-24 bg-linear-to-br from-gray-100 to-gray-50 rounded-3xl flex items-center justify-center mx-auto mb-8 shadow-inner">
             <ShoppingBag className="w-12 h-12 text-gray-300" />
           </div>
           <h2 className="text-3xl font-extrabold text-gray-900 mb-3">Your cart is empty</h2>
           <p className="text-gray-500 mb-8">Looks like you haven't added anything yet.</p>
           <Link
             to="/products"
-            className="inline-flex items-center gap-2 px-8 py-4 font-bold text-white bg-gradient-to-r from-[#1A3C8A] to-[#FF6B35] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all btn-press"
+            className="inline-flex items-center gap-2 px-8 py-4 font-bold text-white bg-linear-to-r from-[#1A3C8A] to-[#FF6B35] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all btn-press"
           >
             <ShoppingCart className="w-5 h-5" /> Start Shopping
           </Link>
@@ -221,7 +221,7 @@ export default function Cart() {
                   <div className="flex gap-4 p-4 sm:p-5">
                     {/* Image */}
                     <div
-                      className="shrink-0 w-20 h-20 sm:w-28 sm:h-28 overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl cursor-pointer flex items-center justify-center p-2"
+                      className="shrink-0 w-20 h-20 sm:w-28 sm:h-28 overflow-hidden bg-linear-to-br from-gray-50 to-gray-100 rounded-xl cursor-pointer flex items-center justify-center p-2"
                       onClick={() => navigate(`/product/${item.id}`)}
                     >
                       <img
@@ -422,7 +422,7 @@ export default function Cart() {
                     sessionStorage.setItem('epasaley_discount', JSON.stringify({ discount, appliedCoupon }))
                     navigate('/checkout', { state: { discount, appliedCoupon } })
                   }}
-                  className="w-full py-4 font-extrabold text-sm text-white bg-gradient-to-r from-[#1A3C8A] to-[#FF6B35] rounded-xl shadow-lg hover:shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-4 font-extrabold text-sm text-white bg-linear-to-r from-[#1A3C8A] to-[#FF6B35] rounded-xl shadow-lg hover:shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-2"
                 >
                   Proceed to Checkout
                   <ChevronRight className="w-4 h-4" />

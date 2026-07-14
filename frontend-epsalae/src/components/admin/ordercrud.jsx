@@ -204,7 +204,7 @@ export default function OrderCRUD() {
       {/* Error */}
       {error && (
         <div className="flex items-center gap-3 p-4 text-red-700 border border-red-200 bg-red-50 rounded-xl text-sm">
-          <AlertCircle className="w-4 h-4 flex-shrink-0" />
+          <AlertCircle className="w-4 h-4 shrink-0" />
           {error}
         </div>
       )}

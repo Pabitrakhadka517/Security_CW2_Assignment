@@ -369,11 +369,11 @@ export default function PromoCodeCRUD() {
                           const checked = form.applicable_products.includes(id);
                           return (
                             <label key={id} className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors ${checked ? 'bg-orange-50' : 'hover:bg-gray-50'}`}>
-                              <div className={`flex-shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${checked ? 'bg-[#FF6B35] border-[#FF6B35]' : 'border-gray-300'}`}
+                              <div className={`shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${checked ? 'bg-[#FF6B35] border-[#FF6B35]' : 'border-gray-300'}`}
                                 onClick={() => toggleProduct(id)}>
                                 {checked && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
                               </div>
-                              <div className="flex-shrink-0 w-9 h-9 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
+                              <div className="shrink-0 w-9 h-9 rounded-lg overflow-hidden bg-gray-100 border border-gray-200">
                                 {p.imageUrl ? (
                                   <img src={getImageUrl(p.imageUrl)} alt={p.name} className="w-full h-full object-cover" onError={e => { e.target.style.display = 'none'; }} />
                                 ) : (
@@ -381,7 +381,7 @@ export default function PromoCodeCRUD() {
                                 )}
                               </div>
                               <span className="text-sm text-gray-700 flex-1 truncate" onClick={() => toggleProduct(id)}>{p.name}</span>
-                              <span className="text-xs text-gray-400 flex-shrink-0">Rs. {p.price?.toLocaleString()}</span>
+                              <span className="text-xs text-gray-400 shrink-0">Rs. {p.price?.toLocaleString()}</span>
                             </label>
                           );
                         });

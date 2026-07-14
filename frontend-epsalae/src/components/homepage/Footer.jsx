@@ -23,7 +23,7 @@ export default function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="border-t border-gray-200 bg-gradient-to-b from-gray-50 to-white">
+    <footer className="border-t border-gray-200 bg-linear-to-b from-gray-50 to-white">
 
       {/* Main Footer */}
       <div className="bg-white">
@@ -64,7 +64,7 @@ export default function Footer() {
 
               {/* Social Icons - Enhanced */}
               <div className="flex gap-3">
-                <a href="https://www.instagram.com/selection.clo?igsh=MW1oNGMwdWc0OHp4ag==" target="_blank" rel="noopener noreferrer" className="p-3 transition-all bg-gray-100 rounded-xl hover:bg-gradient-to-tr hover:from-[#833AB4] hover:via-[#FD1D1D] hover:to-[#F77737] hover:text-white group">
+                <a href="https://www.instagram.com/selection.clo?igsh=MW1oNGMwdWc0OHp4ag==" target="_blank" rel="noopener noreferrer" className="p-3 transition-all bg-gray-100 rounded-xl hover:bg-linear-to-tr hover:from-[#833AB4] hover:via-[#FD1D1D] hover:to-[#F77737] hover:text-white group">
                   <Instagram className="w-5 h-5" />
                 </a>
                 <a href="https://www.tiktok.com/@selection.clo?_r=1&_t=ZS-921wQD0ntWS" target="_blank" rel="noopener noreferrer" className="p-3 transition-all bg-gray-100 rounded-xl hover:bg-black hover:text-white group">

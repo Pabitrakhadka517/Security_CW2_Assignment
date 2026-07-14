@@ -21,7 +21,7 @@ const EASE = [0.16, 1, 0.3, 1]
 
 function SkeletonDetail() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white page-enter">
+    <div className="min-h-screen bg-linear-to-b from-slate-50 to-white page-enter">
       <div className="px-4 py-6 mx-auto max-w-7xl sm:px-6 lg:py-10">
         <div className="grid grid-cols-1 gap-10 lg:grid-cols-2">
           <div className="aspect-square skeleton rounded-3xl" />
@@ -161,7 +161,7 @@ export default function ProductDetail() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-50 via-white to-slate-50 page-enter">
+    <div className="min-h-screen bg-linear-to-b from-slate-50 via-white to-slate-50 page-enter">
       {/* Breadcrumb */}
       <div className="border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-10">
         <div className="px-4 py-3 mx-auto max-w-7xl sm:px-6">
@@ -190,7 +190,7 @@ export default function ProductDetail() {
             transition={{ duration: 0.6, ease: EASE }}
           >
             {/* Main image */}
-            <div className="relative overflow-hidden rounded-3xl border border-gray-100 bg-gradient-to-br from-gray-50 to-slate-100 shadow-xl aspect-square flex items-center justify-center p-6 group">
+            <div className="relative overflow-hidden rounded-3xl border border-gray-100 bg-linear-to-br from-gray-50 to-slate-100 shadow-xl aspect-square flex items-center justify-center p-6 group">
               <img
                 src={mainImage}
                 alt={product.name}
@@ -200,7 +200,7 @@ export default function ProductDetail() {
 
               {/* Discount badge */}
               {discountPct > 0 && (
-                <div className="absolute top-4 left-4 bg-gradient-to-r from-red-500 to-rose-600 text-white text-sm font-extrabold px-3.5 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5 badge-flash">
+                <div className="absolute top-4 left-4 bg-linear-to-r from-red-500 to-rose-600 text-white text-sm font-extrabold px-3.5 py-1.5 rounded-xl shadow-lg flex items-center gap-1.5 badge-flash">
                   <Tag className="w-4 h-4" /> {discountPct}% OFF
                 </div>
               )}
@@ -290,7 +290,7 @@ export default function ProductDetail() {
             </div>
 
             {/* Price block */}
-            <div className="bg-gradient-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-5">
+            <div className="bg-linear-to-br from-gray-50 to-white border border-gray-100 rounded-2xl p-5">
               <div className="flex items-baseline gap-3 mb-1">
                 <span className="text-3xl font-black text-gray-900">
                   Rs. {(product.discountPrice > 0 ? product.discountPrice : product.price).toLocaleString()}
@@ -366,7 +366,7 @@ export default function ProductDetail() {
                 whileTap={{ scale: 0.97 }}
                 onClick={handleBuyNow}
                 disabled={(product.stock || 0) === 0}
-                className="flex items-center justify-center gap-2 py-4 rounded-2xl font-extrabold text-sm bg-gradient-to-r from-[#1A3C8A] to-[#FF6B35] text-white shadow-lg hover:shadow-xl hover:opacity-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 py-4 rounded-2xl font-extrabold text-sm bg-linear-to-r from-[#1A3C8A] to-[#FF6B35] text-white shadow-lg hover:shadow-xl hover:opacity-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Zap className="w-5 h-5" /> Buy Now
               </motion.button>

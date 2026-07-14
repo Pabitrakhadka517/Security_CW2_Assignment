@@ -17,7 +17,7 @@ export default function DeviceMismatchBanner() {
     <div
       role="alert"
       aria-live="assertive"
-      className="sticky top-0 z-[90] flex items-center justify-center gap-3 bg-amber-500 px-4 py-2.5 text-sm font-medium text-white"
+      className="sticky top-0 z-90 flex items-center justify-center gap-3 bg-amber-500 px-4 py-2.5 text-sm font-medium text-white"
     >
       <ShieldAlert className="h-4 w-4 shrink-0" />
       <span>

@@ -248,7 +248,7 @@ export default function Banner() {
                   className={`h-[3px] rounded-full transition-all duration-500 ${
                     i === current
                       ? 'w-7 bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)]'
-                      : 'w-[6px] bg-white/35 hover:bg-white/60'
+                      : 'w-1.5 bg-white/35 hover:bg-white/60'
                   }`}
                 />
               ))}

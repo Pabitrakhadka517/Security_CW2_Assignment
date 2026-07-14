@@ -103,7 +103,7 @@ export default function WishlistCrud() {
                   className="flex w-full items-center gap-4 p-4 text-left transition hover:bg-gray-50"
                 >
                   {/* Avatar */}
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 text-sm font-bold text-white">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-linear-to-br from-slate-700 to-slate-900 text-sm font-bold text-white">
                     {u.avatarUrl
                       ? <img src={u.avatarUrl} alt={u.name} className="h-full w-full object-cover" />
                       : (u.name?.[0] || 'U').toUpperCase()}

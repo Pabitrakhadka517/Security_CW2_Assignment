@@ -249,7 +249,7 @@ export default function SaleCrud() {
             <div key={s.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
               <div className="flex items-center gap-4 p-4 sm:p-5">
                 {/* Banner thumb */}
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-100 to-orange-200 flex items-center justify-center shrink-0 overflow-hidden">
+                <div className="w-12 h-12 rounded-xl bg-linear-to-br from-orange-100 to-orange-200 flex items-center justify-center shrink-0 overflow-hidden">
                   {s.banner ? <img src={getImageUrl(s.banner)} alt="" className="w-full h-full object-cover" /> : <Tag className="w-5 h-5 text-orange-400" />}
                 </div>
                 <div className="flex-1 min-w-0">

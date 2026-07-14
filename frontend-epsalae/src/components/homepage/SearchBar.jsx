@@ -117,7 +117,7 @@ export default function SearchBar() {
   const showDropdown = open && (query.trim() ? suggestions.length > 0 : recent.length > 0 || true)
 
   return (
-    <div className="sticky top-[112px] sm:top-[112px] z-40 w-full border-b border-slate-100 bg-white/95 backdrop-blur-xl shadow-[0_4px_24px_-8px_rgba(15,23,42,0.1)]">
+    <div className="sticky top-28 sm:top-28 z-40 w-full border-b border-slate-100 bg-white/95 backdrop-blur-xl shadow-[0_4px_24px_-8px_rgba(15,23,42,0.1)]">
       <div className="mx-auto max-w-5xl px-4 py-3 sm:px-6" ref={wrapRef}>
         <form onSubmit={handleSubmit} className="flex flex-wrap sm:flex-nowrap items-center gap-2">
 
@@ -129,7 +129,7 @@ export default function SearchBar() {
               className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-100 whitespace-nowrap"
             >
               <Tag className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-              <span className="max-w-[80px] sm:max-w-[120px] truncate">{selectedCatLabel}</span>
+              <span className="max-w-20 sm:max-w-[120px] truncate">{selectedCatLabel}</span>
               <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform ${catOpen ? 'rotate-180' : ''}`} />
             </button>
             <AnimatePresence>

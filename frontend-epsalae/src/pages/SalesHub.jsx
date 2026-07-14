@@ -54,7 +54,7 @@ export default function SalesHub() {
               className="block rounded-2xl overflow-hidden group relative shadow-sm hover:shadow-md transition">
               <img src={getImageUrl(b.imageUrl)} alt={b.title}
                 className="w-full h-40 sm:h-48 object-cover group-hover:scale-[1.02] transition-transform duration-500" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-4">
+              <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent flex items-end p-4">
                 <div>
                   <p className="text-white font-bold">{b.title}</p>
                   {b.subtitle && <p className="text-white/70 text-xs">{b.subtitle}</p>}

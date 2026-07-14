@@ -31,7 +31,7 @@ function CountdownTimer({ endDate }) {
   if (!endDate) return null
   const Unit = ({ v, l }) => (
     <div className="text-center">
-      <div className="bg-white/20 backdrop-blur-sm rounded-lg px-2 py-1 min-w-[36px] text-white font-bold text-lg leading-none">{String(v).padStart(2, '0')}</div>
+      <div className="bg-white/20 backdrop-blur-sm rounded-lg px-2 py-1 min-w-9 text-white font-bold text-lg leading-none">{String(v).padStart(2, '0')}</div>
       <div className="text-white/70 text-[10px] mt-0.5 uppercase tracking-wide">{l}</div>
     </div>
   )
@@ -239,7 +239,7 @@ export default function SaleSection() {
               <div key={sale.id || sale.slug} className="rounded-3xl border border-gray-100 bg-white shadow-sm overflow-hidden">
 
                 {/* Banner header */}
-                <div className={`relative ${sale.banner ? '' : 'bg-gradient-to-r from-[#0A1E46] via-[#1A3C8A] to-[#FF6B35]'}`}
+                <div className={`relative ${sale.banner ? '' : 'bg-linear-to-r from-[#0A1E46] via-[#1A3C8A] to-[#FF6B35]'}`}
                   style={sale.banner ? { background: `url(${sale.banner}) center/cover no-repeat` } : {}}>
                   <div className={`px-5 sm:px-7 py-6 sm:py-7 ${sale.banner ? 'bg-black/55' : ''}`}>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
