@@ -4,6 +4,7 @@ import { useBannerStore } from '../store/bannerstore'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react'
 import { API_BASE_URL } from '@/config'
+import { Skeleton } from '@/components/ui/Skeleton'
 
 const INTERVAL = 5000
 
@@ -11,6 +12,7 @@ export default function Banner() {
   const { banners, loading, fetchActiveBanners } = useBannerStore()
   const [current, setCurrent] = useState(0)
   const [progressKey, setProgressKey] = useState(0)
+  const [isPaused, setIsPaused] = useState(false)
 
   useEffect(() => { fetchActiveBanners() }, [fetchActiveBanners])
 
@@ -40,14 +42,15 @@ export default function Banner() {
 
   useEffect(() => {
     if (slides.length < 2) return
+    if (isPaused) return
     const t = setInterval(() => goTo(current + 1), INTERVAL)
     return () => clearInterval(t)
-  }, [slides.length, current, goTo])
+  }, [slides.length, current, goTo, isPaused])
 
   if (loading) return (
     <section className="py-4 md:py-6 lg:py-8">
       <div className="px-4 mx-auto max-w-7xl md:px-6 lg:px-8">
-        <div className="overflow-hidden bg-gray-100 rounded-2xl md:rounded-3xl animate-pulse" style={{ aspectRatio: '1920/600' }} />
+        <Skeleton className="w-full rounded-2xl md:rounded-3xl aspect-1920/600" />
       </div>
     </section>
   )
@@ -63,6 +66,10 @@ export default function Banner() {
             aspectRatio: '1920/600',
             boxShadow: '0 32px 80px -20px rgba(0,0,0,0.45), 0 0 0 1px rgba(255,255,255,0.06)',
           }}
+          onMouseEnter={() => setIsPaused(true)}
+          onMouseLeave={() => setIsPaused(false)}
+          onFocus={() => setIsPaused(true)}
+          onBlur={() => setIsPaused(false)}
         >
 
           {/* ── Slides ────────────────────────────── */}
@@ -150,7 +157,7 @@ export default function Banner() {
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.34, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  className="hidden max-w-sm mt-2 text-sm font-light leading-relaxed sm:block md:text-base text-white/60 md:max-w-md"
+                  className="max-w-[85%] sm:max-w-sm mt-2 text-xs sm:text-sm font-light leading-relaxed md:text-base text-white/60 md:max-w-md"
                 >
                   {slides[current].subtitle}
                 </motion.p>
@@ -160,7 +167,7 @@ export default function Banner() {
                   initial={{ opacity: 0, y: 14 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.46, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                  className="flex items-center gap-3 mt-4 pointer-events-auto sm:mt-5"
+                  className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 mt-4 pointer-events-auto sm:mt-5"
                 >
                   <button
                     onClick={() => (window.location.href = slides[current].link)}
@@ -172,7 +179,7 @@ export default function Banner() {
                   </button>
                   <button
                     onClick={() => (window.location.href = '/products')}
-                    className="hidden sm:inline-flex items-center gap-2 px-5 py-2.5 text-xs font-normal text-white/80 border border-white/20 rounded-full backdrop-blur-md bg-white/10 hover:bg-white/18 hover:text-white hover:-translate-y-0.5 transition-all duration-250"
+                    className="inline-flex items-center gap-2 px-4 py-1.5 sm:px-5 sm:py-2.5 text-xs font-normal text-white/80 border border-white/20 rounded-full backdrop-blur-md bg-white/10 hover:bg-white/18 hover:text-white hover:-translate-y-0.5 transition-all duration-250"
                   >
                     View All
                   </button>
@@ -185,16 +192,16 @@ export default function Banner() {
                   initial={{ opacity: 0, scale: 0.8 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.5, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                  className="absolute right-[6%] top-1/2 -translate-y-1/2 z-10 hidden md:flex flex-col items-center justify-center w-[72px] h-[72px] rounded-full border border-white/25 bg-white/8 backdrop-blur-md"
-                  style={{ transform: 'translateY(-50%) rotate(12deg)' }}
+                  className="absolute right-[4%] sm:right-[6%] top-[22%] sm:top-1/2 sm:-translate-y-1/2 z-10 flex flex-col items-center justify-center w-12 h-12 sm:w-[72px] sm:h-[72px] rounded-full border border-white/25 bg-white/8 backdrop-blur-md"
+                  style={{ transform: 'rotate(12deg)' }}
                 >
-                  <span className="text-2xl font-black leading-none text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
+                  <span className="text-sm sm:text-2xl font-black leading-none text-white" style={{ fontFamily: "'Playfair Display', serif" }}>
                     {slides[current].badge.value}
                   </span>
-                  <span className="text-[9px] tracking-widest uppercase text-white/55 font-medium">
+                  <span className="hidden sm:block text-[9px] tracking-widest uppercase text-white/55 font-medium">
                     {slides[current].badge.unit}
                   </span>
-                  <span className="text-[9px] tracking-wider uppercase text-[#FF9A72] font-medium mt-0.5">
+                  <span className="hidden sm:block text-[9px] tracking-wider uppercase text-[#FF9A72] font-medium mt-0.5">
                     {slides[current].badge.label}
                   </span>
                 </motion.div>
@@ -214,12 +221,14 @@ export default function Banner() {
             <>
               <button
                 onClick={() => goTo(current - 1)}
+                aria-label="Previous slide"
                 className="absolute z-20 flex items-center justify-center transition-all duration-200 -translate-y-1/2 rounded-full shadow-lg left-3 md:left-5 top-1/2 w-9 h-9 md:w-11 md:h-11 bg-white/90 hover:bg-white hover:shadow-xl hover:scale-110"
               >
                 <ChevronLeft className="w-4 h-4 md:w-5 md:h-5 text-[#1a1209]" />
               </button>
               <button
                 onClick={() => goTo(current + 1)}
+                aria-label="Next slide"
                 className="absolute z-20 flex items-center justify-center transition-all duration-200 -translate-y-1/2 rounded-full shadow-lg right-3 md:right-5 top-1/2 w-9 h-9 md:w-11 md:h-11 bg-white/90 hover:bg-white hover:shadow-xl hover:scale-110"
               >
                 <ChevronRight className="w-4 h-4 md:w-5 md:h-5 text-[#1a1209]" />
@@ -234,6 +243,7 @@ export default function Banner() {
                 <button
                   key={i}
                   onClick={() => goTo(i)}
+                  aria-label={`Go to slide ${i + 1}`}
                   className={`h-[3px] rounded-full transition-all duration-500 ${
                     i === current
                       ? 'w-7 bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)]'

@@ -10,6 +10,8 @@ import {
 import { openCloudinaryWidget } from '../../utils/cloudinary';
 import { TableSkeleton } from '../ui/Skeleton';
 import { getImageUrl } from '@/config';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import Modal from '../ui/Modal';
 
 export default function CategoryCrud() {
   const { categories, loading, fetchCategories, addCategory, updateCategory, deleteCategory } = useCategoryStore();
@@ -19,6 +21,8 @@ export default function CategoryCrud() {
   const [showModal, setShowModal] = useState(false);
   const [editingCat, setEditingCat] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
@@ -132,12 +136,7 @@ export default function CategoryCrud() {
     setShowModal(true);
   };
 
-  const handleDelete = async (id, name) => {
-    const productCount = getProductCount(id);
-    const message = productCount > 0
-      ? `Delete "${name}"? The ${productCount} product${productCount === 1 ? '' : 's'} in this category will be hidden until reassigned.`
-      : `Delete "${name}" permanently?`;
-    if (!confirm(message)) return;
+  const handleDelete = async (id) => {
     try {
       console.log('🗑️ Deleting category:', id);
       await deleteCategory(id);
@@ -301,10 +300,10 @@ export default function CategoryCrud() {
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex justify-center gap-2">
-                        <button onClick={() => handleEdit(cat)} className="bg-[#1A3C8A] hover:bg-blue-900 text-white px-3 py-1.5 rounded-lg text-sm">
+                        <button onClick={() => handleEdit(cat)} title={`Edit ${cat.name}`} aria-label={`Edit ${cat.name}`} className="bg-[#1A3C8A] hover:bg-blue-900 text-white px-3 py-1.5 rounded-lg text-sm">
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => handleDelete(cat._id || cat.id, cat.name)} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm">
+                        <button onClick={() => setPendingDelete(cat)} title={`Delete ${cat.name}`} aria-label={`Delete ${cat.name}`} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -318,17 +317,13 @@ export default function CategoryCrud() {
       </div>
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="font-bold text-gray-800">{editingCat ? 'Edit Category' : 'Create New Category'}</h2>
-              <button onClick={closeModal} className="p-2 rounded-lg hover:bg-gray-100 transition">
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+      <Modal
+        isOpen={showModal}
+        onClose={closeModal}
+        title={editingCat ? 'Edit Category' : 'Create New Category'}
+        size="md"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Category Name *</label>
                 <input
@@ -405,9 +400,27 @@ export default function CategoryCrud() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={!!pendingDelete}
+        title={`Delete ${pendingDelete?.name ?? 'this category'}?`}
+        description={
+          pendingDelete && getProductCount(pendingDelete._id || pendingDelete.id) > 0
+            ? `The ${getProductCount(pendingDelete._id || pendingDelete.id)} product${getProductCount(pendingDelete._id || pendingDelete.id) === 1 ? '' : 's'} in this category will be hidden until reassigned. This can't be undone.`
+            : "This can't be undone."
+        }
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={async () => {
+          setIsDeleting(true);
+          await handleDelete(pendingDelete._id || pendingDelete.id);
+          setIsDeleting(false);
+          setPendingDelete(null);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

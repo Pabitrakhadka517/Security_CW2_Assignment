@@ -305,7 +305,7 @@ export default function ProfileSetup() {
         <button
           onClick={submit}
           disabled={loading || avatarUploading}
-          className="inline-flex items-center gap-2 rounded-xl bg-[linear-gradient(135deg,_#1A3C8A_0%,_#2550b7_55%,_#FF6B35_100%)] px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-24px_rgba(26,60,138,0.55)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-xl bg-brand hover:bg-brand-hover px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-24px_rgba(26,60,138,0.55)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
           {loading ? 'Saving…' : 'Save Profile'}

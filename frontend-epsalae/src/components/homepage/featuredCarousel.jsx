@@ -6,17 +6,18 @@ import { ShoppingCart, ArrowRight, Flame } from 'lucide-react'
 import { useCart } from '@/store/cartstore'
 import { Link, useNavigate } from 'react-router-dom'
 import toast from 'react-hot-toast'
+import { Skeleton } from '@/components/ui/Skeleton'
 
 function CardSkeleton() {
   return (
     <div className="w-44 sm:w-56 flex-shrink-0 bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
-      <div className="aspect-square bg-gray-100 animate-pulse" />
+      <Skeleton className="aspect-square rounded-none" />
       <div className="p-3 space-y-2">
-        <div className="h-3.5 w-full bg-gray-100 rounded animate-pulse" />
-        <div className="h-3.5 w-2/3 bg-gray-100 rounded animate-pulse" />
+        <Skeleton className="h-3.5 w-full" />
+        <Skeleton className="h-3.5 w-2/3" />
         <div className="flex items-center justify-between pt-1">
-          <div className="h-4 w-16 bg-gray-100 rounded animate-pulse" />
-          <div className="h-8 w-8 bg-gray-100 rounded-full animate-pulse" />
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-8 w-8 rounded-full" />
         </div>
       </div>
     </div>

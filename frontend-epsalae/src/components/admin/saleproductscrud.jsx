@@ -12,6 +12,10 @@ import {
   LayoutGrid, DollarSign, Gift, ChevronUp, ChevronDown,
   ArrowUpDown,
 } from 'lucide-react';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import Modal from '../ui/Modal';
+import FetchState from '../ui/FetchState';
+import { TableSkeleton } from '../ui/Skeleton';
 
 const SALE_TYPES = [
   { value: 'percentage', label: 'Percentage Off', icon: Percent },
@@ -45,6 +49,8 @@ export default function SaleProductsCrud() {
   const [showModal,  setShowModal]  = useState(false);
   const [addForm,    setAddForm]    = useState(DEFAULT_FORM);
   const [showProductDrop, setShowProductDrop] = useState(false);
+  const [isError,    setIsError]    = useState(false);
+  const [pendingRemove, setPendingRemove] = useState(null); // { saleId, productId, name }
 
   useEffect(() => {
     const handler = (e) => {
@@ -56,6 +62,7 @@ export default function SaleProductsCrud() {
 
   const loadSales = useCallback(async () => {
     setLoading(true);
+    setIsError(false);
     try {
       const res = await api.get('/sale-categories');
       const raw = res.data?.data ?? [];
@@ -64,6 +71,7 @@ export default function SaleProductsCrud() {
       setActiveTab(prev => prev ?? cats[0]?.id ?? null);
     } catch {
       setSaleCategories([]);
+      setIsError(true);
     } finally {
       setLoading(false);
     }
@@ -128,12 +136,19 @@ export default function SaleProductsCrud() {
   };
 
   // ── Remove from sale ──────────────────────────────────────────────────────
-  const removeFromSale = (saleId, productId) => {
-    if (!window.confirm('Remove this product from the sale?')) return;
+  const requestRemoveFromSale = (saleId, productId) => {
+    const p = getProduct(productId);
+    setPendingRemove({ saleId, productId, name: p?.name || productId });
+  };
+
+  const confirmRemoveFromSale = async () => {
+    if (!pendingRemove) return;
+    const { saleId, productId } = pendingRemove;
     const cat = saleCategories.find((c) => c.id === saleId);
-    if (!cat) return;
+    if (!cat) { setPendingRemove(null); return; }
     const updated = cat.products.filter((p) => p.product_id !== productId);
-    updateSaleProducts(saleId, updated, 'Removed from sale');
+    await updateSaleProducts(saleId, updated, 'Removed from sale');
+    setPendingRemove(null);
   };
 
   // ── Compute effective discount % ─────────────────────────────────────────
@@ -264,17 +279,18 @@ export default function SaleProductsCrud() {
         </button>
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-16">
-          <Loader2 className="w-7 h-7 animate-spin text-[#FF6B35]" />
-        </div>
-      ) : saleCategories.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200">
-          <Tag className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No sale categories yet</p>
-          <p className="text-sm mt-1">Create sale categories first, then add products here.</p>
-        </div>
-      ) : (
+      <FetchState
+        isLoading={loading}
+        isError={isError}
+        isEmpty={!loading && !isError && saleCategories.length === 0}
+        loading={<TableSkeleton rows={5} cols={4} />}
+        errorTitle="Couldn't load sale products"
+        errorDescription="Something went wrong. Check your connection and try again."
+        onRetry={loadSales}
+        emptyIcon={Tag}
+        emptyTitle="No sale categories yet"
+        emptyDescription="Create sale categories first, then add products here."
+      >
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           {/* ── Tab bar ── */}
           <div className="flex overflow-x-auto border-b border-gray-100 scrollbar-none">
@@ -442,9 +458,10 @@ export default function SaleProductsCrud() {
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
-                            onClick={() => removeFromSale(activeTab, sp.product_id)}
+                            onClick={() => requestRemoveFromSale(activeTab, sp.product_id)}
                             className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
                             title="Remove"
+                            aria-label={`Remove ${p?.name || sp.product_id} from sale`}
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
@@ -457,23 +474,15 @@ export default function SaleProductsCrud() {
             </div>
           )}
         </div>
-      )}
+      </FetchState>
 
       {/* ── Add to Sale Modal ────────────────────────────────────────────────── */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-6">
-
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
-                <ShoppingBag className="w-5 h-5 text-[#FF6B35]" /> Add to Sale
-              </h2>
-              <button onClick={closeModal} className="p-2 hover:bg-gray-100 rounded-lg transition">
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-5">
+      <Modal
+        isOpen={showModal}
+        onClose={closeModal}
+        title={<span className="flex items-center gap-2"><ShoppingBag className="w-5 h-5 text-[#FF6B35]" /> Add to Sale</span>}
+      >
+            <div className="space-y-5">
 
               {/* Sale Category */}
               <div>
@@ -725,9 +734,18 @@ export default function SaleProductsCrud() {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={!!pendingRemove}
+        title={`Remove ${pendingRemove?.name ?? 'this product'} from the sale?`}
+        description="This can't be undone."
+        confirmLabel="Remove"
+        variant="danger"
+        isLoading={saving}
+        onConfirm={confirmRemoveFromSale}
+        onCancel={() => setPendingRemove(null)}
+      />
     </div>
   );
 }

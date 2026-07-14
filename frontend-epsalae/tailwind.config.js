@@ -10,9 +10,18 @@ colors: {
       primary: '#0ea5e9', // Sky Blue
       accent: '#fb923c', // Orange
       dark: '#0f172a',   // Navbar
+      brand: {
+        DEFAULT: 'var(--color-brand)',
+        hover: 'var(--color-brand-hover)',
+      },
     },
     boxShadow: {
       neumorphic: '5px 5px 10px #d1d9e6, -5px -5px 10px #ffffff',
+    },
+    borderRadius: {
+      input: 'var(--radius-input)',
+      btn: 'var(--radius-btn)',
+      card: 'var(--radius-card)',
     },
     keyframes: {
       'fade-in': {

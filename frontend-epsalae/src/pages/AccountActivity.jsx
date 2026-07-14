@@ -8,6 +8,7 @@ import {
   ShoppingBag, Flame, Info, Loader2,
 } from 'lucide-react'
 import { useAuditStore } from '@/store/auditStore'
+import Modal from '@/components/ui/Modal'
 
 dayjs.extend(relativeTime)
 
@@ -65,29 +66,26 @@ function parseUserAgent(ua) {
   return `${browser} on ${os}`
 }
 
-function SecureAccountModal({ onClose, onConfirm }) {
+function SecureAccountModal({ isOpen, onClose, onConfirm }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl">
-        <div className="flex items-center gap-3 mb-3">
-          <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
-            <ShieldAlert className="w-5 h-5 text-red-600" />
-          </div>
-          <h3 className="text-lg font-semibold text-slate-900">Secure your account</h3>
-        </div>
-        <p className="text-sm text-slate-500 mb-6">
-          If this sign-in wasn't you, change your password now and consider enabling two-factor authentication.
-        </p>
-        <div className="flex gap-2">
-          <button onClick={onClose} className="flex-1 py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold rounded-xl text-sm transition">
-            Cancel
-          </button>
-          <button onClick={onConfirm} className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-sm transition">
-            Change password
-          </button>
+    <Modal isOpen={isOpen} onClose={onClose} title="Secure your account" size="sm">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center shrink-0">
+          <ShieldAlert className="w-5 h-5 text-red-600" />
         </div>
       </div>
-    </div>
+      <p className="text-sm text-slate-500 mb-6">
+        If this sign-in wasn't you, change your password now and consider enabling two-factor authentication.
+      </p>
+      <div className="flex gap-2">
+        <button onClick={onClose} className="flex-1 py-2.5 border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold rounded-xl text-sm transition">
+          Cancel
+        </button>
+        <button onClick={onConfirm} className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-sm transition">
+          Change password
+        </button>
+      </div>
+    </Modal>
   )
 }
 
@@ -172,12 +170,11 @@ export default function AccountActivity() {
         )}
       </div>
 
-      {modalFor && (
-        <SecureAccountModal
-          onClose={() => setModalFor(null)}
-          onConfirm={() => { setModalFor(null); navigate('/account/security') }}
-        />
-      )}
+      <SecureAccountModal
+        isOpen={!!modalFor}
+        onClose={() => setModalFor(null)}
+        onConfirm={() => { setModalFor(null); navigate('/account/security') }}
+      />
     </div>
   )
 }

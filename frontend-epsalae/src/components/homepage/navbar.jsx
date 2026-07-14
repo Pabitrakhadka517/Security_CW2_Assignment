@@ -101,6 +101,9 @@ export default function Navbar() {
             <span className="flex items-center gap-1.5">✨ 100% genuine products</span>
           </div>
         </div>
+        <div className="flex items-center justify-center gap-2 px-4 pb-1.5 text-[11px] text-white/80 md:hidden">
+          <span>🚚 Free delivery · ✨ Genuine products</span>
+        </div>
       </div>
 
       {/* Ultra-Premium Sticky Navbar with Scroll Effect */}
@@ -200,6 +203,7 @@ export default function Navbar() {
                 {/* Wishlist */}
                 <button
                   onClick={goToWishlist}
+                  aria-label={isLoggedIn && favorites.length > 0 ? `View wishlist (${favorites.length} items)` : 'View wishlist'}
                   className="relative rounded-full p-3 text-gray-600 transition-all duration-300 hover:-translate-y-0.5 hover:bg-red-50 hover:text-red-600"
                 >
                   <Heart className="w-6 h-6" />
@@ -217,6 +221,7 @@ export default function Navbar() {
                 {/* Cart with Badge */}
                 <button
                   onClick={() => navigate('/cart')}
+                  aria-label={cart.length > 0 ? `View cart (${cart.length} items)` : 'View cart'}
                   className="group relative rounded-full p-3 text-gray-600 transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-100 hover:text-gray-900"
                 >
                   <ShoppingBag className="w-6 h-6" />
@@ -236,6 +241,9 @@ export default function Navbar() {
                   <div className="relative">
                     <button
                       onClick={() => setUserMenuOpen(!userMenuOpen)}
+                      aria-haspopup="true"
+                      aria-expanded={userMenuOpen}
+                      aria-label="User menu"
                       className="flex items-center gap-2 rounded-full bg-slate-100 px-5 py-3 font-medium text-gray-700 transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-200"
                     >
                       <User className="w-5 h-5" />
@@ -305,6 +313,8 @@ export default function Navbar() {
                 {/* Mobile Menu Toggle */}
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+                  aria-expanded={mobileMenuOpen}
                   className="rounded-full p-3 transition duration-300 hover:-translate-y-0.5 hover:bg-slate-100 lg:hidden"
                 >
                   {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}

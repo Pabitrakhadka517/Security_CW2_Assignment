@@ -4,6 +4,9 @@ import { useBannerStore } from '../store/bannerstore';
 import toast from 'react-hot-toast';
 import { Plus, Edit2, Trash2, Upload, Loader2, X, Eye, CheckCircle, Image as ImageIcon } from 'lucide-react';
 import { getImageUrl } from '@/config';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import Modal from '../ui/Modal';
+import { TableSkeleton } from '../ui/Skeleton';
 
 export default function BannerCRUD() {
   const { banners, loading, fetchBanners, addBanner, updateBanner, deleteBanner } = useBannerStore();
@@ -11,6 +14,9 @@ export default function BannerCRUD() {
   const [showModal, setShowModal] = useState(false);
   const [editingBanner, setEditingBanner] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [form, setForm] = useState({
     title: '',
     subtitle: '',
@@ -50,6 +56,7 @@ export default function BannerCRUD() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) { toast.error('Please fix the errors'); return; }
+    setIsSaving(true);
     try {
       const payload = {
         title: form.title.trim(),
@@ -67,6 +74,8 @@ export default function BannerCRUD() {
       closeModal();
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to save banner');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -78,7 +87,6 @@ export default function BannerCRUD() {
   };
 
   const handleDelete = async (banner) => {
-    if (!window.confirm(`Delete banner "${banner.title}" permanently?`)) return;
     try {
       await deleteBanner(banner._id || banner.id);
       toast.success('Banner deleted');
@@ -152,9 +160,7 @@ export default function BannerCRUD() {
 
       {/* Banners Grid or Empty State */}
       {loading ? (
-        <div className="flex justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-[#FF6B35]" />
-        </div>
+        <TableSkeleton rows={5} cols={4} />
       ) : banners.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm text-center py-16">
           <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-xl">
@@ -195,10 +201,14 @@ export default function BannerCRUD() {
               {/* Actions */}
               <div className="flex gap-2 px-4 pb-4">
                 <button onClick={() => handleEdit(banner)}
+                  title={`Edit ${banner.title}`}
+                  aria-label={`Edit ${banner.title}`}
                   className="flex-1 py-2 bg-[#1A3C8A] hover:bg-blue-900 text-white rounded-lg text-sm font-semibold transition flex items-center justify-center gap-1.5">
                   <Edit2 className="w-3.5 h-3.5" /> Edit
                 </button>
-                <button onClick={() => handleDelete(banner)}
+                <button onClick={() => setPendingDelete(banner)}
+                  title={`Delete ${banner.title}`}
+                  aria-label={`Delete ${banner.title}`}
                   className="flex-1 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg text-sm font-semibold transition flex items-center justify-center gap-1.5">
                   <Trash2 className="w-3.5 h-3.5" /> Delete
                 </button>
@@ -209,17 +219,13 @@ export default function BannerCRUD() {
       )}
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="font-bold text-gray-800">{editingBanner ? 'Edit Banner' : 'Create New Banner'}</h2>
-              <button onClick={closeModal} className="p-2 rounded-lg hover:bg-gray-100 transition">
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+      <Modal
+        isOpen={showModal}
+        onClose={closeModal}
+        title={editingBanner ? 'Edit Banner' : 'Create New Banner'}
+        size="md"
+      >
+        <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Banner Title *</label>
                 <input type="text" placeholder="e.g. Summer Sale 2025" value={form.title}
@@ -269,7 +275,9 @@ export default function BannerCRUD() {
               </div>
 
               <div className="flex gap-3 pt-2">
-                <button type="submit" className="flex-1 py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-bold rounded-xl text-sm transition">
+                <button type="submit" disabled={isSaving || uploading}
+                  className="flex-1 py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-bold rounded-xl text-sm transition flex items-center justify-center gap-2 disabled:opacity-70">
+                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                   {editingBanner ? 'Update Banner' : 'Create Banner'}
                 </button>
                 <button type="button" onClick={closeModal} className="px-6 py-2.5 font-semibold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 text-sm transition">
@@ -277,9 +285,23 @@ export default function BannerCRUD() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={!!pendingDelete}
+        title={`Delete ${pendingDelete?.title ?? 'this banner'}?`}
+        description="This can't be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={async () => {
+          setIsDeleting(true);
+          await handleDelete(pendingDelete);
+          setIsDeleting(false);
+          setPendingDelete(null);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

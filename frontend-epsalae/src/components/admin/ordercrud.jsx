@@ -8,10 +8,13 @@ import {
   TrendingUp, DollarSign, Search
 } from 'lucide-react';
 import { TableSkeleton } from '../ui/Skeleton';
+import ConfirmDialog from '../ui/ConfirmDialog';
 
 export default function OrderCRUD() {
   const { orders, pagination, loading, error, fetchOrders, updateOrderStatus } = useOrderStore();
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [pendingCancel, setPendingCancel] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
@@ -45,6 +48,18 @@ export default function OrderCRUD() {
       toast.success(`Order updated to ${statusConfig[newStatus]?.label || newStatus}!`);
     } catch {
       toast.error('Failed to update order');
+    }
+  };
+
+  const confirmCancelOrder = async () => {
+    if (!pendingCancel) return;
+    setCancelling(true);
+    try {
+      await handleStatusUpdate(pendingCancel.id, 'cancelled');
+      setSelectedOrder(null);
+    } finally {
+      setCancelling(false);
+      setPendingCancel(null);
     }
   };
 
@@ -263,6 +278,7 @@ export default function OrderCRUD() {
                             onClick={copyOrderId}
                             className="p-1 text-gray-400 hover:text-[#FF6B35] rounded transition"
                             title="Copy full Order ID"
+                            aria-label={`Copy order ID for order ${shortOrderId}`}
                           >
                             <Copy className="w-3.5 h-3.5" />
                           </button>
@@ -303,6 +319,7 @@ export default function OrderCRUD() {
                             onClick={() => setSelectedOrder(order)}
                             className="bg-[#1A3C8A] hover:bg-blue-900 text-white px-3 py-1.5 rounded-lg text-sm"
                             title="View Details"
+                            aria-label={`View order ${order.orderNumber || shortOrderId}`}
                           >
                             <Eye className="w-4 h-4" />
                           </button>
@@ -310,6 +327,7 @@ export default function OrderCRUD() {
                             <button
                               onClick={() => handleStatusUpdate(fullOrderId, nextStatus(order.status))}
                               className="bg-[#FF6B35] hover:bg-orange-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold"
+                              aria-label={`Advance order ${order.orderNumber || shortOrderId} to ${statusConfig[nextStatus(order.status)]?.label || nextStatus(order.status)}`}
                             >
                               Next →
                             </button>
@@ -495,10 +513,7 @@ export default function OrderCRUD() {
                       Mark as {statusConfig[nextStatus(selectedOrder.status)]?.label}
                     </button>
                     <button
-                      onClick={() => {
-                        handleStatusUpdate(modalFullOrderId, 'cancelled');
-                        setSelectedOrder(null);
-                      }}
+                      onClick={() => setPendingCancel({ id: modalFullOrderId, label: modalCustomerName })}
                       className="px-6 py-3 font-bold text-white bg-red-500 hover:bg-red-600 rounded-xl text-sm transition"
                     >
                       Cancel Order
@@ -510,6 +525,17 @@ export default function OrderCRUD() {
           </div>
         );
       })()}
+
+      <ConfirmDialog
+        isOpen={!!pendingCancel}
+        title="Cancel this order?"
+        description="The customer will be notified. This can't be undone."
+        confirmLabel="Cancel order"
+        variant="danger"
+        isLoading={cancelling}
+        onConfirm={confirmCancelOrder}
+        onCancel={() => setPendingCancel(null)}
+      />
     </div>
   );
 }

@@ -12,6 +12,15 @@
   --radius-xl: 1.5rem;
   --radius-2xl: 1.875rem;
   --radius-3xl: 2.25rem;
+
+  /* Shared UI tokens — one radius scale and one primary-action color so
+     cards/buttons/inputs converge instead of drifting per page. The brand
+     color mirrors what LoginPage/RegisterPage/Navbar/Cart already use. */
+  --radius-input: 0.75rem;   /* 12px — inputs, small controls */
+  --radius-btn: 0.875rem;    /* 14px — buttons */
+  --radius-card: 1.25rem;    /* 20px — cards, panels, modals */
+  --color-brand: #1A3C8A;
+  --color-brand-hover: #142f6e;
 }
 
 /* Custom Fonts & Base Styles */

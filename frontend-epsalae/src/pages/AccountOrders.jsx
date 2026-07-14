@@ -275,7 +275,7 @@ export default function OrdersPage() {
   }
 
   return (
-    <div className="rounded-[2rem] bg-white p-5 shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)] sm:p-8">
+    <div className="rounded-card bg-white p-5 shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)] sm:p-8">
       <div className="mb-6">
         <h3 className="text-2xl font-semibold text-slate-900">Purchase History</h3>
         <p className="mt-1 text-sm text-slate-500">

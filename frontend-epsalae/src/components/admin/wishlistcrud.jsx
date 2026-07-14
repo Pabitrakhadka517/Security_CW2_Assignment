@@ -1,21 +1,33 @@
 // src/components/admin/wishlistcrud.jsx
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Heart, Search, ChevronDown, ChevronUp, User, ShoppingBag } from 'lucide-react'
 import api from '../api/base'
 import { getImageUrl } from '@/config'
+import FetchState from '../ui/FetchState'
+import { TableSkeleton } from '../ui/Skeleton'
 
 export default function WishlistCrud() {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isError, setIsError] = useState(false)
   const [search, setSearch] = useState('')
   const [expanded, setExpanded] = useState({})
 
-  useEffect(() => {
-    api.get('/user/admin/wishlists')
-      .then(res => setData(res.data?.data || res.data || []))
-      .catch(() => setData([]))
-      .finally(() => setLoading(false))
+  const loadWishlists = useCallback(async () => {
+    setLoading(true)
+    setIsError(false)
+    try {
+      const res = await api.get('/user/admin/wishlists')
+      setData(res.data?.data || res.data || [])
+    } catch {
+      setData([])
+      setIsError(true)
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => { loadWishlists() }, [loadWishlists])
 
   const toggle = (id) => setExpanded(e => ({ ...e, [id]: !e[id] }))
 
@@ -65,18 +77,18 @@ export default function WishlistCrud() {
       </div>
 
       {/* List */}
-      {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-20 animate-pulse rounded-2xl bg-gray-100" />
-          ))}
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-2xl border border-dashed border-gray-200 bg-white py-16 text-center">
-          <Heart className="mb-3 h-10 w-10 text-gray-200" />
-          <p className="text-gray-400">{search ? 'No customers match your search.' : 'No customers have wishlists yet.'}</p>
-        </div>
-      ) : (
+      <FetchState
+        isLoading={loading}
+        isError={isError}
+        isEmpty={!loading && !isError && filtered.length === 0}
+        loading={<TableSkeleton rows={5} cols={4} />}
+        errorTitle="Couldn't load wishlists"
+        errorDescription="Something went wrong. Check your connection and try again."
+        onRetry={loadWishlists}
+        emptyIcon={Heart}
+        emptyTitle="No wishlist items yet"
+        emptyDescription={search ? 'No customers match your search.' : 'No customers have wishlists yet.'}
+      >
         <div className="space-y-3">
           {filtered.map(u => {
             const uid = String(u.userId)
@@ -86,6 +98,8 @@ export default function WishlistCrud() {
                 {/* User row */}
                 <button
                   onClick={() => toggle(uid)}
+                  aria-expanded={open}
+                  aria-label={`${open ? 'Collapse' : 'Expand'} wishlist for ${u.name || u.email || 'customer'}`}
                   className="flex w-full items-center gap-4 p-4 text-left transition hover:bg-gray-50"
                 >
                   {/* Avatar */}
@@ -146,7 +160,7 @@ export default function WishlistCrud() {
             )
           })}
         </div>
-      )}
+      </FetchState>
     </div>
   )
 }

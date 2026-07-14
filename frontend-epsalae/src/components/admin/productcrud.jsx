@@ -10,6 +10,8 @@ import {
 } from 'lucide-react';
 import { getImageUrl } from '@/config';
 import { TableSkeleton } from '../ui/Skeleton';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import Modal from '../ui/Modal';
 
 export default function ProductCrud() {
   const { products, loading, fetchProducts, fetchAllProducts, addProduct, updateProduct, deleteProduct } = useProductStore();
@@ -20,6 +22,9 @@ export default function ProductCrud() {
   const [editingProduct, setEditingProduct] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const defaultForm = {
     name: '', description: '', price: '', discountPrice: 0,
@@ -74,6 +79,7 @@ export default function ProductCrud() {
     if (!form.name || !form.price || !form.category_id) {
       return toast.error('Name, Price & Category required');
     }
+    setIsSaving(true);
     try {
       const data = {
         ...form,
@@ -99,6 +105,8 @@ export default function ProductCrud() {
     } catch (error) {
       console.error('❌ Save failed:', error);
       toast.error(error?.response?.data?.message || 'Failed to save');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -123,7 +131,6 @@ export default function ProductCrud() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Delete this product permanently?')) return;
     try {
       console.log('🗑️ Attempting to delete product:', id);
       await deleteProduct(id);
@@ -327,12 +334,16 @@ export default function ProductCrud() {
                       <div className="flex justify-center gap-2">
                         <button
                           onClick={() => handleEdit(product)}
+                          title={`Edit ${product.name}`}
+                          aria-label={`Edit ${product.name}`}
                           className="bg-[#1A3C8A] hover:bg-blue-900 text-white px-3 py-1.5 rounded-lg text-sm"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => handleDelete(product._id || product.id)}
+                          onClick={() => setPendingDelete(product)}
+                          title={`Delete ${product.name}`}
+                          aria-label={`Delete ${product.name}`}
                           className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -348,17 +359,13 @@ export default function ProductCrud() {
       </div>
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl max-w-xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="font-bold text-gray-800">{editingProduct ? 'Edit Product' : 'Create New Product'}</h2>
-              <button onClick={closeModal} className="p-2 rounded-lg hover:bg-gray-100 transition">
-                <X className="w-5 h-5 text-gray-500" />
-              </button>
-            </div>
-
-            <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="p-6 space-y-4">
+      <Modal
+        isOpen={showModal}
+        onClose={closeModal}
+        title={editingProduct ? 'Edit Product' : 'Create New Product'}
+        size="lg"
+      >
+        <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">Product Name *</label>
                 <input required name="name" value={form.name} onChange={handleChange} placeholder="iPhone 15 Pro Max"
@@ -445,8 +452,9 @@ export default function ProductCrud() {
                 </div>)}
 
               <div className="flex gap-3 pt-2">
-                <button type="submit"
-                  className="flex-1 py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-bold rounded-xl text-sm transition">
+                <button type="submit" disabled={isSaving || uploading}
+                  className="flex-1 py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-bold rounded-xl text-sm transition flex items-center justify-center gap-2 disabled:opacity-70">
+                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                   {editingProduct ? 'Update Product' : 'Create Product'}
                 </button>
                 <button type="button" onClick={closeModal}
@@ -455,9 +463,23 @@ export default function ProductCrud() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
+
+      <ConfirmDialog
+        isOpen={!!pendingDelete}
+        title={`Delete ${pendingDelete?.name ?? 'this product'}?`}
+        description="This can't be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={isDeleting}
+        onConfirm={async () => {
+          setIsDeleting(true);
+          await handleDelete(pendingDelete._id || pendingDelete.id);
+          setIsDeleting(false);
+          setPendingDelete(null);
+        }}
+        onCancel={() => setPendingDelete(null)}
+      />
     </div>
   );
 }

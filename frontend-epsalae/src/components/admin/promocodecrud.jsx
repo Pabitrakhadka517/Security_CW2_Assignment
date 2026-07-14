@@ -6,6 +6,10 @@ import { useCategoryStore } from '../store/categorystore';
 import toast from 'react-hot-toast';
 import { getImageUrl } from '@/config';
 import { Plus, Edit2, Trash2, Loader2, X, Check, Tag, Search, BarChart3, Users, Repeat, Infinity as InfinityIcon, Package } from 'lucide-react';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import Modal from '../ui/Modal';
+import FetchState from '../ui/FetchState';
+import { TableSkeleton } from '../ui/Skeleton';
 
 const APPLY_ON_OPTS = [
   { value: 'cart', label: 'Entire Cart' },
@@ -55,7 +59,7 @@ function Field({ label, error, children }) {
 }
 
 export default function PromoCodeCRUD() {
-  const { coupons, loading, fetchCoupons, addCoupon, updateCoupon, deleteCoupon, fetchCouponAnalytics } = useCouponStore();
+  const { coupons, loading, error, fetchCoupons, addCoupon, updateCoupon, deleteCoupon, fetchCouponAnalytics } = useCouponStore();
   const { products, fetchProducts, fetchAllProducts } = useProductStore();
   const { categories, fetchCategories } = useCategoryStore();
 
@@ -67,6 +71,8 @@ export default function PromoCodeCRUD() {
   const [analytics, setAnalytics] = useState(null);        // { code, ...stats }
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [productSelectorSearch, setProductSelectorSearch] = useState('');
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => { fetchCoupons(); fetchAllProducts(); fetchCategories(); }, []);
 
@@ -135,10 +141,12 @@ export default function PromoCodeCRUD() {
     } catch (err) { toast.error(err?.response?.data?.message || 'Save failed'); }
   };
 
-  const handleDelete = async (code) => {
-    if (!window.confirm(`Delete coupon ${code}?`)) return;
-    try { await deleteCoupon(code); toast.success('Deleted!'); }
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try { await deleteCoupon(pendingDelete.code); toast.success('Deleted!'); }
     catch (err) { toast.error(err?.response?.data?.message || 'Delete failed'); }
+    finally { setDeleting(false); setPendingDelete(null); }
   };
 
   const openAnalytics = async (code) => {
@@ -189,14 +197,18 @@ export default function PromoCodeCRUD() {
           className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#FF6B35]" />
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin text-[#FF6B35]" /></div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200">
-          <Tag className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No coupons yet</p>
-        </div>
-      ) : (
+      <FetchState
+        isLoading={loading}
+        isError={!!error}
+        isEmpty={!loading && !error && filtered.length === 0}
+        loading={<TableSkeleton rows={5} cols={7} />}
+        errorTitle="Couldn't load promo codes"
+        errorDescription="Something went wrong. Check your connection and try again."
+        onRetry={fetchCoupons}
+        emptyIcon={Tag}
+        emptyTitle="No promo codes yet"
+        emptyDescription={search ? 'No coupons match your search.' : 'Click "New Coupon" to create one.'}
+      >
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -240,7 +252,7 @@ export default function PromoCodeCRUD() {
                       <div className="flex items-center gap-1">
                         <button onClick={() => openAnalytics(c.code)} title="Analytics" className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition"><BarChart3 className="w-4 h-4" /></button>
                         <button onClick={() => openEdit(c)} title="Edit" className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"><Edit2 className="w-4 h-4" /></button>
-                        <button onClick={() => handleDelete(c.code)} title="Delete" className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"><Trash2 className="w-4 h-4" /></button>
+                        <button onClick={() => setPendingDelete(c)} title="Delete" aria-label={`Delete coupon ${c.code}`} className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"><Trash2 className="w-4 h-4" /></button>
                       </div>
                     </td>
                   </tr>
@@ -249,17 +261,22 @@ export default function PromoCodeCRUD() {
             </table>
           </div>
         </div>
-      )}
+      </FetchState>
+
+      <ConfirmDialog
+        isOpen={!!pendingDelete}
+        title={`Delete coupon ${pendingDelete?.code ?? ''}?`}
+        description="This can't be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 overflow-y-auto p-4">
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg my-6">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-900">{editing ? 'Edit Coupon' : 'New Coupon'}</h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg transition"><X className="w-5 h-5 text-gray-500" /></button>
-            </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editing ? 'Edit Coupon' : 'New Coupon'}>
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Code *" error={errors.code}>
                   <input value={form.code} onChange={e => set('code', e.target.value.toUpperCase())} placeholder="SAVE20" className={inputCls(errors.code)} />
@@ -449,9 +466,7 @@ export default function PromoCodeCRUD() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Modal>
 
       {/* Analytics Modal */}
       {analytics && (

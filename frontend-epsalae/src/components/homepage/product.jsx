@@ -10,23 +10,9 @@ import { getImageUrl } from "@/config";
 import { formatProductName, getStockStatus } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
+import { ProductCardSkeleton } from "@/components/ui/Skeleton";
 
 const PLACEHOLDER = 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22300%22%20height%3D%22300%22%3E%3Crect%20width%3D%22300%22%20height%3D%22300%22%20fill%3D%22%23f1f5f9%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%3E%3Crect%20x%3D%22105%22%20y%3D%22100%22%20width%3D%2290%22%20height%3D%2275%22%20rx%3D%228%22%2F%3E%3Ccircle%20cx%3D%22130%22%20cy%3D%22127%22%20r%3D%2210%22%2F%3E%3Cpath%20d%3D%22M112%20168l26-24%2020%2018%2016-14%2020%2020%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%22150%22%20y%3D%22205%22%20text-anchor%3D%22middle%22%20fill%3D%22%2394a3b8%22%20font-family%3D%22sans-serif%22%20font-size%3D%2215%22%3ENo%20image%3C%2Ftext%3E%3C%2Fsvg%3E';
-
-// Skeleton Card
-function SkeletonCard() {
-  return (
-    <div className="overflow-hidden bg-white border border-gray-100 rounded-3xl">
-      <div className="aspect-square skeleton" />
-      <div className="p-5 space-y-3">
-        <div className="h-3 skeleton rounded-full w-1/3" />
-        <div className="h-4 skeleton rounded-full w-3/4" />
-        <div className="h-5 skeleton rounded-full w-1/2" />
-        <div className="h-12 skeleton rounded-xl" />
-      </div>
-    </div>
-  );
-}
 
 // Image component with error handling and loading state
 function ProductImage({ src, alt, className, onClick }) {
@@ -216,7 +202,7 @@ export default function ProductsGrid() {
             <div className="h-12 skeleton rounded-full w-40 hidden md:block" />
           </div>
           <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4 md:gap-6">
-            {Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)}
+            {Array.from({ length: 8 }).map((_, i) => <ProductCardSkeleton key={i} />)}
           </div>
         </div>
       </section>

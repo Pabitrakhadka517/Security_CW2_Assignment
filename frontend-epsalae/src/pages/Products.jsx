@@ -16,21 +16,10 @@ import { getImageUrl as getImage } from '@/config';
 import { formatProductName } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import toast from 'react-hot-toast';
+import FetchState from '@/components/ui/FetchState';
+import { ProductGridSkeleton } from '@/components/ui/Skeleton';
 
 const PLACEHOLDER = 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22300%22%20height%3D%22300%22%3E%3Crect%20width%3D%22300%22%20height%3D%22300%22%20fill%3D%22%23f1f5f9%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%3E%3Crect%20x%3D%22105%22%20y%3D%22100%22%20width%3D%2290%22%20height%3D%2275%22%20rx%3D%228%22%2F%3E%3Ccircle%20cx%3D%22130%22%20cy%3D%22127%22%20r%3D%2210%22%2F%3E%3Cpath%20d%3D%22M112%20168l26-24%2020%2018%2016-14%2020%2020%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%22150%22%20y%3D%22205%22%20text-anchor%3D%22middle%22%20fill%3D%22%2394a3b8%22%20font-family%3D%22sans-serif%22%20font-size%3D%2215%22%3ENo%20image%3C%2Ftext%3E%3C%2Fsvg%3E';
-
-function SkeletonCard() {
-  return (
-    <div className="overflow-hidden bg-white border border-gray-100 rounded-2xl">
-      <div className="aspect-square skeleton" />
-      <div className="p-4 space-y-2.5">
-        <div className="h-3 skeleton rounded-full w-1/4" />
-        <div className="h-4 skeleton rounded-full w-3/4" />
-        <div className="h-5 skeleton rounded-full w-1/3 mt-3" />
-      </div>
-    </div>
-  );
-}
 
 function ProductImg({ src, alt, className }) {
   const [imgSrc, setImgSrc] = useState(src);
@@ -117,7 +106,7 @@ function FilterPanel({ categories, selectedCategory, setSelectedCategory, priceR
 export default function Products() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { products, loading, fetchProducts, pagination } = useProductStore();
+  const { products, loading, error, fetchProducts, pagination } = useProductStore();
   const { categories, fetchActiveCategories } = useCategoryStore();
   const { addToCart } = useCart();
   const { isUser } = useUserAuth();
@@ -144,7 +133,7 @@ export default function Products() {
   // Server-side filtering/sorting/pagination — the old code fetched only the
   // first 20 products and filtered client-side, silently hiding the rest of
   // the catalogue.
-  useEffect(() => {
+  const buildFetchParams = () => {
     const params = { page, limit: PAGE_SIZE };
     if (selectedCategory !== 'all') params.categoryId = selectedCategory;
     if (debouncedSearch.trim()) params.search = debouncedSearch.trim();
@@ -153,7 +142,11 @@ export default function Products() {
     if (sortBy === 'price-high') { params.sortBy = 'price'; params.order = 'desc'; }
     if (sortBy === 'name')       { params.sortBy = 'name';  params.order = 'asc'; }
     if (sortBy === 'newest' || sortBy === 'popular') { params.sortBy = 'createdAt'; params.order = 'desc'; }
-    fetchProducts(params);
+    return params;
+  };
+
+  useEffect(() => {
+    fetchProducts(buildFetchParams());
   }, [page, selectedCategory, debouncedSearch, debouncedMaxPrice, sortBy, fetchProducts]);
 
   // Any filter change goes back to page 1.
@@ -334,25 +327,26 @@ export default function Products() {
             )}
 
             {/* Products */}
-            {loading ? (
-              <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
-                {Array.from({ length: 9 }).map((_, i) => <SkeletonCard key={i} />)}
-              </div>
-            ) : filteredProducts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-24 text-center">
-                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-6">
-                  <PackageX className="w-10 h-10 text-gray-400" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">No products found</h3>
-                <p className="text-gray-500 mb-6">Try adjusting your search or filters</p>
+            <FetchState
+              isLoading={loading}
+              isError={!!error}
+              isEmpty={!loading && !error && filteredProducts.length === 0}
+              loading={<ProductGridSkeleton count={9} />}
+              errorTitle="Couldn't load products"
+              errorDescription="Something went wrong while loading. Check your connection and try again."
+              onRetry={() => fetchProducts(buildFetchParams())}
+              emptyIcon={PackageX}
+              emptyTitle="No products found"
+              emptyDescription="Try adjusting your search or filters"
+              emptyAction={
                 <button
                   onClick={() => { setSelectedCategory('all'); setPriceRange([0, 100000]); setLocalSearch(''); }}
                   className="px-6 py-2.5 bg-[#1A3C8A] text-white font-semibold rounded-full text-sm hover:bg-[#163180] transition-colors"
                 >
                   Clear All Filters
                 </button>
-              </div>
-            ) : (
+              }
+            >
               <div className={`grid gap-4 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
                 {filteredProducts.map((product, index) => {
                   const pid = product.id || product._id;
@@ -477,7 +471,7 @@ export default function Products() {
                   );
                 })}
               </div>
-            )}
+            </FetchState>
 
             {/* Pagination */}
             {!loading && totalPages > 1 && (

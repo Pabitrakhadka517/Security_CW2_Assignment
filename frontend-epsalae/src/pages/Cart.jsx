@@ -7,6 +7,7 @@ import { useProductStore } from '../components/store/productstore'
 import { promocode } from '../components/api/promocode'
 import { AnimatePresence, motion } from 'framer-motion'
 import { getImageUrl } from '@/config'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
 const PLACEHOLDER = 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22300%22%20height%3D%22300%22%3E%3Crect%20width%3D%22300%22%20height%3D%22300%22%20fill%3D%22%23f1f5f9%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%3E%3Crect%20x%3D%22105%22%20y%3D%22100%22%20width%3D%2290%22%20height%3D%2275%22%20rx%3D%228%22%2F%3E%3Ccircle%20cx%3D%22130%22%20cy%3D%22127%22%20r%3D%2210%22%2F%3E%3Cpath%20d%3D%22M112%20168l26-24%2020%2018%2016-14%2020%2020%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%22150%22%20y%3D%22205%22%20text-anchor%3D%22middle%22%20fill%3D%22%2394a3b8%22%20font-family%3D%22sans-serif%22%20font-size%3D%2215%22%3ENo%20image%3C%2Ftext%3E%3C%2Fsvg%3E'
 
@@ -21,6 +22,7 @@ export default function Cart() {
   const [couponError, setCouponError] = useState('')
   const [couponSuccess, setCouponSuccess] = useState('')
   const [couponLoading, setCouponLoading] = useState(false)
+  const [confirmRemove, setConfirmRemove] = useState(null) // holds the item or null
 
   // Mirrors the server's pricing formula (utils/priceCalculator.ts):
   // VAT 13% on the discounted subtotal; shipping Rs. 150, free above Rs. 5,000.
@@ -192,6 +194,7 @@ export default function Cart() {
                         <div className="flex items-center border border-gray-200 rounded-xl overflow-hidden bg-gray-50 shadow-sm">
                           <button
                             onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                            aria-label={`Decrease quantity of ${item.name}`}
                             className="qty-btn px-3 py-2 text-gray-600 hover:bg-[#1A3C8A] hover:text-white transition-all"
                           >
                             <Minus className="w-3.5 h-3.5" />
@@ -199,6 +202,7 @@ export default function Cart() {
                           <span className="w-10 text-center text-sm font-extrabold text-gray-900">{item.quantity}</span>
                           <button
                             onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            aria-label={`Increase quantity of ${item.name}`}
                             className="qty-btn px-3 py-2 text-gray-600 hover:bg-[#1A3C8A] hover:text-white transition-all"
                           >
                             <Plus className="w-3.5 h-3.5" />
@@ -211,7 +215,8 @@ export default function Cart() {
                             Rs. {(item.price * item.quantity).toLocaleString()}
                           </span>
                           <button
-                            onClick={() => removeFromCart(item.id)}
+                            onClick={() => setConfirmRemove(item)}
+                            aria-label={`Remove ${item.name} from cart`}
                             className="p-2 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -276,7 +281,7 @@ export default function Cart() {
                           <p className="text-xs text-green-600">Save Rs. {Number(discount).toLocaleString()}</p>
                         </div>
                       </div>
-                      <button onClick={removeCoupon} className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-white rounded-lg transition-all">
+                      <button onClick={removeCoupon} aria-label="Remove coupon" className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-white rounded-lg transition-all">
                         <X className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -371,6 +376,16 @@ export default function Cart() {
           </div>
         </div>
       </div>
+
+      <ConfirmDialog
+        isOpen={!!confirmRemove}
+        title="Remove item?"
+        description={confirmRemove ? `Remove "${confirmRemove.name}" from your cart?` : ''}
+        confirmLabel="Remove"
+        variant="danger"
+        onConfirm={() => { removeFromCart(confirmRemove.id); setConfirmRemove(null); }}
+        onCancel={() => setConfirmRemove(null)}
+      />
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Ban, ShieldCheck, RefreshCw, Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ipManagementApi } from '../api/ipManagementApi';
+import ConfirmDialog from '../ui/ConfirmDialog';
 
 const STAT_CARDS = [
   { key: 'totalBlocked', label: 'Total Blocked', color: 'text-red-600' },
@@ -30,6 +31,8 @@ export default function IPManagement() {
   const [blockForm, setBlockForm] = useState({ ip: '', reason: '', permanent: false, expiresInHours: 24 });
   const [allowForm, setAllowForm] = useState({ ip: '', reason: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [pendingAction, setPendingAction] = useState(null); // { type: 'unblock' | 'removeAllow', ip }
+  const [actionLoading, setActionLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -82,7 +85,6 @@ export default function IPManagement() {
   };
 
   const handleUnblock = async (ip) => {
-    if (!window.confirm(`Unblock ${ip}?`)) return;
     try {
       await ipManagementApi.unblockIP(ip);
       toast.success(`${ip} unblocked`);
@@ -93,13 +95,24 @@ export default function IPManagement() {
   };
 
   const handleRemoveAllow = async (ip) => {
-    if (!window.confirm(`Remove ${ip} from the allow list?`)) return;
     try {
       await ipManagementApi.removeFromAllowList(ip);
       toast.success(`${ip} removed from allow list`);
       fetchData();
     } catch {
       toast.error('Failed to remove from allow list');
+    }
+  };
+
+  const confirmPendingAction = async () => {
+    if (!pendingAction) return;
+    setActionLoading(true);
+    try {
+      if (pendingAction.type === 'unblock') await handleUnblock(pendingAction.ip);
+      else await handleRemoveAllow(pendingAction.ip);
+    } finally {
+      setActionLoading(false);
+      setPendingAction(null);
     }
   };
 
@@ -183,7 +196,7 @@ export default function IPManagement() {
                       <td className="px-5 py-3 text-gray-500 text-xs">{formatExpiry(rule.expiresAt, rule.permanent)}</td>
                       <td className="px-5 py-3 text-right">
                         <button
-                          onClick={() => handleUnblock(rule.ip)}
+                          onClick={() => setPendingAction({ type: 'unblock', ip: rule.ip })}
                           className="text-xs bg-emerald-100 text-emerald-700 px-3 py-1 rounded-lg hover:bg-emerald-200 transition-colors"
                         >
                           Unblock
@@ -224,7 +237,7 @@ export default function IPManagement() {
                       </td>
                       <td className="px-5 py-3 text-right">
                         <button
-                          onClick={() => handleRemoveAllow(rule.ip)}
+                          onClick={() => setPendingAction({ type: 'removeAllow', ip: rule.ip })}
                           className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-lg hover:bg-red-200 transition-colors"
                         >
                           Remove
@@ -327,6 +340,19 @@ export default function IPManagement() {
           </form>
         </div>
       )}
+
+      <ConfirmDialog
+        isOpen={!!pendingAction}
+        title={pendingAction?.type === 'unblock' ? `Unblock ${pendingAction?.ip}?` : `Remove ${pendingAction?.ip} from the allow list?`}
+        description={pendingAction?.type === 'unblock'
+          ? 'This IP will be able to access the site again.'
+          : 'This IP will lose its allow-listed status and normal rate limiting will apply again.'}
+        confirmLabel={pendingAction?.type === 'unblock' ? 'Unblock' : 'Remove'}
+        variant="warning"
+        isLoading={actionLoading}
+        onConfirm={confirmPendingAction}
+        onCancel={() => setPendingAction(null)}
+      />
     </div>
   );
 }

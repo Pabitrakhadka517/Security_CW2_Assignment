@@ -4,6 +4,7 @@ import relativeTime from 'dayjs/plugin/relativeTime'
 import { Monitor, Smartphone, ShieldCheck, LogOut, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { sessionEndpoints } from '@/components/api/userapi'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
 
 dayjs.extend(relativeTime)
 
@@ -18,6 +19,7 @@ export default function AccountSessions() {
   const [error, setError] = useState('')
   const [revokingId, setRevokingId] = useState(null)
   const [revokingOthers, setRevokingOthers] = useState(false)
+  const [confirmTarget, setConfirmTarget] = useState(null) // session object or 'all' or null
 
   const fetchSessions = useCallback(async () => {
     setLoading(true)
@@ -64,7 +66,7 @@ export default function AccountSessions() {
   const otherSessionsCount = sessions.filter((s) => !s.isCurrent).length
 
   return (
-    <div className="rounded-4xl bg-white p-5 shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)] sm:p-8">
+    <div className="rounded-card bg-white p-5 shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)] sm:p-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-2xl bg-slate-900 flex items-center justify-center shrink-0">
@@ -77,7 +79,7 @@ export default function AccountSessions() {
         </div>
 
         <button
-          onClick={handleRevokeOthers}
+          onClick={() => setConfirmTarget('all')}
           disabled={revokingOthers || otherSessionsCount === 0}
           className="flex items-center gap-2 py-2.5 px-4 border border-red-200 text-red-600 hover:bg-red-50 font-semibold rounded-xl text-sm transition disabled:opacity-40 disabled:cursor-not-allowed"
         >
@@ -124,8 +126,9 @@ export default function AccountSessions() {
                     </p>
                   </div>
                   <button
-                    onClick={() => handleRevoke(s.sessionId)}
+                    onClick={() => setConfirmTarget(s)}
                     disabled={s.isCurrent || revokingId === s.sessionId}
+                    aria-label={`Revoke session on ${s.deviceName || 'this device'}`}
                     className="shrink-0 text-xs font-semibold text-red-600 hover:text-red-700 transition disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     {revokingId === s.sessionId ? 'Revoking…' : 'Revoke'}
@@ -136,6 +139,25 @@ export default function AccountSessions() {
           </ul>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={!!confirmTarget}
+        title={confirmTarget === 'all' ? 'Log out all other devices?' : 'Revoke this session?'}
+        description={confirmTarget === 'all'
+          ? "This will immediately sign out every device except this one."
+          : `This will immediately sign out the session on ${confirmTarget?.deviceName || 'this device'}.`}
+        confirmLabel={confirmTarget === 'all' ? 'Log out all' : 'Revoke'}
+        variant="danger"
+        onConfirm={() => {
+          if (confirmTarget === 'all') {
+            handleRevokeOthers()
+          } else if (confirmTarget) {
+            handleRevoke(confirmTarget.sessionId)
+          }
+          setConfirmTarget(null)
+        }}
+        onCancel={() => setConfirmTarget(null)}
+      />
     </div>
   )
 }

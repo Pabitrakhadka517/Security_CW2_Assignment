@@ -8,6 +8,10 @@ import {
   Plus, Edit2, Trash2, Loader2, X, Tag, ToggleLeft, ToggleRight,
   Search, ChevronDown, ChevronUp, Package, Percent, Check, Sparkles, Upload,
 } from 'lucide-react';
+import ConfirmDialog from '../ui/ConfirmDialog';
+import Modal from '../ui/Modal';
+import FetchState from '../ui/FetchState';
+import { TableSkeleton } from '../ui/Skeleton';
 
 const ENDPOINT = '/sale-categories';
 
@@ -55,6 +59,9 @@ export default function SaleCrud() {
   const [showProductDropdown, setShowProductDropdown] = useState(false);
   const [expandedSale, setExpandedSale] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [isError, setIsError] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Close product dropdown on outside click
   useEffect(() => {
@@ -69,11 +76,12 @@ export default function SaleCrud() {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setIsError(false);
     try {
       const res = await api.get(ENDPOINT);
       const data = res.data?.data || [];
       setSales(Array.isArray(data) ? data : data.items || []);
-    } catch { setSales([]); }
+    } catch { setSales([]); setIsError(true); }
     finally { setLoading(false); }
   }, []);
 
@@ -163,12 +171,14 @@ export default function SaleCrud() {
     } finally { setSaving(false); }
   };
 
-  const handleDelete = async (s) => {
-    if (!window.confirm(`Delete "${s.title}"? This cannot be undone.`)) return;
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
     try {
-      await api.delete(`${ENDPOINT}/${s.id}`);
+      await api.delete(`${ENDPOINT}/${pendingDelete.id}`);
       toast.success('Deleted'); load();
     } catch (err) { toast.error(err?.response?.data?.message || 'Delete failed'); }
+    finally { setDeleting(false); setPendingDelete(null); }
   };
 
   const toggleActive = async (s) => {
@@ -221,15 +231,18 @@ export default function SaleCrud() {
       </div>
 
       {/* List */}
-      {loading ? (
-        <div className="flex justify-center py-16"><Loader2 className="w-7 h-7 animate-spin text-[#FF6B35]" /></div>
-      ) : filtered.length === 0 ? (
-        <div className="text-center py-16 text-gray-400 bg-white rounded-2xl border border-dashed border-gray-200">
-          <Tag className="w-10 h-10 mx-auto mb-3 opacity-30" />
-          <p className="font-medium">No sale categories yet</p>
-          <p className="text-sm mt-1">Click "New Sale" to create one</p>
-        </div>
-      ) : (
+      <FetchState
+        isLoading={loading}
+        isError={isError}
+        isEmpty={!loading && !isError && filtered.length === 0}
+        loading={<TableSkeleton rows={5} cols={4} />}
+        errorTitle="Couldn't load sales"
+        errorDescription="Something went wrong. Check your connection and try again."
+        onRetry={load}
+        emptyIcon={Tag}
+        emptyTitle="No sale categories yet"
+        emptyDescription={search ? 'No sales match your search.' : 'Click "New Sale" to create one.'}
+      >
         <div className="space-y-3">
           {filtered.map(s => (
             <div key={s.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
@@ -275,7 +288,7 @@ export default function SaleCrud() {
                   <button onClick={() => openEdit(s)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
                     <Edit2 className="w-4 h-4" />
                   </button>
-                  <button onClick={() => handleDelete(s)} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
+                  <button onClick={() => setPendingDelete(s)} aria-label={`Delete sale ${s.title}`} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
@@ -309,17 +322,22 @@ export default function SaleCrud() {
             </div>
           ))}
         </div>
-      )}
+      </FetchState>
 
       {/* Modal */}
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/50 overflow-y-auto p-4">
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl my-6">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-              <h2 className="text-lg font-bold text-gray-900">{editing ? 'Edit Sale Category' : 'New Sale Category'}</h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 rounded-lg transition"><X className="w-5 h-5 text-gray-500" /></button>
-            </div>
-            <div className="p-6 space-y-5">
+      <ConfirmDialog
+        isOpen={!!pendingDelete}
+        title={`Delete "${pendingDelete?.title ?? 'this sale'}"?`}
+        description="This can't be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        isLoading={deleting}
+        onConfirm={confirmDelete}
+        onCancel={() => setPendingDelete(null)}
+      />
+
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editing ? 'Edit Sale Category' : 'New Sale Category'} size="lg">
+            <div className="space-y-5">
               {/* Basic info */}
               <div className="grid grid-cols-2 gap-4">
                 <SaleInput label="Title" value={form.title} onChange={v => set('title', v)} placeholder="Winter Sale" error={errors.title} required />
@@ -489,9 +507,7 @@ export default function SaleCrud() {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+      </Modal>
     </div>
   );
 }

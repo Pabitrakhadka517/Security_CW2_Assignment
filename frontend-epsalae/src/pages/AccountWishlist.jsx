@@ -6,6 +6,8 @@ import { productApi } from '@/components/api/productapi'
 import { useCart } from '@/store/cartstore'
 import { useFavoritesStore } from '@/store/favoritesstore'
 import { getImageUrl } from '@/config'
+import FetchState from '@/components/ui/FetchState'
+import { Link } from 'react-router-dom'
 
 /**
  * Wishlist page.
@@ -18,12 +20,14 @@ import { getImageUrl } from '@/config'
 export default function WishlistPage(){
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [busy, setBusy] = useState({}) // productId -> bool
   const { addToCart } = useCart()
   const removeId = useFavoritesStore((s) => s.removeId)
 
   const load = async () => {
     setLoading(true)
+    setLoadError(false)
     try {
       const res = await profileEndpoints.favorites.list()
       const raw = res.data?.data || res.data || []
@@ -46,6 +50,7 @@ export default function WishlistPage(){
       setItems([...hydrated, ...fetched])
     } catch (e) {
       setItems([])
+      setLoadError(true)
     } finally {
       setLoading(false)
     }
@@ -82,18 +87,35 @@ export default function WishlistPage(){
   }
 
   return (
-    <div className="rounded-2xl sm:rounded-4xl bg-white p-4 sm:p-8 shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)]">
+    <div className="rounded-card bg-white p-4 sm:p-8 shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)]">
       <h3 className="text-2xl font-semibold text-slate-900">Wishlist</h3>
       <p className="mt-1 text-sm text-slate-500">Your saved products for later.</p>
 
-      {loading ? (
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {[1,2].map((i)=>(<div key={i} className="h-32 animate-pulse rounded-2xl bg-slate-100" />))}
-        </div>
-      ) : items.length === 0 ? (
-        <div className="mt-6 rounded-2xl border border-dashed border-slate-200 p-8 text-center text-slate-500">No favorites yet.</div>
-      ) : (
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="mt-6">
+        <FetchState
+          isLoading={loading}
+          isError={loadError}
+          isEmpty={!loading && !loadError && items.length === 0}
+          loading={(
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {[1,2].map((i)=>(<div key={i} className="h-32 animate-pulse rounded-2xl bg-slate-100" />))}
+            </div>
+          )}
+          errorTitle="Couldn't load your wishlist"
+          errorDescription="Something went wrong. Check your connection and try again."
+          onRetry={load}
+          emptyTitle="No favorites yet"
+          emptyDescription="Save products you love and they'll show up here."
+          emptyAction={(
+            <Link
+              to="/products"
+              className="inline-flex items-center gap-2 rounded-btn bg-brand px-4 py-2 text-sm font-medium text-white hover:bg-brand-hover"
+            >
+              Browse products
+            </Link>
+          )}
+        >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {items.map((p, idx) => {
             const pid = p.id || p._id || idx
             const price = Number(p.hasOffer && p.discountPrice ? p.discountPrice : p.price) || 0
@@ -127,7 +149,8 @@ export default function WishlistPage(){
             )
           })}
         </div>
-      )}
+        </FetchState>
+      </div>
     </div>
   )
 }

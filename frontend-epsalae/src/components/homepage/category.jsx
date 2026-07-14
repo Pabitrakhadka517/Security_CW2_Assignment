@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { getImageUrl } from '@/config'
 import { ArrowRight, Sparkles } from 'lucide-react'
+import { CategoryGridSkeleton } from '@/components/ui/Skeleton'
 
 // Placeholder for failed images
 const CATEGORY_PLACEHOLDER = 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600';
@@ -48,17 +49,7 @@ export default function TopCategories() {
           <div className="h-7 w-40 mx-auto bg-gray-100 rounded-full animate-pulse" />
           <div className="h-9 w-64 mx-auto mt-4 bg-gray-100 rounded-lg animate-pulse" />
         </div>
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 lg:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="overflow-hidden border border-gray-100 rounded-2xl bg-white">
-              <div className="aspect-square bg-gray-100 animate-pulse" />
-              <div className="p-5 border-t border-gray-100 space-y-2">
-                <div className="h-4 w-2/3 mx-auto bg-gray-100 rounded animate-pulse" />
-                <div className="h-3 w-1/2 mx-auto bg-gray-100 rounded animate-pulse" />
-              </div>
-            </div>
-          ))}
-        </div>
+        <CategoryGridSkeleton count={8} />
       </div>
     </section>
   )

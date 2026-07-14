@@ -2,12 +2,13 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, ShoppingCart, Tag, Loader2, ChevronLeft, ChevronRight as ChevronRightIcon, Flame } from 'lucide-react'
+import { ArrowRight, ShoppingCart, Tag, ChevronLeft, ChevronRight as ChevronRightIcon, Flame } from 'lucide-react'
 import api from '@/components/api/base'
 import { useCart } from '@/store/cartstore'
 import { getImageUrl } from '@/config'
 import SeasonalBadge from './SeasonalBadge'
 import toast from 'react-hot-toast'
+import { ProductGridSkeleton } from '@/components/ui/Skeleton'
 
 function CountdownTimer({ endDate }) {
   const [t, setT] = useState({ d: 0, h: 0, m: 0, s: 0 })
@@ -197,7 +198,9 @@ export default function SaleSection() {
 
   if (loading) return (
     <section className="py-6 sm:py-10 px-3 sm:px-4">
-      <div className="flex justify-center"><Loader2 className="w-6 h-6 animate-spin text-[#FF6B35]" /></div>
+      <div className="max-w-7xl mx-auto">
+        <ProductGridSkeleton count={4} />
+      </div>
     </section>
   )
   if (!sales.length) return null
