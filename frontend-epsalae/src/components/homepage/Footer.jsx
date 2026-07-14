@@ -3,6 +3,14 @@ import { Link } from "react-router-dom"
 import { HelpCircle, Phone, Mail, ChevronRight, Package, Truck, Shield, CreditCard, Instagram, MapPin, Clock } from "lucide-react"
 import logo from "../../assets/logo1080.png"
 import { motion } from "framer-motion"
+import toast from "react-hot-toast"
+
+// Pages that don't exist yet — let the click resolve to something rather
+// than silently doing nothing and scrolling to top.
+const comingSoon = (e) => {
+  e.preventDefault()
+  toast('This page is coming soon!')
+}
 
 // TikTok Icon Component
 const TikTokIcon = ({ className }) => (
@@ -84,9 +92,15 @@ export default function Footer() {
             <div>
               <h4 className="mb-6 text-lg font-semibold text-gray-900">Customer Care</h4>
               <ul className="space-y-4">
-                {["Track Order", "Returns & Refund", "Shipping Info", "Size Guide", "FAQ"].map((item) => (
+                <li>
+                  <Link to="/track-order" className="flex items-center gap-2 text-gray-600 transition hover:text-gray-900 group">
+                    <ChevronRight className="w-4 h-4 text-gray-400 transition group-hover:text-gray-900" />
+                    Track Order
+                  </Link>
+                </li>
+                {["Returns & Refund", "Shipping Info", "Size Guide", "FAQ"].map((item) => (
                   <li key={item}>
-                    <a href="#" className="flex items-center gap-2 text-gray-600 transition hover:text-gray-900 group">
+                    <a href="#" onClick={comingSoon} className="flex items-center gap-2 text-gray-600 transition hover:text-gray-900 group">
                       <ChevronRight className="w-4 h-4 text-gray-400 transition group-hover:text-gray-900" />
                       {item}
                     </a>
@@ -101,7 +115,7 @@ export default function Footer() {
               <ul className="space-y-4">
                 {["About Us", "Careers", "Press", "Blog", "Contact"].map((item) => (
                   <li key={item}>
-                    <a href="#" className="flex items-center gap-2 text-gray-600 transition hover:text-gray-900 group">
+                    <a href="#" onClick={comingSoon} className="flex items-center gap-2 text-gray-600 transition hover:text-gray-900 group">
                       <ChevronRight className="w-4 h-4 text-gray-400 transition group-hover:text-gray-900" />
                       {item}
                     </a>
@@ -124,9 +138,9 @@ export default function Footer() {
               </p>
             </div>
             <div className="flex items-center gap-8 text-sm">
-              <a href="#" className="text-gray-400 transition hover:text-white">Privacy Policy</a>
-              <a href="#" className="text-gray-400 transition hover:text-white">Terms of Service</a>
-              <a href="#" className="text-gray-400 transition hover:text-white">Cookie Policy</a>
+              <a href="#" onClick={comingSoon} className="text-gray-400 transition hover:text-white">Privacy Policy</a>
+              <a href="#" onClick={comingSoon} className="text-gray-400 transition hover:text-white">Terms of Service</a>
+              <a href="#" onClick={comingSoon} className="text-gray-400 transition hover:text-white">Cookie Policy</a>
               <Link to="/admin/login" className="text-gray-600 transition hover:text-gray-300 text-xs">Admin</Link>
             </div>
           </div>

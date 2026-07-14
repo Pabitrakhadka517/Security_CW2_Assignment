@@ -244,6 +244,7 @@ export default function Banner() {
                   key={i}
                   onClick={() => goTo(i)}
                   aria-label={`Go to slide ${i + 1}`}
+                  aria-current={i === current ? 'true' : 'false'}
                   className={`h-[3px] rounded-full transition-all duration-500 ${
                     i === current
                       ? 'w-7 bg-white shadow-[0_0_8px_rgba(255,255,255,0.5)]'

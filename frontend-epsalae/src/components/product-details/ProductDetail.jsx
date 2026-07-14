@@ -91,10 +91,15 @@ export default function ProductDetail() {
     return found?.name || 'General'
   }
 
+  // Same id resolution as getCategoryName(), surfaced separately so the
+  // breadcrumb can link to the category instead of just naming it.
+  const categoryId = product?.category?._id || product?.category?.id || product?.category_id || product?.categoryId
+    || (typeof product?.category === 'string' ? product.category : null)
+
   const handleAddToCart = async () => {
     if (!product || (product.stock || 0) === 0) {
       toast.error('This product is out of stock')
-      return
+      return false
     }
     setAddingToCart(true)
     const added = addToCart({
@@ -104,18 +109,19 @@ export default function ProductDetail() {
       image: mainImage,
       quantity,
     })
-    if (!added) { setAddingToCart(false); return }
+    if (!added) { setAddingToCart(false); return false }
     setIsAdded(true)
     toast.success(`${quantity} item${quantity > 1 ? 's' : ''} added to cart!`, {
       style: { borderRadius: '14px', fontWeight: 600 },
       icon: '🛒',
     })
     setTimeout(() => { setIsAdded(false); setAddingToCart(false); }, 2200)
+    return true
   }
 
-  const handleBuyNow = () => {
-    handleAddToCart()
-    navigate('/checkout')
+  const handleBuyNow = async () => {
+    const added = await handleAddToCart()
+    if (added) navigate('/checkout')
   }
 
   const handleShare = async () => {
@@ -159,12 +165,18 @@ export default function ProductDetail() {
       {/* Breadcrumb */}
       <div className="border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-10">
         <div className="px-4 py-3 mx-auto max-w-7xl sm:px-6">
-          <nav className="flex items-center gap-1.5 text-xs text-gray-500 overflow-x-auto scrollbar-hide">
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-gray-500 overflow-x-auto scrollbar-hide">
             <Link to="/" className="hover:text-[#1A3C8A] font-semibold whitespace-nowrap transition-colors">Home</Link>
-            <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" />
+            <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" aria-hidden="true" />
             <Link to="/products" className="hover:text-[#1A3C8A] font-semibold whitespace-nowrap transition-colors">Products</Link>
-            <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" />
-            <span className="text-gray-800 font-bold truncate max-w-[180px]">{formatProductName(product.name)}</span>
+            <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" aria-hidden="true" />
+            {categoryId && (
+              <>
+                <Link to={`/products?category=${categoryId}`} className="hover:text-[#1A3C8A] font-semibold whitespace-nowrap transition-colors">{getCategoryName()}</Link>
+                <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" aria-hidden="true" />
+              </>
+            )}
+            <span aria-current="page" className="text-gray-800 font-bold truncate max-w-[180px]">{formatProductName(product.name)}</span>
           </nav>
         </div>
       </div>
@@ -264,7 +276,7 @@ export default function ProductDetail() {
             </div>
 
             {/* Title */}
-            <h1 className="text-2xl font-extrabold text-gray-900 leading-snug sm:text-3xl">
+            <h1 className="text-2xl font-semibold text-gray-900 leading-snug">
               {formatProductName(product.name)}
             </h1>
 

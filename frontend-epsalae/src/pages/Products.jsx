@@ -213,8 +213,8 @@ export default function Products() {
 
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h1 className="text-2xl font-extrabold text-gray-900 sm:text-4xl">{currentCategoryName}</h1>
-              <p className="mt-1 text-gray-500 text-sm">
+              <h1 className="text-2xl font-semibold text-gray-900">{currentCategoryName}</h1>
+              <p className="text-sm text-gray-500 mt-1">
                 {loading ? 'Loading…' : `${totalProducts} product${totalProducts !== 1 ? 's' : ''} found`}
               </p>
             </div>

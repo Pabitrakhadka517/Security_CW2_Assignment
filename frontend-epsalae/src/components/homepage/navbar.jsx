@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { Search, ShoppingBag, Heart, Menu, Package, LogIn, X, Grid, Home, ChevronDown, User, Zap, Flame } from 'lucide-react'
 import api from '../api/base'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useCart } from '@/store/cartstore'
 import { useFavoritesStore } from '@/store/favoritesstore'
 import { authEndpoints } from '../api/userapi'
@@ -14,6 +14,7 @@ import logo from '../../assets/logo1080.png'
 
 export default function Navbar() {
   const navigate = useNavigate()
+  const location = useLocation()
   const { cart } = useCart()
   const { isUser: isLoggedIn, logoutUser: logout } = useUserAuth()
   const { favorites, load: loadFavorites, initialized: favoritesInitialized } = useFavoritesStore()
@@ -23,7 +24,10 @@ export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState('')
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [userMenuOpen, setUserMenuOpen] = useState(false)
+  const [categoriesOpen, setCategoriesOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+
+  const isActive = (path) => location.pathname === path
 
   // Fetch initial data
   useEffect(() => {
@@ -135,40 +139,74 @@ export default function Navbar() {
               <nav className="items-center hidden gap-1 lg:flex z-30">
                 <Link
                   to="/"
-                  className="flex items-center gap-2 rounded-full px-5 py-3 font-medium text-gray-700 transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-100 hover:text-gray-900"
+                  aria-current={isActive('/') ? 'page' : undefined}
+                  className={`flex items-center gap-2 rounded-full px-5 py-3 font-medium transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-100 hover:text-gray-900 ${
+                    isActive('/') ? 'bg-slate-100 text-gray-900' : 'text-gray-700'
+                  }`}
                 >
                   <Home className="w-4 h-4" />
                   Home
                 </Link>
 
-                {/* Categories Mega Dropdown */}
-                <div className="relative group">
+                {/* Categories Mega Dropdown — click-to-toggle (not hover-only)
+                    so it's operable by keyboard, matching the User Menu
+                    pattern already used elsewhere in this file. */}
+                <div className="relative">
                   <button
+                    onClick={() => setCategoriesOpen(o => !o)}
+                    aria-haspopup="true"
+                    aria-expanded={categoriesOpen}
+                    aria-controls="categories-menu"
                     className="flex cursor-pointer items-center gap-2 rounded-full px-5 py-3 font-medium text-gray-700 transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-100 hover:text-gray-900"
                   >
                     <Grid className="w-4 h-4" />
                     Categories
-                    <ChevronDown className="w-4 h-4 transition-transform group-hover:rotate-180" />
+                    <ChevronDown className={`w-4 h-4 transition-transform ${categoriesOpen ? 'rotate-180' : ''}`} />
                   </button>
-                  <div className="absolute left-0 z-50 mt-2 hidden w-64 overflow-hidden rounded-3xl border border-white/70 bg-white/95 shadow-[0_30px_80px_-45px_rgba(15,23,42,0.5)] backdrop-blur-xl transition-all duration-300 group-hover:block">
-                    <div className="py-2">
-                      {categories.map((cat) => (
-                        <Link
-                          key={cat._id || cat.id}
-                          to={`/products?category=${cat._id || cat.id}`}
-                          className="block px-4 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-slate-50 hover:text-[#FF6B35]"
+                  <AnimatePresence>
+                    {categoriesOpen && (
+                      <>
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="fixed inset-0 z-40"
+                          onClick={() => setCategoriesOpen(false)}
+                        />
+                        <motion.div
+                          id="categories-menu"
+                          role="menu"
+                          initial={{ opacity: 0, y: -8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -8 }}
+                          className="absolute left-0 z-50 mt-2 w-64 overflow-hidden rounded-3xl border border-white/70 bg-white/95 shadow-[0_30px_80px_-45px_rgba(15,23,42,0.5)] backdrop-blur-xl"
                         >
-                          {cat.name}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
+                          <div className="py-2">
+                            {categories.map((cat) => (
+                              <Link
+                                key={cat._id || cat.id}
+                                to={`/products?category=${cat._id || cat.id}`}
+                                role="menuitem"
+                                onClick={() => setCategoriesOpen(false)}
+                                className="block px-4 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-slate-50 hover:text-[#FF6B35]"
+                              >
+                                {cat.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </motion.div>
+                      </>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* Sales — dedicated entry with live-count badge */}
                 <Link
                   to="/sales"
-                  className="relative flex items-center gap-2 rounded-full px-5 py-3 font-semibold text-[#FF6B35] transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-50"
+                  aria-current={isActive('/sales') ? 'page' : undefined}
+                  className={`relative flex items-center gap-2 rounded-full px-5 py-3 font-semibold text-[#FF6B35] transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-50 ${
+                    isActive('/sales') ? 'bg-orange-50 ring-1 ring-[#FF6B35]/30' : ''
+                  }`}
                 >
                   <Flame className="w-4 h-4" />
                   Sales
@@ -181,7 +219,10 @@ export default function Navbar() {
 
                 <Link
                   to="/products"
-                  className="flex items-center gap-2 rounded-full px-5 py-3 font-medium text-gray-700 transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-100 hover:text-gray-900"
+                  aria-current={isActive('/products') ? 'page' : undefined}
+                  className={`flex items-center gap-2 rounded-full px-5 py-3 font-medium transition-all duration-300 hover:-translate-y-0.5 hover:bg-slate-100 hover:text-gray-900 ${
+                    isActive('/products') ? 'bg-slate-100 text-gray-900' : 'text-gray-700'
+                  }`}
                 >
                   <Grid className="w-4 h-4" />
                   All Products
@@ -354,7 +395,10 @@ export default function Navbar() {
                       key={link.path}
                       to={link.path}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-4 rounded-3xl px-6 py-4 text-lg font-medium transition hover:bg-slate-100"
+                      aria-current={isActive(link.path) ? 'page' : undefined}
+                      className={`flex items-center gap-4 rounded-3xl px-6 py-4 text-lg font-medium transition hover:bg-slate-100 ${
+                        isActive(link.path) ? 'bg-slate-100 text-gray-900' : ''
+                      }`}
                     >
                       <link.icon className="w-6 h-6 text-gray-600" />
                       {link.name}

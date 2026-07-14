@@ -34,9 +34,10 @@ export const useCart = create(
         return true
       },
 
-      removeFromCart: (id) => {
+      removeFromCart: (id, opts = {}) => {
         set((state) => ({ cart: state.cart.filter((item) => item.id !== id) }))
-        
+        if (opts.silent) return
+
         // Red theme - Product removed
         toast.error('Removed from cart!', {
           duration: 2500,
