@@ -9,15 +9,21 @@ import { useSessionAlertStore } from '@/components/store/sessionAlertStore'
  * change across VPNs/browser updates (see backend session.service).
  */
 export default function DeviceMismatchBanner() {
-  const { deviceMismatch, setDeviceMismatch } = useSessionAlertStore()
+  const { deviceMismatch, deviceMismatchAt, setDeviceMismatch } = useSessionAlertStore()
 
   if (!deviceMismatch) return null
 
   return (
-    <div className="sticky top-0 z-[90] flex items-center justify-center gap-3 bg-amber-500 px-4 py-2.5 text-sm font-medium text-white">
+    <div
+      role="alert"
+      aria-live="assertive"
+      className="sticky top-0 z-[90] flex items-center justify-center gap-3 bg-amber-500 px-4 py-2.5 text-sm font-medium text-white"
+    >
       <ShieldAlert className="h-4 w-4 shrink-0" />
       <span>
-        Your account was accessed from a new device or location. If this wasn't you, secure your account.
+        Your account was accessed from a new device or location
+        {deviceMismatchAt && ` (detected ${new Date(deviceMismatchAt).toLocaleString()})`}.
+        If this wasn't you, secure your account now.
       </span>
       <Link
         to="/account/sessions"

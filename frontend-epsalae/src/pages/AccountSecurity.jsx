@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff, Lock, ShieldCheck, ShieldOff, CheckCircle2, AlertCircle, Loader2, Download } from 'lucide-react'
+import { Eye, EyeOff, Lock, ShieldCheck, ShieldOff, CheckCircle2, AlertCircle, Loader2, Download, Info } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { profileEndpoints, mfaEndpoints } from '@/components/api/userapi'
 import { useUserAuth } from '@/components/store/authstore'
@@ -38,6 +38,7 @@ function MFASection() {
   const [disableForm, setDisableForm] = useState({ password: '', token: '' })
   const [disabling, setDisabling] = useState(false)
   const [disableError, setDisableError] = useState(null)
+  const [showDisablePwd, setShowDisablePwd] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -108,14 +109,24 @@ function MFASection() {
                   {disableError}
                 </div>
               )}
-              <input
-                type="password"
-                placeholder="Current password"
-                value={disableForm.password}
-                onChange={(e) => setDisableForm((f) => ({ ...f, password: e.target.value }))}
-                disabled={disabling}
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-400 disabled:opacity-50"
-              />
+              <div className="relative">
+                <input
+                  type={showDisablePwd ? 'text' : 'password'}
+                  placeholder="Current password"
+                  value={disableForm.password}
+                  onChange={(e) => setDisableForm((f) => ({ ...f, password: e.target.value }))}
+                  disabled={disabling}
+                  className="w-full px-4 py-3 pr-10 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-400 disabled:opacity-50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowDisablePwd((p) => !p)}
+                  aria-label={showDisablePwd ? 'Hide password' : 'Show password'}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900/20 rounded"
+                >
+                  {showDisablePwd ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
               <input
                 type="text"
                 inputMode="numeric"
@@ -344,6 +355,14 @@ export default function SecurityPage() {
             error={errors.confirmPassword?.message}
             show={show.confirm} onToggle={() => toggle('confirm')} placeholder="Re-enter new password"
             fieldProps={register('confirmPassword')} />
+
+          <div className="flex items-start gap-2.5 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+            <Info className="w-4 h-4 shrink-0 mt-0.5" />
+            <p>
+              Changing your password will sign you out of all other devices for security.
+              You'll need to sign in again on this device.
+            </p>
+          </div>
 
           <button type="submit" disabled={loading}
             className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-sm transition disabled:opacity-60 disabled:cursor-not-allowed">

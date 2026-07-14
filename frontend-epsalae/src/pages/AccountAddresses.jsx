@@ -1,10 +1,47 @@
 import { useEffect, useState } from 'react'
-import { MapPin, Plus, Loader2 } from 'lucide-react'
+import { MapPin, Plus, Loader2, Pencil, Trash2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { profileEndpoints } from '@/components/api/userapi'
 import FetchState from '@/components/ui/FetchState'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import Modal from '@/components/ui/Modal'
 
 const emptyForm = { label: '', addressLine: '', city: '', postalCode: '', country: 'Nepal', phone: '' }
+
+const fieldLabelCls = 'block mb-1 text-xs font-medium text-slate-700'
+const requiredMark = <span className="text-red-500 ml-0.5" aria-label="required">*</span>
+
+function AddressFormFields({ idPrefix, values, onChange }) {
+  const id = (name) => `${idPrefix}-${name}`
+  return (
+    <>
+      <div>
+        <label className={fieldLabelCls} htmlFor={id('label')}>Label</label>
+        <input id={id('label')} name="label" value={values.label} onChange={onChange} placeholder="Home, Office..." className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm" />
+      </div>
+      <div>
+        <label className={fieldLabelCls} htmlFor={id('phone')}>Phone number</label>
+        <input id={id('phone')} name="phone" value={values.phone} onChange={onChange} placeholder="Optional" className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm" />
+      </div>
+      <div className="sm:col-span-2">
+        <label className={fieldLabelCls} htmlFor={id('addressLine')}>Street address{requiredMark}</label>
+        <input id={id('addressLine')} name="addressLine" value={values.addressLine} onChange={onChange} placeholder="House no., street, area" className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm" required />
+      </div>
+      <div>
+        <label className={fieldLabelCls} htmlFor={id('city')}>City{requiredMark}</label>
+        <input id={id('city')} name="city" value={values.city} onChange={onChange} placeholder="City" className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm" required />
+      </div>
+      <div>
+        <label className={fieldLabelCls} htmlFor={id('postalCode')}>Postal code{requiredMark}</label>
+        <input id={id('postalCode')} name="postalCode" value={values.postalCode} onChange={onChange} placeholder="Postal code" className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm" required />
+      </div>
+      <div>
+        <label className={fieldLabelCls} htmlFor={id('country')}>Country{requiredMark}</label>
+        <input id={id('country')} name="country" value={values.country} onChange={onChange} placeholder="Country" className="w-full rounded-xl border border-slate-200 bg-white p-3 text-sm" required />
+      </div>
+    </>
+  )
+}
 
 export default function AddressesPage(){
   const [addresses, setAddresses] = useState([])
@@ -14,6 +51,12 @@ export default function AddressesPage(){
   const [saving, setSaving] = useState(false)
   const [form, setForm] = useState(emptyForm)
   const [error, setError] = useState('')
+  const [editModal, setEditModal] = useState({ isOpen: false, index: null })
+  const [editForm, setEditForm] = useState(emptyForm)
+  const [editSaving, setEditSaving] = useState(false)
+  const [editError, setEditError] = useState('')
+  const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, index: null })
+  const [deleting, setDeleting] = useState(false)
 
   const load = async () => {
     setLoading(true)
@@ -62,6 +105,57 @@ export default function AddressesPage(){
     }
   }
 
+  const openEditAddress = (address, index) => {
+    setEditError('')
+    setEditForm({
+      label: address.label || '',
+      addressLine: address.addressLine || '',
+      city: address.city || '',
+      postalCode: address.postalCode || '',
+      country: address.country || 'Nepal',
+      phone: address.phone || '',
+    })
+    setEditModal({ isOpen: true, index })
+  }
+
+  const onEditChange = (e) => setEditForm((f) => ({ ...f, [e.target.name]: e.target.value }))
+
+  const onEditSave = async (e) => {
+    e?.preventDefault?.()
+    setEditError('')
+    if (!editForm.addressLine || !editForm.city || !editForm.postalCode || !editForm.country) {
+      setEditError('Address line, city, postal code and country are required.')
+      return
+    }
+    setEditSaving(true)
+    try {
+      // No dedicated update endpoint exists — apply the edit as add-then-remove
+      // against the two address endpoints the backend actually exposes.
+      await profileEndpoints.addresses.add(editForm)
+      await profileEndpoints.addresses.remove(editModal.index)
+      toast.success('Address updated')
+      setEditModal({ isOpen: false, index: null })
+      load()
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to update address')
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  const deleteAddress = async (index) => {
+    setDeleting(true)
+    try {
+      await profileEndpoints.addresses.remove(index)
+      toast.success('Address deleted')
+      load()
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete address')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <div className="rounded-card bg-white p-4 sm:p-5 shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)] sm:p-8">
       <div className="flex items-center justify-between gap-3">
@@ -76,12 +170,7 @@ export default function AddressesPage(){
 
       {showForm && (
         <form onSubmit={onSave} className="mt-6 grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-2">
-          <input name="label" value={form.label} onChange={onChange} placeholder="Label (Home, Office...)" className="rounded-xl border border-slate-200 bg-white p-3 text-sm" />
-          <input name="phone" value={form.phone} onChange={onChange} placeholder="Phone (optional)" className="rounded-xl border border-slate-200 bg-white p-3 text-sm" />
-          <input name="addressLine" value={form.addressLine} onChange={onChange} placeholder="Address line" className="rounded-xl border border-slate-200 bg-white p-3 text-sm sm:col-span-2" required />
-          <input name="city" value={form.city} onChange={onChange} placeholder="City" className="rounded-xl border border-slate-200 bg-white p-3 text-sm" required />
-          <input name="postalCode" value={form.postalCode} onChange={onChange} placeholder="Postal code" className="rounded-xl border border-slate-200 bg-white p-3 text-sm" required />
-          <input name="country" value={form.country} onChange={onChange} placeholder="Country" className="rounded-xl border border-slate-200 bg-white p-3 text-sm" required />
+          <AddressFormFields idPrefix="add" values={form} onChange={onChange} />
           {error && <p className="text-sm text-rose-600 sm:col-span-2">{error}</p>}
           <button disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60 sm:col-span-2">
             {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</> : 'Save address'}
@@ -120,12 +209,53 @@ export default function AddressesPage(){
                 <p className="text-sm text-slate-600">{a.addressLine}</p>
                 <p className="text-sm text-slate-600">{a.city}, {a.postalCode}</p>
                 <p className="text-sm text-slate-600">{a.country}</p>
-                {a.phone && <p className="mt-1 text-sm text-slate-500">📞 {a.phone}</p>}
+                {a.phone && <p className="mt-1 text-sm text-slate-500">Phone: {a.phone}</p>}
+
+                <div className="flex gap-2 mt-3 pt-3 border-t border-gray-100">
+                  <button
+                    onClick={() => openEditAddress(a, i)}
+                    className="text-xs text-green-700 hover:text-green-900 font-medium flex items-center gap-1 transition-colors"
+                  >
+                    <Pencil className="w-3 h-3" />
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => setDeleteConfirm({ isOpen: true, index: i })}
+                    className="text-xs text-red-500 hover:text-red-700 font-medium flex items-center gap-1 transition-colors"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                    Delete
+                  </button>
+                </div>
               </div>
             ))}
           </div>
         </FetchState>
       </div>
+
+      <ConfirmDialog
+        isOpen={deleteConfirm.isOpen}
+        title="Delete address?"
+        description="This address will be permanently removed from your account."
+        confirmLabel="Delete address"
+        isLoading={deleting}
+        onConfirm={() => deleteAddress(deleteConfirm.index)}
+        onCancel={() => setDeleteConfirm({ isOpen: false, index: null })}
+      />
+
+      <Modal
+        isOpen={editModal.isOpen}
+        onClose={() => setEditModal({ isOpen: false, index: null })}
+        title="Edit address"
+      >
+        <form onSubmit={onEditSave} className="grid gap-3 sm:grid-cols-2">
+          <AddressFormFields idPrefix="edit" values={editForm} onChange={onEditChange} />
+          {editError && <p className="text-sm text-rose-600 sm:col-span-2">{editError}</p>}
+          <button disabled={editSaving} className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand px-4 py-3 text-sm font-medium text-white hover:bg-brand-hover disabled:opacity-60 sm:col-span-2">
+            {editSaving ? <><Loader2 className="h-4 w-4 animate-spin" /> Saving…</> : 'Save changes'}
+          </button>
+        </form>
+      </Modal>
     </div>
   )
 }

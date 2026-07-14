@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import dayjs from 'dayjs'
 import relativeTime from 'dayjs/plugin/relativeTime'
 import { Monitor, Smartphone, ShieldCheck, LogOut, Loader2 } from 'lucide-react'
@@ -20,6 +20,25 @@ export default function AccountSessions() {
   const [revokingId, setRevokingId] = useState(null)
   const [revokingOthers, setRevokingOthers] = useState(false)
   const [confirmTarget, setConfirmTarget] = useState(null) // session object or 'all' or null
+  const [ipLocations, setIpLocations] = useState({})
+  const lookedUpIpsRef = useRef(new Set())
+
+  useEffect(() => {
+    sessions.forEach((session) => {
+      const ip = session.ipAddress
+      if (!ip || lookedUpIpsRef.current.has(ip)) return
+      lookedUpIpsRef.current.add(ip)
+      fetch(`https://ipapi.co/${encodeURIComponent(ip)}/json/`)
+        .then((res) => res.json())
+        .then((data) => {
+          const label = data?.city && data?.country_name ? `${data.city}, ${data.country_name}` : ip
+          setIpLocations((prev) => ({ ...prev, [ip]: label }))
+        })
+        .catch(() => {
+          setIpLocations((prev) => ({ ...prev, [ip]: ip }))
+        })
+    })
+  }, [sessions])
 
   const fetchSessions = useCallback(async () => {
     setLoading(true)
@@ -122,7 +141,7 @@ export default function AccountSessions() {
                       )}
                     </div>
                     <p className="mt-0.5 text-xs text-slate-500">
-                      {s.ipAddress || 'Unknown IP'} &middot; Last active {s.lastUsedAt ? dayjs(s.lastUsedAt).fromNow() : '—'}
+                      {(s.ipAddress && ipLocations[s.ipAddress]) || s.ipAddress || 'Unknown IP'} &middot; Last active {s.lastUsedAt ? dayjs(s.lastUsedAt).fromNow() : '—'}
                     </p>
                   </div>
                   <button

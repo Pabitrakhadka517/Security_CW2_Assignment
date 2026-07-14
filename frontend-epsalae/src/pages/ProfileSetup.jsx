@@ -1,5 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import toast from 'react-hot-toast'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { z } from 'zod'
 import { Camera, CheckCircle2, Loader2, Upload, User, Phone, Mail, MapPin } from 'lucide-react'
 import { profileEndpoints } from '@/components/api/userapi'
 
@@ -85,19 +88,49 @@ const NEPAL_DISTRICTS = {
 }
 
 const inputCls = 'w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 px-4 text-sm text-slate-900 outline-none transition focus:border-[#1A3C8A] focus:bg-white focus:ring-4 focus:ring-[#1A3C8A]/10'
+const errorInputCls = inputCls + ' border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-100'
 const selectCls = inputCls + ' cursor-pointer'
 const labelCls = 'block mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400'
+const errorTextCls = 'mt-1.5 text-xs text-red-600'
+
+const profileSchema = z.object({
+  name: z.string()
+    .min(2, 'Name must be at least 2 characters')
+    .max(50, 'Name too long'),
+  email: z.string()
+    .email('Please enter a valid email address'),
+  phone: z.string()
+    .regex(/^[0-9]{10}$/, 'Phone must be 10 digits')
+    .optional()
+    .or(z.literal('')),
+  addressLine: z.string().optional().or(z.literal('')),
+  district: z.string().optional().or(z.literal('')),
+  city: z.string().optional().or(z.literal('')),
+  postalCode: z.string().optional().or(z.literal('')),
+})
+
+const emptyFormValues = {
+  name: '', phone: '', email: '',
+  addressLine: '', district: '', city: '', postalCode: '',
+}
 
 export default function ProfileSetup() {
-  const [loading, setLoading] = useState(false)
   const [avatarUploading, setAvatarUploading] = useState(false)
-  const [form, setForm] = useState({
-    name: '', phone: '', email: '',
-    addressLine: '', district: '', city: '', postalCode: '',
-  })
   const [avatarUrl, setAvatarUrl] = useState('')
   const [avatarPreview, setAvatarPreview] = useState('')
   const [uploadError, setUploadError] = useState('')
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    formState: { errors, isSubmitting, isDirty },
+  } = useForm({
+    resolver: zodResolver(profileSchema),
+    defaultValues: emptyFormValues,
+  })
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -105,7 +138,7 @@ export default function ProfileSetup() {
         const res = await profileEndpoints.me()
         const user = res.data?.data || res.data
         if (user) {
-          setForm({
+          reset({
             name:        user.name || '',
             phone:       user.phone || '',
             email:       user.email || '',
@@ -120,31 +153,27 @@ export default function ProfileSetup() {
       } catch { /* ignore */ }
     }
     fetchProfile()
-  }, [])
+  }, [reset])
 
-  const handle = (k, v) => setForm(s => ({ ...s, [k]: v }))
-
-  const submit = async () => {
-    setLoading(true)
+  const onSubmit = async (values) => {
     try {
       await profileEndpoints.update({
-        name:  form.name,
-        email: form.email,
-        phone: form.phone,
+        name:  values.name,
+        email: values.email,
+        phone: values.phone,
         address: {
-          addressLine: form.addressLine,
-          district:    form.district,
-          city:        form.city,
-          postalCode:  form.postalCode,
+          addressLine: values.addressLine,
+          district:    values.district,
+          city:        values.city,
+          postalCode:  values.postalCode,
           country:     'Nepal',
         },
         avatarUrl,
       })
       toast.success('Profile updated')
+      reset(values)
     } catch (err) {
       toast.error(err.response?.data?.message || 'Update failed')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -171,15 +200,19 @@ export default function ProfileSetup() {
     }
   }
 
-  const initials = useMemo(() => {
-    const parts = form.name.trim().split(' ').filter(Boolean)
-    return (parts[0]?.[0] || 'U') + (parts[1]?.[0] || '')
-  }, [form.name])
+  const name = watch('name')
+  const district = watch('district')
+  const districtField = register('district')
 
-  const cities = form.district ? (NEPAL_DISTRICTS[form.district] || []) : []
+  const initials = useMemo(() => {
+    const parts = (name || '').trim().split(' ').filter(Boolean)
+    return (parts[0]?.[0] || 'U') + (parts[1]?.[0] || '')
+  }, [name])
+
+  const cities = district ? (NEPAL_DISTRICTS[district] || []) : []
 
   return (
-    <div className="space-y-6">
+    <form className="space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>
 
       {/* ── Personal Information ──────────────────────────────────── */}
       <div className="overflow-hidden rounded-[2rem] bg-white shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)]">
@@ -215,16 +248,19 @@ export default function ProfileSetup() {
           {/* Fields */}
           <div className="grid grid-cols-1 gap-4 p-6 sm:grid-cols-2">
             <div>
-              <label className={labelCls}><span className="flex items-center gap-1"><User className="h-3 w-3" /> Full Name</span></label>
-              <input value={form.name} onChange={e => handle('name', e.target.value)} placeholder="Jane Doe" className={inputCls} />
+              <label className={labelCls} htmlFor="name"><span className="flex items-center gap-1"><User className="h-3 w-3" /> Full Name</span></label>
+              <input id="name" {...register('name')} placeholder="Jane Doe" aria-invalid={!!errors.name} className={errors.name ? errorInputCls : inputCls} />
+              {errors.name && <p className={errorTextCls}>{errors.name.message}</p>}
             </div>
             <div>
-              <label className={labelCls}><span className="flex items-center gap-1"><Phone className="h-3 w-3" /> Phone</span></label>
-              <input value={form.phone} onChange={e => handle('phone', e.target.value)} placeholder="+977 98XXXXXXXX" className={inputCls} />
+              <label className={labelCls} htmlFor="phone"><span className="flex items-center gap-1"><Phone className="h-3 w-3" /> Phone</span></label>
+              <input id="phone" {...register('phone')} placeholder="98XXXXXXXX" aria-invalid={!!errors.phone} className={errors.phone ? errorInputCls : inputCls} />
+              {errors.phone && <p className={errorTextCls}>{errors.phone.message}</p>}
             </div>
             <div className="sm:col-span-2">
-              <label className={labelCls}><span className="flex items-center gap-1"><Mail className="h-3 w-3" /> Email</span></label>
-              <input type="email" value={form.email} onChange={e => handle('email', e.target.value)} placeholder="you@example.com" className={inputCls} />
+              <label className={labelCls} htmlFor="email"><span className="flex items-center gap-1"><Mail className="h-3 w-3" /> Email</span></label>
+              <input id="email" type="email" {...register('email')} placeholder="you@example.com" aria-invalid={!!errors.email} className={errors.email ? errorInputCls : inputCls} />
+              {errors.email && <p className={errorTextCls}>{errors.email.message}</p>}
             </div>
           </div>
         </div>
@@ -242,8 +278,7 @@ export default function ProfileSetup() {
           <div>
             <label className={labelCls}><span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> Street / House No / Tole</span></label>
             <textarea
-              value={form.addressLine}
-              onChange={e => handle('addressLine', e.target.value)}
+              {...register('addressLine')}
               placeholder="House no., Tole, Ward no., locality…"
               rows={2}
               className={inputCls + ' resize-none'}
@@ -255,8 +290,8 @@ export default function ProfileSetup() {
             <div>
               <label className={labelCls}>District</label>
               <select
-                value={form.district}
-                onChange={e => { handle('district', e.target.value); handle('city', '') }}
+                {...districtField}
+                onChange={(e) => { districtField.onChange(e); setValue('city', '', { shouldDirty: true }) }}
                 className={selectCls}
               >
                 <option value="">Select District</option>
@@ -270,12 +305,11 @@ export default function ProfileSetup() {
             <div>
               <label className={labelCls}>City / Municipality</label>
               <select
-                value={form.city}
-                onChange={e => handle('city', e.target.value)}
-                disabled={!form.district}
-                className={selectCls + (!form.district ? ' opacity-50 cursor-not-allowed' : '')}
+                {...register('city')}
+                disabled={!district}
+                className={selectCls + (!district ? ' opacity-50 cursor-not-allowed' : '')}
               >
-                <option value="">{form.district ? 'Select City' : 'Select district first'}</option>
+                <option value="">{district ? 'Select City' : 'Select district first'}</option>
                 {cities.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
             </div>
@@ -284,8 +318,7 @@ export default function ProfileSetup() {
             <div>
               <label className={labelCls}>Postal Code</label>
               <input
-                value={form.postalCode}
-                onChange={e => handle('postalCode', e.target.value)}
+                {...register('postalCode')}
                 placeholder="44600"
                 className={inputCls}
               />
@@ -303,15 +336,15 @@ export default function ProfileSetup() {
       {/* ── Save ─────────────────────────────────────────────────── */}
       <div className="flex justify-end gap-3 pb-2">
         <button
-          onClick={submit}
-          disabled={loading || avatarUploading}
+          type="submit"
+          disabled={!isDirty || isSubmitting || avatarUploading}
           className="inline-flex items-center gap-2 rounded-xl bg-brand hover:bg-brand-hover px-6 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_-24px_rgba(26,60,138,0.55)] transition hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-          {loading ? 'Saving…' : 'Save Profile'}
+          {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+          {isSubmitting ? 'Saving…' : 'Save changes'}
         </button>
       </div>
 
-    </div>
+    </form>
   )
 }

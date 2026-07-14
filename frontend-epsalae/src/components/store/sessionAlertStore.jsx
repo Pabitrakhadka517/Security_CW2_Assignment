@@ -9,5 +9,6 @@ import { create } from 'zustand';
  */
 export const useSessionAlertStore = create((set) => ({
   deviceMismatch: false,
-  setDeviceMismatch: (value) => set({ deviceMismatch: value }),
+  deviceMismatchAt: null,
+  setDeviceMismatch: (value) => set({ deviceMismatch: value, deviceMismatchAt: value ? Date.now() : null }),
 }));

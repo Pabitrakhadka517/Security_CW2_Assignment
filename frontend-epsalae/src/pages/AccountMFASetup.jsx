@@ -2,8 +2,43 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
-import { ShieldCheck, ShieldAlert, Loader2, KeyRound, Copy, Check } from 'lucide-react'
+import { ShieldCheck, ShieldAlert, AlertTriangle, Loader2, KeyRound, Copy, Check, Download } from 'lucide-react'
 import { mfaEndpoints } from '@/components/api/userapi'
+
+const SETUP_STEPS = [
+  { id: 1, label: 'Set up' },
+  { id: 2, label: 'Verify' },
+  { id: 3, label: 'Backup codes' },
+]
+const STEP_NUMBER_OF = { status: 1, qr: 2, 'backup-codes': 3 }
+
+function SetupStepIndicator({ currentStep }) {
+  return (
+    <div className="flex items-center gap-0 mb-8">
+      {SETUP_STEPS.map((s, i) => (
+        <div key={s.id} className="flex items-center">
+          <div className="flex flex-col items-center gap-1">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+              currentStep > s.id
+                ? 'bg-green-600 text-white'
+                : currentStep === s.id
+                  ? 'bg-green-800 text-white'
+                  : 'bg-gray-100 text-gray-400'
+            }`}>
+              {currentStep > s.id ? <Check className="w-4 h-4" /> : s.id}
+            </div>
+            <span className={`text-xs font-medium ${currentStep === s.id ? 'text-green-800' : 'text-gray-400'}`}>
+              {s.label}
+            </span>
+          </div>
+          {i < SETUP_STEPS.length - 1 && (
+            <div className={`h-0.5 w-16 mx-2 mb-4 transition-colors ${currentStep > s.id ? 'bg-green-600' : 'bg-gray-200'}`} />
+          )}
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export default function AccountMFASetup() {
   const navigate = useNavigate()
@@ -15,6 +50,7 @@ export default function AccountMFASetup() {
   const [backupCodes, setBackupCodes] = useState([])
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [hasConfirmedBackup, setHasConfirmedBackup] = useState(false)
 
   const {
     register,
@@ -97,6 +133,10 @@ export default function AccountMFASetup() {
       </div>
 
       <div className="mt-8 max-w-md">
+        {(!mfaEnabled || step !== 'status') && (
+          <SetupStepIndicator currentStep={STEP_NUMBER_OF[step]} />
+        )}
+
         {step === 'status' && (
           mfaEnabled ? (
             <div className="space-y-4">
@@ -202,6 +242,40 @@ export default function AccountMFASetup() {
               <span>Save these codes somewhere safe. Each can only be used once.</span>
             </div>
 
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText(backupCodes.join('\n'))
+                  toast.success('Codes copied to clipboard')
+                }}
+                className="flex items-center gap-2 text-sm border border-slate-200 rounded-xl px-4 py-2 text-slate-700 hover:bg-slate-50 transition"
+              >
+                <Copy className="w-4 h-4" />
+                Copy all codes
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  const content = 'Epasaley — MFA Backup Codes\n\n' +
+                    backupCodes.join('\n') +
+                    '\n\nSave these somewhere safe. Each code can only be used once.'
+                  const blob = new Blob([content], { type: 'text/plain' })
+                  const url = URL.createObjectURL(blob)
+                  const a = document.createElement('a')
+                  a.href = url
+                  a.download = 'epasaley-backup-codes.txt'
+                  a.click()
+                  URL.revokeObjectURL(url)
+                }}
+                className="flex items-center gap-2 text-sm border border-slate-200 rounded-xl px-4 py-2 text-slate-700 hover:bg-slate-50 transition"
+              >
+                <Download className="w-4 h-4" />
+                Download codes
+              </button>
+            </div>
+
             <div className="grid grid-cols-2 gap-2">
               {backupCodes.map((code) => (
                 <div key={code} className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
@@ -211,11 +285,30 @@ export default function AccountMFASetup() {
               ))}
             </div>
 
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+              <p className="text-sm text-amber-800 font-medium mb-3 flex items-center gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                These codes cannot be shown again
+              </p>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasConfirmedBackup}
+                  onChange={(e) => setHasConfirmedBackup(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded text-green-700 border-amber-300 focus:ring-green-600"
+                />
+                <span className="text-sm text-amber-700">
+                  I have saved my backup codes in a safe place. I understand they cannot be recovered if lost.
+                </span>
+              </label>
+            </div>
+
             <button
+              disabled={!hasConfirmedBackup}
               onClick={() => navigate('/account/security')}
-              className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-sm transition"
+              className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              I have saved my codes
+              Finish setup
             </button>
           </div>
         )}
