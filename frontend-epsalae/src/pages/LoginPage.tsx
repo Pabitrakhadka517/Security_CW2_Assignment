@@ -48,6 +48,13 @@ const LoginPage: React.FC = () => {
   const [mfaError, setMfaError]               = useState('');
   const [mfaAttemptsUsed, setMfaAttemptsUsed] = useState(0);
 
+  const [capsLockOn, setCapsLockOn] = useState(false);
+  const handlePasswordKeyEvent = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (typeof e.getModifierState === 'function') {
+      setCapsLockOn(e.getModifierState('CapsLock'));
+    }
+  };
+
   const reason = new URLSearchParams(location.search).get('reason');
   const showExpiredBanner = reason === 'expired';
 
@@ -243,7 +250,7 @@ const LoginPage: React.FC = () => {
           </Link>
 
           {mfaPendingToken ? (
-            <>
+            <div className="animate-fade-in">
               <h1 className="text-2xl font-bold text-gray-900 mb-1">Enter your authentication code</h1>
               <p className="text-gray-500 text-sm mb-8">
                 {useBackupCode
@@ -252,7 +259,7 @@ const LoginPage: React.FC = () => {
               </p>
 
               {mfaError && (
-                <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-5 text-sm">
+                <div id="mfa-error" role="alert" aria-live="assertive" className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-5 text-sm animate-shake">
                   <AlertCircle size={15} className="shrink-0" />
                   <span>{mfaError}</span>
                 </div>
@@ -264,11 +271,13 @@ const LoginPage: React.FC = () => {
                     {useBackupCode ? 'Backup code' : 'Authentication code'}
                   </label>
                   <div className="relative">
-                    <ShieldCheck size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    <ShieldCheck size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" aria-hidden="true" />
                     <input
                       id="mfaCode" type="text" inputMode={useBackupCode ? 'text' : 'numeric'}
                       maxLength={useBackupCode ? undefined : 6} autoFocus autoComplete="one-time-code"
                       value={mfaCode} disabled={loading}
+                      aria-invalid={!!mfaError}
+                      aria-describedby={mfaError ? 'mfa-error' : undefined}
                       onChange={e => { setMfaCode(e.target.value); setMfaError(''); }}
                       placeholder={useBackupCode ? 'Backup code' : '000000'}
                       className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 text-sm text-center tracking-[0.4em] font-mono transition focus:outline-none focus:ring-2 focus:ring-[#1A3C8A]/10 focus:border-[#1A3C8A]/40 focus:bg-white disabled:opacity-50"
@@ -297,28 +306,28 @@ const LoginPage: React.FC = () => {
                   ← Back
                 </button>
               </form>
-            </>
+            </div>
           ) : (
-            <>
+            <div className="animate-fade-in">
               <h1 className="text-2xl font-bold text-gray-900 mb-1">Sign in</h1>
               <p className="text-gray-500 text-sm mb-8">Welcome back! Enter your credentials to continue.</p>
 
               {showExpiredBanner && (
-                <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl px-4 py-3 mb-5 text-sm">
+                <div role="status" aria-live="polite" className="flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl px-4 py-3 mb-5 text-sm">
                   <AlertCircle size={15} className="shrink-0" />
                   <span>Your password has expired. Please log in and update your password.</span>
                 </div>
               )}
 
               {!showExpiredBanner && reasonMessage && (
-                <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl px-4 py-3 mb-5 text-sm">
+                <div role="status" aria-live="polite" className="flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl px-4 py-3 mb-5 text-sm">
                   <AlertCircle size={15} className="shrink-0" />
                   <span>{reasonMessage}</span>
                 </div>
               )}
 
               {error && (
-                <div className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-5 text-sm">
+                <div role="alert" aria-live="assertive" className="flex items-center gap-3 bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-5 text-sm animate-shake">
                   <AlertCircle size={15} className="shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -329,11 +338,13 @@ const LoginPage: React.FC = () => {
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
                   <div className="relative">
-                    <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" aria-hidden="true" />
                     <input
-                      id="email" type="email" value={email} disabled={loading}
+                      id="email" type="email" value={email} disabled={loading} autoFocus
                       onChange={e => { setEmail(e.target.value); setFieldErrors(p => ({ ...p, email: '' })); setError(''); }}
                       placeholder="you@example.com" autoComplete="email"
+                      aria-invalid={!!fieldErrors.email}
+                      aria-describedby={fieldErrors.email ? 'email-error' : undefined}
                       className={`w-full pl-10 pr-4 py-2.5 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-400 text-sm transition focus:outline-none focus:ring-2 focus:bg-white disabled:opacity-50 ${
                         fieldErrors.email
                           ? 'border-red-300 focus:ring-red-100 focus:border-red-400'
@@ -341,7 +352,7 @@ const LoginPage: React.FC = () => {
                       }`}
                     />
                   </div>
-                  {fieldErrors.email && <p className="mt-1.5 text-xs text-red-500">{fieldErrors.email}</p>}
+                  {fieldErrors.email && <p id="email-error" role="alert" className="mt-1.5 text-xs text-red-500">{fieldErrors.email}</p>}
                 </div>
 
                 {/* Password */}
@@ -353,11 +364,14 @@ const LoginPage: React.FC = () => {
                     </Link>
                   </div>
                   <div className="relative">
-                    <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" aria-hidden="true" />
                     <input
                       id="password" type={showPassword ? 'text' : 'password'} value={password} disabled={loading}
                       onChange={e => { setPassword(e.target.value); setFieldErrors(p => ({ ...p, password: '' })); setError(''); }}
+                      onKeyDown={handlePasswordKeyEvent} onKeyUp={handlePasswordKeyEvent}
                       placeholder="Your password" autoComplete="current-password"
+                      aria-invalid={!!fieldErrors.password}
+                      aria-describedby={fieldErrors.password ? 'password-error' : capsLockOn ? 'password-capslock' : undefined}
                       className={`w-full pl-10 pr-11 py-2.5 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-400 text-sm transition focus:outline-none focus:ring-2 focus:bg-white disabled:opacity-50 ${
                         fieldErrors.password
                           ? 'border-red-300 focus:ring-red-100 focus:border-red-400'
@@ -365,11 +379,15 @@ const LoginPage: React.FC = () => {
                       }`}
                     />
                     <button type="button" onClick={() => setShowPassword(v => !v)} disabled={loading}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
                       className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
                       {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                     </button>
                   </div>
-                  {fieldErrors.password && <p className="mt-1.5 text-xs text-red-500">{fieldErrors.password}</p>}
+                  {fieldErrors.password && <p id="password-error" role="alert" className="mt-1.5 text-xs text-red-500">{fieldErrors.password}</p>}
+                  {!fieldErrors.password && capsLockOn && (
+                    <p id="password-capslock" className="mt-1.5 text-xs text-amber-600 animate-fade-in">Caps Lock is on</p>
+                  )}
                 </div>
 
                 {loginAttempts > 0 && loginAttempts < MAX_LOGIN_ATTEMPTS && (
@@ -433,7 +451,7 @@ const LoginPage: React.FC = () => {
                   ← Continue shopping without signing in
                 </Link>
               </p>
-            </>
+            </div>
           )}
         </div>
       </div>

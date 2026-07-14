@@ -15,7 +15,7 @@ export default function PasswordStrengthMeter({ password }) {
   const suggestions = result.feedback?.suggestions || []
 
   return (
-    <div className="mt-2">
+    <div className="mt-2" role="meter" aria-valuenow={score} aria-valuemin={0} aria-valuemax={4} aria-label="Password strength" aria-valuetext={`${LABELS[score]} password`}>
       <div className="grid grid-cols-4 gap-1.5">
         {[0, 1, 2, 3].map((i) => (
           <div
