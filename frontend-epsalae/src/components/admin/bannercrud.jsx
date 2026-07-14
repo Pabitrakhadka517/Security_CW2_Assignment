@@ -7,9 +7,11 @@ import { getImageUrl } from '@/config';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import Modal from '../ui/Modal';
 import { TableSkeleton } from '../ui/Skeleton';
+import FetchState from '../ui/FetchState';
+import StatusPill from '../ui/StatusPill';
 
 export default function BannerCRUD() {
-  const { banners, loading, fetchBanners, addBanner, updateBanner, deleteBanner } = useBannerStore();
+  const { banners, loading, error, fetchBanners, addBanner, updateBanner, deleteBanner } = useBannerStore();
 
   const [showModal, setShowModal] = useState(false);
   const [editingBanner, setEditingBanner] = useState(null);
@@ -159,17 +161,26 @@ export default function BannerCRUD() {
       </div>
 
       {/* Banners Grid or Empty State */}
-      {loading ? (
-        <TableSkeleton rows={5} cols={4} />
-      ) : banners.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm text-center py-16">
-          <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-xl">
-            <Upload className="w-8 h-8 text-gray-400" />
-          </div>
-          <p className="font-semibold text-gray-600">No banners yet</p>
-          <p className="text-sm text-gray-400 mt-1">Create your first promotional banner!</p>
-        </div>
-      ) : (
+      <FetchState
+        isLoading={loading}
+        isError={!!error && banners.length === 0}
+        isEmpty={!loading && !error && banners.length === 0}
+        loading={<TableSkeleton rows={5} cols={4} />}
+        errorTitle="Couldn't load banners"
+        errorDescription="Something went wrong. Check your connection and try again."
+        onRetry={fetchBanners}
+        emptyIcon={Upload}
+        emptyTitle="No banners yet"
+        emptyDescription="Create your first promotional banner!"
+        emptyAction={
+          <button
+            onClick={() => setShowModal(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-xl bg-[#FF6B35] hover:bg-orange-500 transition"
+          >
+            <Plus className="w-4 h-4" /> Create first banner
+          </button>
+        }
+      >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {banners.map((banner) => (
             <div key={banner._id || banner.id}
@@ -182,11 +193,7 @@ export default function BannerCRUD() {
                   className="object-cover w-full h-full"
                 />
                 <div className="absolute top-3 right-3">
-                  <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full flex items-center gap-1
-                    ${banner.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
-                    {banner.isActive ? <CheckCircle className="w-3 h-3" /> : null}
-                    {banner.isActive ? 'Active' : 'Inactive'}
-                  </span>
+                  <StatusPill isActive={banner.isActive} />
                 </div>
               </div>
 
@@ -216,7 +223,7 @@ export default function BannerCRUD() {
             </div>
           ))}
         </div>
-      )}
+      </FetchState>
 
       {/* Modal */}
       <Modal

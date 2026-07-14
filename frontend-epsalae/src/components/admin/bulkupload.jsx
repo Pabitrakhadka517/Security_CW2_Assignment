@@ -24,6 +24,7 @@ export default function BulkUpload() {
   const [zipFile, setZipFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [uploadPhase, setUploadPhase] = useState('idle'); // 'idle' | 'uploading' | 'processing' | 'done'
   const [report, setReport] = useState(null);
   const [requestError, setRequestError] = useState('');
   const [dragOver, setDragOver] = useState(false);
@@ -75,13 +76,18 @@ export default function BulkUpload() {
   const handleUpload = async () => {
     if (!dataFile || uploading) return;
     setUploading(true);
+    setUploadPhase('uploading');
     setProgress(0);
     setReport(null);
     setRequestError('');
     try {
-      const res = await bulkApi.upload(entity, dataFile, zipFile, setProgress);
+      const res = await bulkApi.upload(entity, dataFile, zipFile, (pct) => {
+        setProgress(pct);
+        if (pct >= 100) setUploadPhase('processing');
+      });
       const data = res.data?.data || null;
       setReport(data);
+      setUploadPhase('done');
       if (data?.summary?.failed === 0) toast.success(res.data?.message || 'Upload complete');
       else toast(`Completed with ${data?.summary?.failed ?? '?'} failed rows — see report`, { icon: '⚠️' });
       refetchEntity();
@@ -89,6 +95,7 @@ export default function BulkUpload() {
       const msg = err?.response?.data?.message || 'Upload failed. Please check the file and try again.';
       setRequestError(msg);
       toast.error(msg);
+      setUploadPhase('idle');
     } finally {
       setUploading(false);
     }
@@ -191,18 +198,32 @@ export default function BulkUpload() {
       </div>
 
       {/* Submit + progress */}
-      <div className="mt-5 flex items-center gap-4">
+      <div className="mt-5 flex items-center gap-4 flex-wrap">
         <button
           onClick={handleUpload}
           disabled={!dataFile || uploading}
           className="inline-flex items-center gap-2 px-6 py-3 font-bold text-white bg-[#1A3C8A] rounded-xl hover:bg-[#112960] disabled:opacity-40 disabled:cursor-not-allowed transition"
         >
           {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
-          {uploading ? `Uploading… ${progress}%` : 'Upload'}
+          Upload
         </button>
-        {uploading && (
-          <div className="flex-1 max-w-xs h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div className="h-full bg-[#1A3C8A] transition-all" style={{ width: `${progress}%` }} />
+
+        {uploadPhase === 'uploading' && (
+          <div className="flex-1 min-w-[180px] max-w-xs">
+            <div className="flex justify-between text-xs text-gray-500 mb-1">
+              <span>Uploading file...</span>
+              <span>{progress}%</span>
+            </div>
+            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+              <div className="h-full bg-[#1A3C8A] rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+            </div>
+          </div>
+        )}
+
+        {uploadPhase === 'processing' && (
+          <div className="flex items-center gap-3 text-sm text-gray-600">
+            <span className="w-4 h-4 rounded-full border-2 border-[#1A3C8A] border-t-transparent animate-spin" />
+            Processing your file... this may take a moment
           </div>
         )}
       </div>

@@ -16,6 +16,7 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 import Modal from '../ui/Modal';
 import FetchState from '../ui/FetchState';
 import { TableSkeleton } from '../ui/Skeleton';
+import StatusPill from '../ui/StatusPill';
 
 const SALE_TYPES = [
   { value: 'percentage', label: 'Percentage Off', icon: Percent },
@@ -328,7 +329,7 @@ export default function SaleProductsCrud() {
               <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-gray-50">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${activeCategory.is_active ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+                    <StatusPill isActive={activeCategory.is_active} />
                     <span className="font-semibold text-gray-900">{activeCategory.title}</span>
                     {activeCategory.badge_label && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
@@ -677,7 +678,7 @@ export default function SaleProductsCrud() {
 
               {addForm.saleType === 'bxgy' && (
                 <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-1.5">Buy Qty</label>
                       <input type="number" min="1" value={addForm.buy_qty}

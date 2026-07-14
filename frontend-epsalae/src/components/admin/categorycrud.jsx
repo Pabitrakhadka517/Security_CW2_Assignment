@@ -5,16 +5,18 @@ import { useProductStore } from '../store/productstore';
 import toast from 'react-hot-toast';
 import {
   Plus, Edit2, Trash2, Search, Upload, X, Loader2,
-  Tag, Image as ImageIcon, Eye, EyeOff
+  Tag, Image as ImageIcon, Eye
 } from 'lucide-react';
 import { openCloudinaryWidget } from '../../utils/cloudinary';
 import { TableSkeleton } from '../ui/Skeleton';
 import { getImageUrl } from '@/config';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import Modal from '../ui/Modal';
+import FetchState from '../ui/FetchState';
+import StatusPill from '../ui/StatusPill';
 
 export default function CategoryCrud() {
-  const { categories, loading, fetchCategories, addCategory, updateCategory, deleteCategory } = useCategoryStore();
+  const { categories, loading, error, fetchCategories, addCategory, updateCategory, deleteCategory } = useCategoryStore();
   const { products, fetchProducts, deleteProduct } = useProductStore();
 
   const [search, setSearch] = useState('');
@@ -230,15 +232,30 @@ export default function CategoryCrud() {
           </div>
         </div>
 
-        {loading ? (
-          <TableSkeleton rows={6} cols={4} />
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-16">
-            <Tag className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="font-semibold text-gray-600">No categories found</p>
-            <p className="text-sm text-gray-400 mt-1">Create your first category to organize products</p>
-          </div>
-        ) : (
+        <FetchState
+          isLoading={loading}
+          isError={!!error && categories.length === 0}
+          isEmpty={!loading && !error && filtered.length === 0}
+          loading={<TableSkeleton rows={6} cols={4} />}
+          errorTitle="Couldn't load categories"
+          errorDescription="Something went wrong. Check your connection and try again."
+          onRetry={fetchCategories}
+          emptyIcon={Tag}
+          emptyTitle="No categories found"
+          emptyDescription="Create your first category to organize products"
+          emptyAction={
+            <button
+              onClick={() => {
+                setEditingCat(null);
+                setForm({ name: '', slug: '', description: '', imageUrl: null, isActive: true });
+                setShowModal(true);
+              }}
+              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-xl bg-[#FF6B35] hover:bg-orange-500 transition"
+            >
+              <Plus className="w-4 h-4" /> Create first category
+            </button>
+          }
+        >
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -288,15 +305,7 @@ export default function CategoryCrud() {
                       })()}
                     </td>
                     <td className="px-5 py-4 text-center">
-                      {cat.isActive ? (
-                        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 inline-flex items-center gap-1">
-                          <Eye className="w-3 h-3" /> Active
-                        </span>
-                      ) : (
-                        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-500 inline-flex items-center gap-1">
-                          <EyeOff className="w-3 h-3" /> Inactive
-                        </span>
-                      )}
+                      <StatusPill isActive={cat.isActive} />
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex justify-center gap-2">
@@ -313,7 +322,7 @@ export default function CategoryCrud() {
               </tbody>
             </table>
           </div>
-        )}
+        </FetchState>
       </div>
 
       {/* Modal */}

@@ -12,6 +12,7 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 import Modal from '../ui/Modal';
 import FetchState from '../ui/FetchState';
 import { TableSkeleton } from '../ui/Skeleton';
+import StatusPill from '../ui/StatusPill';
 
 const ENDPOINT = '/sale-categories';
 
@@ -62,6 +63,7 @@ export default function SaleCrud() {
   const [isError, setIsError] = useState(false);
   const [pendingDelete, setPendingDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [noProductsConfirm, setNoProductsConfirm] = useState(false);
 
   // Close product dropdown on outside click
   useEffect(() => {
@@ -136,14 +138,13 @@ export default function SaleCrud() {
     // An active sale with no products renders an empty section on the
     // storefront — make the admin confirm that's really intended.
     if (form.products.length === 0 && form.is_active !== false) {
-      const ok = window.confirm(
-        'This sale has NO products attached.\n\n' +
-        'It will appear on the homepage and /sales with an empty product grid. ' +
-        'Add products from the list below (the picker now shows your full catalogue), ' +
-        'or press OK to save it without products anyway.'
-      );
-      if (!ok) return;
+      setNoProductsConfirm(true);
+      return;
     }
+    await doSave();
+  };
+
+  const doSave = async () => {
     setSaving(true);
     try {
       const payload = {
@@ -254,9 +255,7 @@ export default function SaleCrud() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h3 className="font-semibold text-gray-900">{s.title}</h3>
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${s.is_active ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
-                      {s.is_active ? 'Active' : 'Inactive'}
-                    </span>
+                    <StatusPill isActive={s.is_active} />
                   </div>
                   <div className="flex items-center gap-2 flex-wrap mt-0.5">
                     <p className="text-xs text-gray-400 truncate">/{s.slug} · {s.products?.length || 0} products
@@ -336,10 +335,21 @@ export default function SaleCrud() {
         onCancel={() => setPendingDelete(null)}
       />
 
+      <ConfirmDialog
+        isOpen={noProductsConfirm}
+        title="Save sale with no products?"
+        description="This sale has no products attached. It will appear on the homepage and /sales with an empty product grid. Add products from the list below, or save it without products anyway."
+        confirmLabel="Save anyway"
+        variant="warning"
+        isLoading={saving}
+        onConfirm={async () => { await doSave(); setNoProductsConfirm(false); }}
+        onCancel={() => setNoProductsConfirm(false)}
+      />
+
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editing ? 'Edit Sale Category' : 'New Sale Category'} size="lg">
             <div className="space-y-5">
               {/* Basic info */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <SaleInput label="Title" value={form.title} onChange={v => set('title', v)} placeholder="Winter Sale" error={errors.title} required />
                 <SaleInput label="Slug" value={form.slug} onChange={v => set('slug', v)} placeholder="winter-sale" error={errors.slug} required />
               </div>
@@ -376,13 +386,13 @@ export default function SaleCrud() {
                   </div>
                 )}
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <SaleInput label="Start Date" type="datetime-local" value={form.start_date} onChange={v => set('start_date', v)} error={errors.start_date} />
                 <SaleInput label="End Date" type="datetime-local" value={form.end_date} onChange={v => set('end_date', v)} error={errors.end_date} />
               </div>
 
               {/* Campaign promotion controls */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <SaleInput label="Priority" type="number" value={form.priority} onChange={v => set('priority', v)} placeholder="0 = lowest" />
                 <SaleInput label="CTA Button Label" value={form.cta_label} onChange={v => set('cta_label', v)} placeholder="Shop the Sale" />
               </div>
@@ -403,7 +413,7 @@ export default function SaleCrud() {
                   </select>
                   <p className="mt-1 text-xs text-gray-400">Tag this sale to a season so the Seasonal Sales manager can activate it automatically.</p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <SaleInput label="Badge Label" value={form.badge_label} onChange={v => set('badge_label', v)} placeholder="e.g. DASHAIN OFFER" />
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Badge Color</label>

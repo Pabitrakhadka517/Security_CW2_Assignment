@@ -10,6 +10,7 @@ import ConfirmDialog from '../ui/ConfirmDialog';
 import Modal from '../ui/Modal';
 import FetchState from '../ui/FetchState';
 import { TableSkeleton } from '../ui/Skeleton';
+import StatusPill from '../ui/StatusPill';
 
 const APPLY_ON_OPTS = [
   { value: 'cart', label: 'Entire Cart' },
@@ -244,9 +245,7 @@ export default function PromoCodeCRUD() {
                       <p className="text-[11px] text-gray-400 mt-0.5 flex items-center gap-1"><Users className="w-3 h-3" /> {perUserLabel(c)}</p>
                     </td>
                     <td className="px-4 py-3.5">
-                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${c.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-500'}`}>
-                        {c.isActive ? 'Active' : 'Inactive'}
-                      </span>
+                      <StatusPill isActive={c.isActive} />
                     </td>
                     <td className="px-4 py-3.5">
                       <div className="flex items-center gap-1">
@@ -277,7 +276,7 @@ export default function PromoCodeCRUD() {
       {/* Modal */}
       <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={editing ? 'Edit Coupon' : 'New Coupon'}>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Code *" error={errors.code}>
                   <input value={form.code} onChange={e => set('code', e.target.value.toUpperCase())} placeholder="SAVE20" className={inputCls(errors.code)} />
                 </Field>
@@ -295,7 +294,7 @@ export default function PromoCodeCRUD() {
                 <input value={form.description} onChange={e => set('description', e.target.value)} placeholder="Optional note" className={inputCls()} />
               </Field>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Discount Type">
                   <select value={form.discount_type} onChange={e => set('discount_type', e.target.value)} className={inputCls()}>
                     {TYPE_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
@@ -409,7 +408,7 @@ export default function PromoCodeCRUD() {
                 </Field>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Valid From *" error={errors.validFrom}>
                   <input type="date" value={form.validFrom} onChange={e => set('validFrom', e.target.value)} className={inputCls(errors.validFrom)} />
                 </Field>
@@ -418,7 +417,7 @@ export default function PromoCodeCRUD() {
                 </Field>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <Field label="Global Usage Limit">
                   <input type="number" min="1" value={form.usage_limit} onChange={e => set('usage_limit', e.target.value)} placeholder="Unlimited" className={inputCls()} />
                 </Field>

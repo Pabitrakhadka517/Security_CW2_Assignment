@@ -6,12 +6,13 @@ import { useCategoryStore } from '../store/categorystore';
 import toast from 'react-hot-toast';
 import {
   Plus, Edit2, Trash2, Upload, Loader2, Search, X,
-  Package, CheckCircle, AlertCircle, Eye, EyeOff
+  Package, CheckCircle, AlertCircle, Eye
 } from 'lucide-react';
 import { getImageUrl } from '@/config';
 import { TableSkeleton } from '../ui/Skeleton';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import Modal from '../ui/Modal';
+import StatusPill from '../ui/StatusPill';
 
 export default function ProductCrud() {
   const { products, loading, fetchProducts, fetchAllProducts, addProduct, updateProduct, deleteProduct } = useProductStore();
@@ -307,9 +308,13 @@ export default function ProductCrud() {
                     </td>
                     <td className="px-5 py-4 text-center">
                       <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
-                        product.stock > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-red-100 text-red-700'
+                        product.stock === 0 ? 'bg-red-100 text-red-700'
+                        : product.stock <= 10 ? 'bg-amber-100 text-amber-700'
+                        : 'bg-emerald-100 text-emerald-700'
                       }`}>
-                        {product.stock}
+                        {product.stock === 0 ? 'Out of stock'
+                          : product.stock <= 10 ? `Low: ${product.stock}`
+                          : `In stock: ${product.stock}`}
                       </span>
                     </td>
                     <td className="px-5 py-4 text-center">
@@ -320,15 +325,7 @@ export default function ProductCrud() {
                       )}
                     </td>
                     <td className="px-5 py-4 text-center">
-                      {product.isActive ? (
-                        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-700 inline-flex items-center gap-1">
-                          <Eye className="w-3 h-3" /> Active
-                        </span>
-                      ) : (
-                        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-500 inline-flex items-center gap-1">
-                          <EyeOff className="w-3 h-3" /> Inactive
-                        </span>
-                      )}
+                      <StatusPill isActive={product.isActive} />
                     </td>
                     <td className="px-5 py-4">
                       <div className="flex justify-center gap-2">
@@ -382,7 +379,7 @@ export default function ProductCrud() {
                   })}
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Price (Rs.) *</label>
                   <input required type="number" name="price" value={form.price} onChange={handleChange} placeholder="29999"
@@ -438,7 +435,7 @@ export default function ProductCrud() {
 
               {/* Optional sale scheduling — offer is only active within this window */}
               {form.hasOffer && (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1.5">Sale Start (optional)</label>
                     <input type="datetime-local" name="saleStartDate" value={form.saleStartDate} onChange={handleChange}
