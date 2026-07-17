@@ -10,7 +10,7 @@ const SEASON_CONFIG = {
 export default function SeasonalBadge({ season, label, color, size = 'sm', className = '' }) {
   const cfg = SEASON_CONFIG[season];
   const displayLabel = label || cfg?.label || 'SALE';
-  const bgColor = color || cfg?.bg || '#FF6B35';
+  const bgColor = color || cfg?.bg || '#10B981';
   const textColor = cfg?.text || '#fff';
 
   const sizeClass = size === 'lg'

@@ -2,9 +2,10 @@
    ePasaley · Admin Design System
    ----------------------------------------------------------------------------
    A single source of truth for the admin + auth visual language. It extends the
-   brand tokens already defined in index.css (brand blue #1A3C8A, orange #FF6B35,
-   the radius / shadow scale) and adds reusable component classes so every admin
-   screen — dashboard, CRUD pages, login — looks like one enterprise product.
+   brand tokens already defined in index.css (brand charcoal #1E293B, emerald
+   accent #10B981, the radius / shadow scale) and adds reusable component
+   classes so every admin screen — dashboard, CRUD pages, login — looks like
+   one enterprise product.
 
    Usage: apply the `.ds-*` classes instead of re-deriving ad-hoc Tailwind chains.
    Dark mode: add `data-theme="dark"` to <html> (or rely on prefers-color-scheme).
@@ -12,11 +13,11 @@
 
 :root {
   /* Brand palette --------------------------------------------------------- */
-  --ds-brand:            #1A3C8A;   /* primary brand (deep blue)            */
-  --ds-brand-strong:     #163180;
-  --ds-accent:           #FF6B35;   /* action / highlight (orange)         */
-  --ds-accent-strong:    #e55a2b;
-  --ds-brand-gradient:   linear-gradient(135deg, #1A3C8A 0%, #FF6B35 100%);
+  --ds-brand:            #1E293B;   /* primary brand (charcoal)             */
+  --ds-brand-strong:     #0B1220;
+  --ds-accent:           #10B981;   /* action / highlight (emerald)         */
+  --ds-accent-strong:    #059669;
+  --ds-brand-gradient:   linear-gradient(135deg, #1E293B 0%, #10B981 100%);
 
   /* Semantic colors ------------------------------------------------------- */
   --ds-success:          #059669;
@@ -122,7 +123,7 @@
 .ds-textarea:focus {
   outline: none;
   border-color: var(--ds-accent);
-  box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.15);
+  box-shadow: 0 0 0 3px rgba(16,185,129, 0.15);
 }
 .ds-input--error { border-color: var(--ds-danger); background: var(--ds-danger-bg); }
 .ds-field-error  { margin-top: 0.25rem; font-size: 0.75rem; color: var(--ds-danger); }
@@ -141,11 +142,16 @@
 .ds-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 .ds-btn-primary {
   background: var(--ds-accent); color: #fff;
-  box-shadow: 0 8px 20px -12px rgba(255, 107, 53, 0.7);
+  box-shadow: 0 8px 20px -12px rgba(16,185,129, 0.7);
 }
 .ds-btn-primary:hover:not(:disabled) { background: var(--ds-accent-strong); transform: translateY(-1px); }
 .ds-btn-brand   { background: var(--ds-brand-gradient); color: #fff; }
 .ds-btn-brand:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--ds-shadow-lg); }
+.ds-btn-blue    { background: var(--ds-brand); color: #fff; }
+.ds-btn-blue:hover:not(:disabled) { background: var(--ds-brand-strong); }
+/* Compact variant for icon-only actions in table rows — same language,
+   smaller footprint than the standard .ds-btn padding. */
+.ds-btn-icon    { padding: 0.375rem 0.625rem; border-radius: var(--ds-r-sm); }
 .ds-btn-secondary {
   background: var(--ds-card); color: var(--ds-text);
   border-color: var(--ds-border-strong);
@@ -173,14 +179,17 @@
    Tables — shared admin table styling
    ========================================================================= */
 .ds-table { width: 100%; font-size: 0.875rem; border-collapse: collapse; }
-.ds-table thead th {
+/* :where() keeps thead/tbody/th/td/tr out of the specificity count, so a
+   per-column Tailwind utility (e.g. text-center on one <th>) still wins
+   over these defaults instead of losing to element-selector specificity. */
+.ds-table :where(thead th) {
   text-align: left; padding: 0.75rem 1rem;
   font-size: 0.6875rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
   color: var(--ds-text-muted); background: var(--ds-card-muted);
   border-bottom: 1px solid var(--ds-border);
 }
-.ds-table tbody td { padding: 0.875rem 1rem; border-bottom: 1px solid var(--ds-border); color: var(--ds-text); }
-.ds-table tbody tr:hover { background: var(--ds-card-muted); }
+.ds-table :where(tbody td) { padding: 0.875rem 1rem; border-bottom: 1px solid var(--ds-border); color: var(--ds-text); }
+.ds-table :where(tbody tr):hover { background: var(--ds-card-muted); }
 
 /* ===========================================================================
    Modal scaffolding

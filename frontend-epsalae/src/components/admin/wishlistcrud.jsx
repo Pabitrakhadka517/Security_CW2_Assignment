@@ -39,12 +39,12 @@ export default function WishlistCrud() {
   const totalItems = data.reduce((s, u) => s + (u.wishlist?.length || 0), 0)
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="ds-page space-y-5 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Customer Wishlists</h1>
-          <p className="mt-1 text-sm text-gray-500">
+          <h1 className="ds-page-title">Customer Wishlists</h1>
+          <p className="ds-page-sub">
             {data.length} customers · {totalItems} total wishlist items
           </p>
         </div>
@@ -54,7 +54,7 @@ export default function WishlistCrud() {
             value={search}
             onChange={e => setSearch(e.target.value)}
             placeholder="Search by name or email…"
-            className="w-full rounded-xl border border-gray-200 bg-white py-2.5 pl-9 pr-4 text-sm outline-none focus:border-slate-400 focus:ring-2 focus:ring-slate-100"
+            className="ds-input pl-9"
           />
         </div>
       </div>
@@ -66,12 +66,12 @@ export default function WishlistCrud() {
           { label: 'Total wishlist items', value: totalItems, icon: Heart, color: 'bg-rose-50 text-rose-600' },
           { label: 'Avg. items / customer', value: data.length ? (totalItems / data.length).toFixed(1) : 0, icon: ShoppingBag, color: 'bg-purple-50 text-purple-600' },
         ].map(({ label, value, icon: Icon, color }) => (
-          <div key={label} className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+          <div key={label} className="ds-card ds-card-pad">
             <div className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${color}`}>
               <Icon className="h-4 w-4" />
             </div>
-            <p className="mt-3 text-2xl font-bold text-gray-900">{value}</p>
-            <p className="mt-0.5 text-xs text-gray-500">{label}</p>
+            <p className="mt-3 text-2xl font-bold text-(--ds-text)">{value}</p>
+            <p className="mt-0.5 text-xs text-(--ds-text-muted)">{label}</p>
           </div>
         ))}
       </div>
@@ -94,7 +94,7 @@ export default function WishlistCrud() {
             const uid = String(u.userId)
             const open = !!expanded[uid]
             return (
-              <div key={uid} className="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+              <div key={uid} className="ds-card overflow-hidden">
                 {/* User row */}
                 <button
                   onClick={() => toggle(uid)}
@@ -109,7 +109,7 @@ export default function WishlistCrud() {
                       : (u.name?.[0] || 'U').toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="truncate font-semibold text-gray-900">{u.name || '—'}</p>
+                    <p className="truncate font-semibold text-(--ds-text)">{u.name || '—'}</p>
                     <p className="truncate text-xs text-gray-500">{u.email}</p>
                   </div>
                   <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-600">

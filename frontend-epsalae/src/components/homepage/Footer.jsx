@@ -1,9 +1,9 @@
 // src/components/Footer.jsx
 import { Link } from "react-router-dom"
 import { HelpCircle, Phone, Mail, ChevronRight, Package, Truck, Shield, CreditCard, Instagram, MapPin, Clock } from "lucide-react"
-import logo from "../../assets/logo1080.png"
 import { motion } from "framer-motion"
 import toast from "react-hot-toast"
+import { LogoMark } from "../ui/Logo"
 
 // Pages that don't exist yet — let the click resolve to something rather
 // than silently doing nothing and scrolling to top.
@@ -34,12 +34,13 @@ export default function Footer() {
             {/* Brand Column */}
             <div className="lg:col-span-2">
               {/* Logo */}
-              <Link to="/" className="flex items-center mb-8 group">
-                <img 
-                  src={logo} 
-                  alt="Epasaley Logo" 
-                  className="object-contain w-36 h-36"
-                />
+              <Link to="/" className="flex items-center gap-3 mb-8 group">
+                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-linear-to-br from-[#1E293B] to-[#10B981]">
+                  <LogoMark className="w-6 h-6 text-white" />
+                </div>
+                <span className="text-2xl font-bold text-gray-900">
+                  epasal<span className="text-[#10B981]">ey</span>
+                </span>
               </Link>
 
               <p className="max-w-md mb-10 text-lg leading-relaxed text-gray-600">
@@ -132,7 +133,7 @@ export default function Footer() {
         <div className="px-6 py-8 mx-auto max-w-7xl">
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             <div className="flex items-center gap-3">
-              <MapPin className="w-5 h-5 text-[#FF6B35]" />
+              <MapPin className="w-5 h-5 text-[#10B981]" />
               <p className="text-sm text-gray-400">
                 © {currentYear} <span className="font-semibold text-white">Epasaley</span>. All rights reserved. Made with ❤️ in Nepal
               </p>

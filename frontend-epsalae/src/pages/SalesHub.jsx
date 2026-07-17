@@ -34,9 +34,9 @@ export default function SalesHub() {
   return (
     <div className="min-h-screen page-enter">
       {/* Page header */}
-      <div className="bg-[linear-gradient(135deg,#0A1E46_0%,#1A3C8A_55%,#FF6B35_130%)]">
+      <div className="bg-[linear-gradient(135deg,#0A1E46_0%,#1E293B_55%,#10B981_130%)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-14 text-center">
-          <div className="inline-flex items-center gap-2 bg-white/10 text-orange-200 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
+          <div className="inline-flex items-center gap-2 bg-white/10 text-emerald-200 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
             <Flame className="w-4 h-4" /> Live now
           </div>
           <h1 className="text-3xl sm:text-4xl font-black text-white">Sales &amp; Offers</h1>
@@ -77,7 +77,7 @@ export default function SalesHub() {
           <h2 className="text-lg font-bold text-gray-900">No sales running right now</h2>
           <p className="mt-1 text-sm text-gray-500">New deals appear here automatically the moment they go live. Check back soon!</p>
           <Link to="/products"
-            className="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-[#1A3C8A] text-white font-semibold rounded-xl hover:bg-[#112960] transition">
+            className="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-[#1E293B] text-white font-semibold rounded-xl hover:bg-[#0B1220] transition">
             <Tag className="w-4 h-4" /> Browse all products
           </Link>
         </div>

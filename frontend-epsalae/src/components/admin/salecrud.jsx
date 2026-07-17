@@ -29,7 +29,7 @@ const emptyForm = {
   title: '', slug: '', description: '', banner: '',
   is_active: true, start_date: '', end_date: '',
   priority: 0, cta_label: '', cta_url: '',
-  season: '', badge_label: '', badge_color: '#FF6B35',
+  season: '', badge_label: '', badge_color: '#10B981',
   products: [],
 };
 
@@ -38,9 +38,9 @@ const slugify = s => s.toLowerCase().replace(/[^\w\s-]/g, '').replace(/[\s_]+/g,
 function SaleInput({ label, value, onChange, error, placeholder, required, type = 'text' }) {
   return (
     <div>
-      <label className="block text-sm font-semibold text-gray-700 mb-1.5">{label}{required && ' *'}</label>
+      <label className="ds-label">{label}{required && ' *'}</label>
       <input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        className={`w-full px-4 py-2.5 border rounded-xl text-sm focus:outline-none focus:border-[#FF6B35] transition ${error ? 'border-red-400 bg-red-50' : 'border-gray-200'}`} />
+        className={`ds-input ${error ? 'ds-input--error' : ''}`} />
       {error && <p className="mt-1 text-xs text-red-500">{error}</p>}
     </div>
   );
@@ -98,7 +98,7 @@ export default function SaleCrud() {
       start_date: s.start_date ? s.start_date.slice(0, 16) : '',
       end_date: s.end_date ? s.end_date.slice(0, 16) : '',
       priority: s.priority ?? 0, cta_label: s.cta_label || '', cta_url: s.cta_url || '',
-      season: s.season || '', badge_label: s.badge_label || '', badge_color: s.badge_color || '#FF6B35',
+      season: s.season || '', badge_label: s.badge_label || '', badge_color: s.badge_color || '#10B981',
       products: Array.isArray(s.products) ? s.products.map(p => ({ product_id: p.product_id || p.id, discount_percentage: p.discount_percentage || 0 })) : [],
     });
     setErrors({}); setShowModal(true);
@@ -215,11 +215,11 @@ export default function SaleCrud() {
       {/* Header */}
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Sale Categories</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Manage seasonal and promotional sale categories</p>
+          <h1 className="ds-page-title">Sale Categories</h1>
+          <p className="ds-page-sub">Manage seasonal and promotional sale categories</p>
         </div>
         <button onClick={openCreate}
-          className="flex items-center gap-2 px-5 py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-semibold rounded-xl text-sm transition shadow-md shadow-orange-200">
+          className="ds-btn ds-btn-primary">
           <Plus className="w-4 h-4" /> New Sale
         </button>
       </div>
@@ -228,7 +228,7 @@ export default function SaleCrud() {
       <div className="relative max-w-xs">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
         <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search sales…"
-          className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#FF6B35] transition" />
+          className="ds-input pl-9" />
       </div>
 
       {/* List */}
@@ -246,15 +246,15 @@ export default function SaleCrud() {
       >
         <div className="space-y-3">
           {filtered.map(s => (
-            <div key={s.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+            <div key={s.id} className="ds-card overflow-hidden">
               <div className="flex items-center gap-4 p-4 sm:p-5">
                 {/* Banner thumb */}
-                <div className="w-12 h-12 rounded-xl bg-linear-to-br from-orange-100 to-orange-200 flex items-center justify-center shrink-0 overflow-hidden">
-                  {s.banner ? <img src={getImageUrl(s.banner)} alt="" className="w-full h-full object-cover" /> : <Tag className="w-5 h-5 text-orange-400" />}
+                <div className="w-12 h-12 rounded-xl bg-linear-to-br from-emerald-100 to-emerald-200 flex items-center justify-center shrink-0 overflow-hidden">
+                  {s.banner ? <img src={getImageUrl(s.banner)} alt="" className="w-full h-full object-cover" /> : <Tag className="w-5 h-5 text-emerald-400" />}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-semibold text-gray-900">{s.title}</h3>
+                    <h3 className="font-semibold text-(--ds-text)">{s.title}</h3>
                     <StatusPill isActive={s.is_active} />
                   </div>
                   <div className="flex items-center gap-2 flex-wrap mt-0.5">
@@ -269,7 +269,7 @@ export default function SaleCrud() {
                     )}
                     {s.badge_label && (
                       <span className="inline-flex text-[9px] font-bold px-2 py-0.5 rounded-full text-white uppercase"
-                        style={{ background: s.badge_color || '#FF6B35' }}>
+                        style={{ background: s.badge_color || '#10B981' }}>
                         {s.badge_label}
                       </span>
                     )}
@@ -281,7 +281,7 @@ export default function SaleCrud() {
                     {expandedSale === s.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
                   <button onClick={() => toggleActive(s)} title={s.is_active ? 'Deactivate' : 'Activate'}
-                    className="p-2 text-gray-400 hover:text-[#FF6B35] hover:bg-orange-50 rounded-lg transition">
+                    className="p-2 text-gray-400 hover:text-[#10B981] hover:bg-emerald-50 rounded-lg transition">
                     {s.is_active ? <ToggleRight className="w-5 h-5 text-emerald-500" /> : <ToggleLeft className="w-5 h-5" />}
                   </button>
                   <button onClick={() => openEdit(s)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
@@ -310,7 +310,7 @@ export default function SaleCrud() {
                               <p className="text-sm font-medium text-gray-800 truncate">{p?.name || sp.product_id}</p>
                               <p className="text-xs text-gray-400">{p?.price ? `Rs. ${p.price} → Rs. ${Math.round(p.price * (1 - sp.discount_percentage / 100))}` : 'Price not loaded'}</p>
                             </div>
-                            <span className="shrink-0 text-xs font-bold text-orange-600 bg-orange-50 px-2 py-1 rounded-full">{sp.discount_percentage}% off</span>
+                            <span className="shrink-0 text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">{sp.discount_percentage}% off</span>
                           </div>
                         );
                       })}
@@ -354,14 +354,14 @@ export default function SaleCrud() {
                 <SaleInput label="Slug" value={form.slug} onChange={v => set('slug', v)} placeholder="winter-sale" error={errors.slug} required />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
+                <label className="ds-label">Description</label>
                 <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={2} placeholder="Optional description…"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#FF6B35] resize-none transition" />
+                  className="ds-textarea resize-none" />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Banner Image</label>
+                <label className="ds-label">Banner Image</label>
                 {!form.banner ? (
-                  <label className="flex flex-col items-center justify-center gap-1.5 w-full py-6 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-[#FF6B35] hover:bg-orange-50/40 transition text-gray-500">
+                  <label className="flex flex-col items-center justify-center gap-1.5 w-full py-6 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-[#10B981] hover:bg-emerald-50/40 transition text-gray-500">
                     {uploading ? (
                       <><Loader2 className="w-5 h-5 animate-spin" /> Uploading…</>
                     ) : (
@@ -406,9 +406,9 @@ export default function SaleCrud() {
                   <span className="text-sm font-bold text-gray-700">Season &amp; Badge</span>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Season</label>
+                  <label className="ds-label">Season</label>
                   <select value={form.season} onChange={e => set('season', e.target.value)}
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#FF6B35] bg-white transition">
+                    className="ds-select">
                     {SEASONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
                   </select>
                   <p className="mt-1 text-xs text-gray-400">Tag this sale to a season so the Seasonal Sales manager can activate it automatically.</p>
@@ -416,15 +416,15 @@ export default function SaleCrud() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <SaleInput label="Badge Label" value={form.badge_label} onChange={v => set('badge_label', v)} placeholder="e.g. DASHAIN OFFER" />
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Badge Color</label>
+                    <label className="ds-label">Badge Color</label>
                     <div className="flex items-center gap-2">
                       <input type="color" value={form.badge_color}
                         onChange={e => set('badge_color', e.target.value)}
                         className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer p-0.5" />
                       <input type="text" value={form.badge_color}
                         onChange={e => set('badge_color', e.target.value)}
-                        placeholder="#FF6B35"
-                        className="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#FF6B35] font-mono transition" />
+                        placeholder="#10B981"
+                        className="ds-input flex-1 font-mono" />
                     </div>
                   </div>
                 </div>
@@ -432,7 +432,7 @@ export default function SaleCrud() {
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     Preview:
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full text-white uppercase"
-                      style={{ background: form.badge_color || '#FF6B35' }}>
+                      style={{ background: form.badge_color || '#10B981' }}>
                       {form.badge_label}
                     </span>
                   </div>
@@ -449,19 +449,19 @@ export default function SaleCrud() {
 
               {/* Products */}
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Products in this sale</label>
+                <label className="ds-label">Products in this sale</label>
                 {/* Search & add */}
                 <div className="relative mb-3" data-dropdown="product-search">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   <input value={productSearch} placeholder="Search products to add…"
                     onChange={e => { setProductSearch(e.target.value); setShowProductDropdown(true); }}
                     onFocus={() => setShowProductDropdown(true)}
-                    className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#FF6B35] transition" />
+                    className="ds-input pl-9" />
                   {showProductDropdown && productSearch && (
                     <div className="absolute top-full mt-1 w-full bg-white rounded-xl shadow-xl border border-gray-100 max-h-48 overflow-y-auto z-30">
                       {filteredProducts.length > 0 ? filteredProducts.map(p => (
                         <button key={p.id || p._id} type="button" onClick={() => addProduct(p)}
-                          className="w-full text-left px-4 py-2.5 hover:bg-orange-50 flex items-center gap-3 text-sm transition">
+                          className="w-full text-left px-4 py-2.5 hover:bg-emerald-50 flex items-center gap-3 text-sm transition">
                           <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-100 shrink-0">
                             {p.imageUrl ? <img src={getImageUrl(p.imageUrl)} alt="" className="w-full h-full object-cover" /> : <Package className="w-4 h-4 m-2 text-gray-300" />}
                           </div>
@@ -489,13 +489,13 @@ export default function SaleCrud() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-gray-800 truncate">{p?.name || fp.product_id}</p>
-                            {p?.price ? <p className="text-xs text-gray-400">Rs. {p.price} → <span className="text-orange-600 font-semibold">Rs. {Math.round(p.price * (1 - Number(fp.discount_percentage) / 100))}</span></p> : null}
+                            {p?.price ? <p className="text-xs text-gray-400">Rs. {p.price} → <span className="text-emerald-600 font-semibold">Rs. {Math.round(p.price * (1 - Number(fp.discount_percentage) / 100))}</span></p> : null}
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
                             <Percent className="w-3.5 h-3.5 text-gray-400" />
                             <input type="number" min="0" max="100" value={fp.discount_percentage}
                               onChange={e => setDiscount(fp.product_id, e.target.value)}
-                              className="w-16 text-sm text-center border border-gray-200 rounded-lg py-1 focus:outline-none focus:border-[#FF6B35]" />
+                              className="w-16 text-sm text-center border border-gray-200 rounded-lg py-1 focus:outline-none focus:border-[#10B981]" />
                             <button onClick={() => removeProduct(fp.product_id)} className="p-1 text-gray-400 hover:text-red-500 transition">
                               <X className="w-4 h-4" />
                             </button>
@@ -509,10 +509,10 @@ export default function SaleCrud() {
 
               <div className="flex gap-3 pt-2">
                 <button onClick={handleSave} disabled={saving}
-                  className="flex-1 py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-bold rounded-xl text-sm transition disabled:opacity-70 flex items-center justify-center gap-2">
+                  className="ds-btn ds-btn-primary flex-1">
                   {saving ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</> : <><Check className="w-4 h-4" /> {editing ? 'Update' : 'Create'}</>}
                 </button>
-                <button onClick={() => setShowModal(false)} className="px-6 py-2.5 font-semibold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 text-sm transition">
+                <button onClick={() => setShowModal(false)} className="ds-btn ds-btn-secondary">
                   Cancel
                 </button>
               </div>

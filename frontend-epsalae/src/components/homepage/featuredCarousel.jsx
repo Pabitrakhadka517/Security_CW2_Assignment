@@ -39,12 +39,12 @@ export default function FeaturedCarousel() {
       <div className="px-3 sm:px-6 mx-auto max-w-7xl">
         <div className="flex items-center justify-between mb-5 sm:mb-6">
           <h3 className="flex items-center gap-2 text-lg sm:text-xl font-bold text-gray-900">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-orange-50 text-[#FF6B35]">
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-50 text-[#10B981]">
               <Flame className="w-4 h-4" />
             </span>
             Hot Deals
           </h3>
-          <Link to="/products" className="text-sm text-[#1A3C8A] font-semibold flex items-center gap-1.5 hover:gap-2.5 transition-all">
+          <Link to="/products" className="text-sm text-[#1E293B] font-semibold flex items-center gap-1.5 hover:gap-2.5 transition-all">
             View all <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -61,7 +61,7 @@ export default function FeaturedCarousel() {
                   return (
                     <article
                       key={id}
-                      className="group w-44 sm:w-56 shrink-0 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-lg hover:border-orange-100 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
+                      className="group w-44 sm:w-56 shrink-0 bg-white border border-gray-100 rounded-2xl shadow-sm hover:shadow-lg hover:border-emerald-100 hover:-translate-y-1 transition-all duration-300 overflow-hidden"
                     >
                       <div className="relative aspect-square p-3 flex items-center justify-center bg-gray-50">
                         {hasOffer && (
@@ -80,7 +80,7 @@ export default function FeaturedCarousel() {
                       <div className="p-3">
                         <h4
                           onClick={() => navigate(`/product/${id}`)}
-                          className="text-sm font-semibold text-gray-900 cursor-pointer line-clamp-2 group-hover:text-[#1A3C8A] transition-colors min-h-10"
+                          className="text-sm font-semibold text-gray-900 cursor-pointer line-clamp-2 group-hover:text-[#1E293B] transition-colors min-h-10"
                         >
                           {formatProductName(p.name)}
                         </h4>
@@ -98,7 +98,7 @@ export default function FeaturedCarousel() {
                               if (!addToCart({ id, name: p.name, price: p.discountPrice || p.price, image: getImageUrl(p.imageUrl), quantity: 1 })) return
                               toast.success('Added to cart!')
                             }}
-                            className="shrink-0 p-2 text-white bg-[#1A3C8A] rounded-full hover:bg-[#FF6B35] active:scale-90 transition-all"
+                            className="shrink-0 p-2 text-white bg-[#1E293B] rounded-full hover:bg-[#10B981] active:scale-90 transition-all"
                           >
                             <ShoppingCart className="w-4 h-4" />
                           </button>

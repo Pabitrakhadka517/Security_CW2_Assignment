@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import zxcvbn from 'zxcvbn'
 
-const BAR_COLORS = ['bg-red-500', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-emerald-500']
+const BAR_COLORS = ['bg-red-500', 'bg-red-500', 'bg-emerald-500', 'bg-yellow-500', 'bg-emerald-500']
 const LABELS = ['Very weak', 'Weak', 'Fair', 'Strong', 'Very strong']
 
 export default function PasswordStrengthMeter({ password }) {

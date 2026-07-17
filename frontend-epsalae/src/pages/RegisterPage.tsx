@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { User, Mail, Phone, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, X, ShoppingBag, ArrowRight } from 'lucide-react';
+import { User, Mail, Phone, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, X, ArrowRight } from 'lucide-react';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import toast from 'react-hot-toast';
 import { authEndpoints } from '@/components/api/userapi';
@@ -11,6 +11,7 @@ import { useUserAuth } from '@/components/store/authstore';
 import PasswordStrengthMeter from '@/components/ui/PasswordStrengthMeter';
 import PasswordRules from '@/components/ui/PasswordRules';
 import CaptchaWidget from '@/components/ui/CaptchaWidget';
+import { LogoMark } from '@/components/ui/Logo';
 
 const registerSchema = z
   .object({
@@ -38,7 +39,7 @@ const inputCls = (err?: string) =>
   `w-full py-2.5 bg-gray-50 border rounded-xl text-gray-900 placeholder-gray-400 text-sm transition focus:outline-none focus:ring-2 focus:bg-white disabled:opacity-50 ${
     err
       ? 'border-red-300 focus:ring-red-100 focus:border-red-400'
-      : 'border-gray-200 focus:ring-[#1A3C8A]/10 focus:border-[#1A3C8A]/40'
+      : 'border-gray-200 focus:ring-[#1E293B]/10 focus:border-[#1E293B]/40'
   }`;
 
 const RegisterPage: React.FC = () => {
@@ -130,17 +131,17 @@ const RegisterPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white flex">
       {/* Left branding panel */}
-      <div className="hidden lg:flex lg:w-5/12 bg-linear-to-br from-[#0B1A3E] via-[#1A3C8A] to-[#1e50c8] flex-col justify-between p-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-linear-to-br from-[#0B1220] via-[#1E293B] to-[#334155] flex-col justify-between p-12 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-72 h-72 bg-[#FF6B35]/15 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-72 h-72 bg-[#10B981]/15 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
         </div>
         <Link to="/" className="relative flex items-center gap-3">
           <div className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center backdrop-blur">
-            <ShoppingBag className="w-5 h-5 text-white" />
+            <LogoMark className="w-5 h-5 text-white" />
           </div>
           <span className="text-2xl font-bold text-white tracking-tight">
-            epasal<span className="text-[#FF6B35]">ey</span>
+            epasal<span className="text-[#10B981]">ey</span>
           </span>
         </Link>
         <div className="relative">
@@ -172,10 +173,10 @@ const RegisterPage: React.FC = () => {
 
           {/* Mobile logo */}
           <Link to="/" className="lg:hidden flex items-center gap-2.5 mb-6">
-            <div className="w-9 h-9 bg-linear-to-br from-[#1A3C8A] to-[#FF6B35] rounded-xl flex items-center justify-center">
-              <ShoppingBag className="w-4 h-4 text-white" />
+            <div className="w-9 h-9 bg-linear-to-br from-[#1E293B] to-[#10B981] rounded-xl flex items-center justify-center">
+              <LogoMark className="w-4 h-4 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">epasal<span className="text-[#FF6B35]">ey</span></span>
+            <span className="text-xl font-bold text-gray-900">epasal<span className="text-[#10B981]">ey</span></span>
           </Link>
 
           <h1 className="text-2xl font-bold text-gray-900 mb-1">Create account</h1>
@@ -313,7 +314,7 @@ const RegisterPage: React.FC = () => {
                 </div>
 
                 <button type="submit" disabled={isDisabled || !captchaToken}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 mt-1 bg-[#1A3C8A] hover:bg-[#142f6e] text-white font-semibold rounded-xl text-sm transition shadow-md shadow-blue-900/20 disabled:opacity-60 disabled:cursor-not-allowed">
+                  className="w-full flex items-center justify-center gap-2 py-2.5 mt-1 bg-[#1E293B] hover:bg-[#0B1220] text-white font-semibold rounded-xl text-sm transition shadow-md shadow-blue-900/20 disabled:opacity-60 disabled:cursor-not-allowed">
                   {loading ? (
                     <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creating account…</>
                   ) : (
@@ -343,7 +344,7 @@ const RegisterPage: React.FC = () => {
               <div className="mt-5 pt-5 border-t border-gray-100 text-center">
                 <p className="text-sm text-gray-500">
                   Already have an account?{' '}
-                  <Link to="/login" state={{ returnTo }} className="text-[#FF6B35] hover:text-orange-600 font-semibold transition">
+                  <Link to="/login" state={{ returnTo }} className="text-[#10B981] hover:text-emerald-600 font-semibold transition">
                     Sign in
                   </Link>
                 </p>

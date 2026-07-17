@@ -50,14 +50,14 @@ export default function SalePage() {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
-      <Loader2 className="w-8 h-8 animate-spin text-[#FF6B35]" />
+      <Loader2 className="w-8 h-8 animate-spin text-[#10B981]" />
     </div>
   )
   if (!sale) return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-gray-500">
       <Tag className="w-12 h-12 opacity-30" />
       <p className="text-lg font-medium">Sale not found</p>
-      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-[#FF6B35] hover:underline">
+      <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-[#10B981] hover:underline">
         <ArrowLeft className="w-4 h-4" /> Go back
       </button>
     </div>
@@ -66,12 +66,12 @@ export default function SalePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero banner */}
-      <div className={`relative overflow-hidden ${sale.banner ? '' : 'bg-gradient-to-r from-[#0A1E46] via-[#1A3C8A] to-[#FF6B35]'}`}
+      <div className={`relative overflow-hidden ${sale.banner ? '' : 'bg-gradient-to-r from-[#0A1E46] via-[#1E293B] to-[#10B981]'}`}
         style={sale.banner ? { background: `url(${sale.banner}) center/cover no-repeat` } : {}}>
         <div className={`px-4 py-14 sm:py-20 ${sale.banner ? 'bg-black/55' : ''}`}>
           <div className="max-w-5xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-full px-4 py-1.5 mb-4">
-              <Tag className="w-4 h-4 text-orange-300" />
+              <Tag className="w-4 h-4 text-emerald-300" />
               <span className="text-white/90 text-xs font-bold uppercase tracking-widest">Special Sale</span>
             </div>
             <h1 className="text-4xl sm:text-5xl font-bold text-white mb-3">{sale.title}</h1>
@@ -111,12 +111,12 @@ export default function SalePage() {
           <div className="relative flex-1 min-w-48 max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
             <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search products…"
-              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 bg-white rounded-xl text-sm focus:outline-none focus:border-[#FF6B35] transition" />
+              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 bg-white rounded-xl text-sm focus:outline-none focus:border-[#10B981] transition" />
           </div>
           <div className="flex items-center gap-2">
             <SlidersHorizontal className="w-4 h-4 text-gray-400" />
             <select value={minDiscount} onChange={e => setMinDiscount(Number(e.target.value))}
-              className="border border-gray-200 bg-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#FF6B35]">
+              className="border border-gray-200 bg-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#10B981]">
               <option value={0}>All Discounts</option>
               <option value={10}>10%+</option>
               <option value={20}>20%+</option>
@@ -127,7 +127,7 @@ export default function SalePage() {
           <div className="flex items-center gap-2">
             <ArrowUpDown className="w-4 h-4 text-gray-400" />
             <select value={sort} onChange={e => setSort(e.target.value)}
-              className="border border-gray-200 bg-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#FF6B35]">
+              className="border border-gray-200 bg-white rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-[#10B981]">
               {SORT_OPTS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
@@ -166,7 +166,7 @@ export default function SalePage() {
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                       onError={e => { e.target.src = 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22300%22%20height%3D%22300%22%3E%3Crect%20width%3D%22300%22%20height%3D%22300%22%20fill%3D%22%23f1f5f9%22%2F%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%2394a3b8%22%20stroke-width%3D%222%22%3E%3Crect%20x%3D%22105%22%20y%3D%22100%22%20width%3D%2290%22%20height%3D%2275%22%20rx%3D%228%22%2F%3E%3Ccircle%20cx%3D%22130%22%20cy%3D%22127%22%20r%3D%2210%22%2F%3E%3Cpath%20d%3D%22M112%20168l26-24%2020%2018%2016-14%2020%2020%22%2F%3E%3C%2Fg%3E%3Ctext%20x%3D%22150%22%20y%3D%22205%22%20text-anchor%3D%22middle%22%20fill%3D%22%2394a3b8%22%20font-family%3D%22sans-serif%22%20font-size%3D%2215%22%3ENo%20image%3C%2Ftext%3E%3C%2Fsvg%3E' }} />
                     {p.discount_percentage > 0 && (
-                      <div className="absolute top-2 left-2 bg-[#FF6B35] text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                      <div className="absolute top-2 left-2 bg-[#10B981] text-white text-xs font-bold px-2 py-0.5 rounded-full">
                         -{p.discount_percentage}%
                       </div>
                     )}
@@ -182,7 +182,7 @@ export default function SalePage() {
                         e.stopPropagation()
                         if (!addToCart({ id: p.id, name: p.name, price, image: p.imageUrl, quantity: 1 })) return
                         toast.success('Added to cart!')
-                      }} className="p-2 bg-[#FF6B35] hover:bg-orange-500 text-white rounded-xl transition shadow-sm shadow-orange-200">
+                      }} className="p-2 bg-[#10B981] hover:bg-emerald-500 text-white rounded-xl transition shadow-sm shadow-emerald-200">
                         <ShoppingCart className="w-4 h-4" />
                       </button>
                     </div>

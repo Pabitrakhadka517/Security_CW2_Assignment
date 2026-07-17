@@ -66,7 +66,7 @@ function QuickViewModal({ product, onClose, onAddToCart }) {
 
           <div className="w-full md:w-1/2 p-6 sm:p-8 flex flex-col justify-between">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-[#FF6B35] bg-orange-50 px-2.5 py-1 rounded-full">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#10B981] bg-emerald-50 px-2.5 py-1 rounded-full">
                 {product.category}
               </span>
               <h3 className="mt-3 text-xl font-bold text-gray-900 leading-tight">
@@ -110,7 +110,7 @@ function QuickViewModal({ product, onClose, onAddToCart }) {
                 disabled={product.stock === 0}
                 className={`w-full py-4 rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-all btn-press ${
                   product.stock > 0
-                    ? 'bg-linear-to-r from-[#1A3C8A] to-[#2d4ea8] text-white hover:shadow-lg hover:shadow-blue-500/25'
+                    ? 'bg-linear-to-r from-[#1E293B] to-[#2d4ea8] text-white hover:shadow-lg hover:shadow-blue-500/25'
                     : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                 }`}
               >
@@ -221,7 +221,7 @@ export default function ProductsGrid() {
               initial={{ opacity: 0, x: -16 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 mb-3 text-xs font-bold text-[#FF6B35] bg-orange-50 border border-orange-100 rounded-full uppercase tracking-wider"
+              className="inline-flex items-center gap-2 px-4 py-1.5 mb-3 text-xs font-bold text-[#10B981] bg-emerald-50 border border-emerald-100 rounded-full uppercase tracking-wider"
             >
               <Sparkles className="w-3.5 h-3.5" /> Curated Collection
             </motion.span>
@@ -237,7 +237,7 @@ export default function ProductsGrid() {
           </div>
           <Link
             to="/products"
-            className="inline-flex items-center gap-2 px-6 py-3 font-bold text-sm text-white bg-linear-to-r from-[#1A3C8A] to-[#FF6B35] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all btn-press"
+            className="inline-flex items-center gap-2 px-6 py-3 font-bold text-sm text-white bg-linear-to-r from-[#1E293B] to-[#10B981] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all btn-press"
           >
             View All {hasMoreProducts ? `${totalProducts}+ ` : ''}Products
             <ArrowRight className="w-4 h-4" />
@@ -313,12 +313,12 @@ export default function ProductsGrid() {
 
               {/* Info */}
               <div className="p-4">
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#FF6B35] mb-1 truncate">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#10B981] mb-1 truncate">
                   {product.category}
                 </p>
                 <h3
                   onClick={() => navigate(`/product/${product.id}`)}
-                  className="text-sm font-bold text-gray-900 line-clamp-1 cursor-pointer hover:text-[#1A3C8A] transition-colors mb-3"
+                  className="text-sm font-bold text-gray-900 line-clamp-1 cursor-pointer hover:text-[#1E293B] transition-colors mb-3"
                 >
                   {formatProductName(product.name)}
                 </h3>
@@ -347,7 +347,7 @@ export default function ProductsGrid() {
                   disabled={product.stock === 0}
                   className={`w-full py-2.5 rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-all btn-press ${
                     product.stock > 0
-                      ? 'bg-[#1A3C8A] text-white hover:bg-[#163180] hover:shadow-md hover:shadow-blue-200'
+                      ? 'bg-[#1E293B] text-white hover:bg-[#0B1220] hover:shadow-md hover:shadow-blue-200'
                       : 'bg-gray-100 text-gray-400 cursor-not-allowed'
                   }`}
                 >
@@ -364,7 +364,7 @@ export default function ProductsGrid() {
           <div className="flex justify-center mt-10">
             <Link
               to="/products"
-              className="inline-flex items-center gap-2 px-8 py-3.5 font-bold text-sm border-2 border-[#1A3C8A] text-[#1A3C8A] rounded-full hover:bg-[#1A3C8A] hover:text-white transition-all btn-press"
+              className="inline-flex items-center gap-2 px-8 py-3.5 font-bold text-sm border-2 border-[#1E293B] text-[#1E293B] rounded-full hover:bg-[#1E293B] hover:text-white transition-all btn-press"
             >
               See All {totalProducts} Products <ArrowRight className="w-4 h-4" />
             </Link>

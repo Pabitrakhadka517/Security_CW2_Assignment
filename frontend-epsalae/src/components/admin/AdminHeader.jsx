@@ -8,6 +8,7 @@ import {
 import { useAdminAuth } from '../store/authstore';
 import api, { adminMfaEndpoints } from '../api/base';
 import toast from 'react-hot-toast';
+import { LogoMark } from '../ui/Logo';
 
 const ROUTE_META = {
   '/admin':               { title: 'Dashboard',          sub: 'Welcome to ePasaley admin panel' },
@@ -19,6 +20,8 @@ const ROUTE_META = {
   '/admin/promocodecrud': { title: 'Promo Codes',        sub: 'Create and manage discount coupons' },
   '/admin/bannercrud':    { title: 'Banners',            sub: 'Manage homepage banner images' },
   '/admin/wishlists':     { title: 'Customer Wishlists', sub: 'View customer saved products' },
+  '/admin/bulk-upload':   { title: 'Bulk Upload',        sub: 'Import products in bulk via CSV' },
+  '/admin/security':      { title: 'Security Dashboard', sub: 'Login activity, audit trail & IP management' },
 };
 
 /* ── Profile slide-over panel ───────────────────────────────── */
@@ -178,7 +181,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#FF6B35] to-amber-400 flex items-center justify-center text-white font-bold text-base shadow shadow-orange-200">
+            <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#10B981] to-amber-400 flex items-center justify-center text-white font-bold text-base shadow shadow-emerald-200">
               {(admin?.name || 'A').charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
@@ -201,7 +204,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
             <button key={id} onClick={() => { setTab(id); setError(''); }}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
                 tab === id
-                  ? 'bg-orange-50 text-[#FF6B35]'
+                  ? 'bg-emerald-50 text-[#10B981]'
                   : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
               }`}>
               <Icon className="w-3.5 h-3.5" /> {label}
@@ -225,7 +228,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
                   value={name}
                   onChange={e => { setName(e.target.value); setError(''); }}
                   placeholder="Admin name"
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300/40 focus:border-orange-300 focus:bg-white transition"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-300/40 focus:border-emerald-300 focus:bg-white transition"
                 />
               </div>
               <div>
@@ -235,7 +238,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
                   value={email}
                   onChange={e => { setEmail(e.target.value); setError(''); }}
                   placeholder="admin@epasaley.com"
-                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300/40 focus:border-orange-300 focus:bg-white transition"
+                  className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-300/40 focus:border-emerald-300 focus:bg-white transition"
                 />
               </div>
               <div className="bg-gray-50 rounded-xl px-4 py-3">
@@ -258,7 +261,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
                       value={val}
                       onChange={e => { set(e.target.value); setError(''); }}
                       placeholder="••••••••"
-                      className="w-full px-4 py-2.5 pr-11 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300/40 focus:border-orange-300 focus:bg-white transition"
+                      className="w-full px-4 py-2.5 pr-11 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-300/40 focus:border-emerald-300 focus:bg-white transition"
                     />
                     <button type="button" onClick={toggle}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
@@ -297,7 +300,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
                             value={disableMfaPwd}
                             onChange={(e) => { setDisableMfaPwd(e.target.value); setError(''); }}
                             disabled={mfaBusy}
-                            className="w-full px-4 py-2.5 pr-11 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300/40 focus:border-orange-300 focus:bg-white transition disabled:opacity-50"
+                            className="w-full px-4 py-2.5 pr-11 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-emerald-300/40 focus:border-emerald-300 focus:bg-white transition disabled:opacity-50"
                           />
                           <button type="button" onClick={() => setShowDisableMfaPwd((v) => !v)}
                             className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
@@ -312,7 +315,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
                           value={disableMfaCode}
                           onChange={(e) => { setDisableMfaCode(e.target.value); setError(''); }}
                           disabled={mfaBusy}
-                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-orange-300/40 focus:border-orange-300 focus:bg-white transition disabled:opacity-50"
+                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-emerald-300/40 focus:border-emerald-300 focus:bg-white transition disabled:opacity-50"
                         />
                         <div className="flex gap-2">
                           <button
@@ -344,7 +347,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
                     <button
                       onClick={startMfaSetup}
                       disabled={mfaBusy}
-                      className="w-full py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-semibold rounded-xl text-sm transition disabled:opacity-60"
+                      className="w-full py-2.5 bg-[#10B981] hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm transition disabled:opacity-60"
                     >
                       {mfaBusy ? 'Starting setup…' : 'Enable MFA'}
                     </button>
@@ -382,12 +385,12 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
                       value={mfaVerifyCode}
                       onChange={(e) => setMfaVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                       disabled={mfaBusy}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-900 text-center text-lg tracking-[0.4em] font-mono focus:outline-none focus:ring-2 focus:ring-orange-300/40 focus:border-orange-300 disabled:opacity-50"
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-900 text-center text-lg tracking-[0.4em] font-mono focus:outline-none focus:ring-2 focus:ring-emerald-300/40 focus:border-emerald-300 disabled:opacity-50"
                     />
                     <button
                       type="submit"
                       disabled={mfaBusy || !mfaVerifyCode}
-                      className="w-full py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-semibold rounded-xl text-sm transition disabled:opacity-60"
+                      className="w-full py-2.5 bg-[#10B981] hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm transition disabled:opacity-60"
                     >
                       {mfaBusy ? 'Verifying…' : 'Verify & Enable'}
                     </button>
@@ -451,7 +454,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
                   <button
                     disabled={!mfaBackupConfirmed}
                     onClick={() => { setMfaStep('status'); setMfaBackupConfirmed(false); setMfaBackupCodes([]); }}
-                    className="w-full py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-semibold rounded-xl text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-2.5 bg-[#10B981] hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Finish setup
                   </button>
@@ -471,7 +474,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
             <button
               onClick={tab === 'profile' ? saveProfile : savePassword}
               disabled={saving || pwdSaving}
-              className="flex-1 py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-semibold rounded-xl text-sm transition shadow-md shadow-orange-200 disabled:opacity-60 flex items-center justify-center gap-2">
+              className="flex-1 py-2.5 bg-[#10B981] hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm transition shadow-md shadow-emerald-200 disabled:opacity-60 flex items-center justify-center gap-2">
               {(saving || pwdSaving)
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
                 : <><Check className="w-4 h-4" /> Save Changes</>
@@ -531,7 +534,7 @@ export default function AdminHeader({ onToggleSidebar, sidebarOpen }) {
 
         {/* Mobile toggle */}
         <button onClick={onToggleSidebar}
-          className="p-2 rounded-xl text-gray-500 hover:bg-orange-50 hover:text-[#FF6B35] transition-colors lg:hidden shrink-0">
+          className="p-2 rounded-xl text-gray-500 hover:bg-emerald-50 hover:text-[#10B981] transition-colors lg:hidden shrink-0">
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
 
@@ -543,10 +546,10 @@ export default function AdminHeader({ onToggleSidebar, sidebarOpen }) {
 
         {/* Mobile logo */}
         <Link to="/admin" className="lg:hidden flex items-center gap-2 shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#FF6B35] to-orange-400 flex items-center justify-center">
-            <span className="text-white font-black text-sm">E</span>
+          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#1E293B] to-[#10B981] flex items-center justify-center">
+            <LogoMark className="w-4 h-4 text-white" />
           </div>
-          <span className="text-base font-bold text-gray-900">ePasal<span className="text-[#FF6B35]">ey</span></span>
+          <span className="text-base font-bold text-gray-900">ePasal<span className="text-[#10B981]">ey</span></span>
         </Link>
 
         {/* Search */}
@@ -557,7 +560,7 @@ export default function AdminHeader({ onToggleSidebar, sidebarOpen }) {
               type="text" value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               placeholder="Search…"
-              className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-300/40 focus:border-orange-300 focus:bg-white transition-all placeholder:text-gray-400"
+              className="w-full pl-10 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-300/40 focus:border-emerald-300 focus:bg-white transition-all placeholder:text-gray-400"
             />
           </div>
         </div>
@@ -565,8 +568,8 @@ export default function AdminHeader({ onToggleSidebar, sidebarOpen }) {
         {/* User menu */}
         <div className="ml-auto shrink-0 relative" ref={userMenuRef}>
           <button onClick={() => setUserMenuOpen(v => !v)}
-            className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl hover:bg-orange-50 transition-colors">
-            <div className="w-8 h-8 bg-linear-to-br from-[#FF6B35] to-amber-400 rounded-full flex items-center justify-center text-white font-bold text-sm shadow shadow-orange-200">
+            className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl hover:bg-emerald-50 transition-colors">
+            <div className="w-8 h-8 bg-linear-to-br from-[#10B981] to-amber-400 rounded-full flex items-center justify-center text-white font-bold text-sm shadow shadow-emerald-200">
               {adminInitial}
             </div>
             <div className="hidden md:block text-left leading-none">
@@ -581,7 +584,7 @@ export default function AdminHeader({ onToggleSidebar, sidebarOpen }) {
               {/* Info */}
               <div className="px-4 py-3 border-b border-gray-50 mb-1">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-linear-to-br from-[#FF6B35] to-amber-400 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
+                  <div className="w-9 h-9 bg-linear-to-br from-[#10B981] to-amber-400 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
                     {adminInitial}
                   </div>
                   <div className="min-w-0">
@@ -593,13 +596,13 @@ export default function AdminHeader({ onToggleSidebar, sidebarOpen }) {
 
               {/* Edit Profile */}
               <button onClick={openProfile}
-                className="w-[calc(100%-12px)] flex items-center gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#FF6B35] rounded-xl transition-colors">
+                className="w-[calc(100%-12px)] flex items-center gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-emerald-50 hover:text-[#10B981] rounded-xl transition-colors">
                 <User className="w-4 h-4 shrink-0" /> Edit Profile
               </button>
 
               {/* Change Password */}
               <button onClick={() => { setUserMenuOpen(false); setProfileOpen(true); }}
-                className="w-[calc(100%-12px)] flex items-center gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-orange-50 hover:text-[#FF6B35] rounded-xl transition-colors">
+                className="w-[calc(100%-12px)] flex items-center gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-emerald-50 hover:text-[#10B981] rounded-xl transition-colors">
                 <Lock className="w-4 h-4 shrink-0" /> Change Password
               </button>
 

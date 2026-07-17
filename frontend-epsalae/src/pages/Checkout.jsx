@@ -287,15 +287,15 @@ export default function Checkout() {
 
   if (cart.length === 0) {
     return (
-      <div className="flex items-center justify-center min-h-screen px-6 bg-gradient-to-b from-white to-gray-50">
+      <div className="flex items-center justify-center min-h-screen px-6 bg-linear-to-b from-white to-gray-50">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md text-center">
-          <div className="w-24 h-24 mx-auto mb-6 rounded-3xl bg-orange-50 flex items-center justify-center">
-            <ShoppingBag className="w-11 h-11 text-[#FF6B35]" />
+          <div className="w-24 h-24 mx-auto mb-6 rounded-3xl bg-emerald-50 flex items-center justify-center">
+            <ShoppingBag className="w-11 h-11 text-[#10B981]" />
           </div>
           <h2 className="mb-2 text-3xl font-extrabold text-gray-900">Your cart is empty</h2>
           <p className="mb-8 text-gray-500">Add a few items and come back to check out.</p>
           <button onClick={() => navigate('/products')}
-            className="px-8 py-3.5 font-semibold text-white transition bg-[#1A3C8A] rounded-xl hover:bg-[#FF6B35]">
+            className="px-8 py-3.5 font-semibold text-white transition bg-[#1E293B] rounded-xl hover:bg-[#10B981]">
             Continue Shopping
           </button>
         </motion.div>
@@ -309,7 +309,7 @@ export default function Checkout() {
     return (
       <div className="flex items-center gap-3">
         <div className={`w-11 h-11 rounded-2xl flex items-center justify-center font-bold transition-all ${
-          done ? 'bg-emerald-500 text-white' : active ? 'bg-[#1A3C8A] text-white ring-4 ring-blue-100' : 'bg-gray-100 text-gray-400'
+          done ? 'bg-emerald-500 text-white' : active ? 'bg-[#1E293B] text-white ring-4 ring-blue-100' : 'bg-gray-100 text-gray-400'
         }`}>
           {done ? <Check className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
         </div>
@@ -321,13 +321,13 @@ export default function Checkout() {
     )
   }
 
-  const field = "w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#FF6B35] focus:bg-white transition"
+  const field = "w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-white transition"
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
       <div className="px-4 py-6 mx-auto max-w-7xl sm:px-6 sm:py-10">
 
-        <button onClick={() => navigate('/cart')} className="flex items-center gap-1.5 mb-5 text-sm font-semibold text-gray-500 hover:text-[#1A3C8A] transition">
+        <button onClick={() => navigate('/cart')} className="flex items-center gap-1.5 mb-5 text-sm font-semibold text-gray-500 hover:text-[#1E293B] transition">
           <ChevronLeft className="w-4 h-4" /> Back to Cart
         </button>
         <h1 className="text-3xl sm:text-4xl font-extrabold text-gray-900 tracking-tight">Checkout</h1>
@@ -357,7 +357,7 @@ export default function Checkout() {
             {currentStep === 1 && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-5 sm:p-7 bg-white border border-gray-100 rounded-2xl shadow-sm">
                 <h2 className="flex items-center gap-2 mb-6 text-lg font-bold text-gray-900">
-                  <MapPin className="w-5 h-5 text-[#FF6B35]" /> Shipping Address
+                  <MapPin className="w-5 h-5 text-[#10B981]" /> Shipping Address
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <input type="text" name="first_name" placeholder="First Name" value={formData.first_name} onChange={handleInputChange} className={field} />
@@ -386,7 +386,7 @@ export default function Checkout() {
                 </div>
                 <textarea name="description" placeholder="Delivery notes (e.g. call before delivery, near school, red gate)" value={formData.description} onChange={handleInputChange} rows={3} className={`${field} resize-none`} />
                 <button onClick={() => validateStep() && setCurrentStep(2)}
-                  className="flex items-center justify-center w-full gap-2 py-4 mt-6 text-base font-bold text-white transition bg-[#1A3C8A] shadow-sm hover:bg-[#FF6B35] rounded-xl">
+                  className="flex items-center justify-center w-full gap-2 py-4 mt-6 text-base font-bold text-white transition bg-[#1E293B] shadow-sm hover:bg-[#10B981] rounded-xl">
                   Continue to Payment <ArrowRight className="w-5 h-5" />
                 </button>
               </motion.div>
@@ -396,12 +396,12 @@ export default function Checkout() {
             {currentStep === 2 && (
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="p-5 sm:p-7 bg-white border border-gray-100 rounded-2xl shadow-sm">
                 <h2 className="flex items-center gap-2 mb-6 text-lg font-bold text-gray-900">
-                  <CreditCard className="w-5 h-5 text-[#FF6B35]" /> Payment Method
+                  <CreditCard className="w-5 h-5 text-[#10B981]" /> Payment Method
                 </h2>
                 <div className="space-y-3">
-                  <label className={`flex items-center gap-4 p-4 border-2 rounded-2xl cursor-pointer transition ${formData.paymentMethod === 'cod' ? 'border-[#FF6B35] bg-orange-50/50' : 'border-gray-200 hover:border-gray-300'}`}>
-                    <input type="radio" name="paymentMethod" value="cod" checked={formData.paymentMethod === 'cod'} onChange={handleInputChange} className="w-5 h-5 accent-[#FF6B35]" />
-                    <span className="flex items-center justify-center w-11 h-11 rounded-xl bg-orange-100 text-[#FF6B35]"><Banknote className="w-6 h-6" /></span>
+                  <label className={`flex items-center gap-4 p-4 border-2 rounded-2xl cursor-pointer transition ${formData.paymentMethod === 'cod' ? 'border-[#10B981] bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <input type="radio" name="paymentMethod" value="cod" checked={formData.paymentMethod === 'cod'} onChange={handleInputChange} className="w-5 h-5 accent-[#10B981]" />
+                    <span className="flex items-center justify-center w-11 h-11 rounded-xl bg-emerald-100 text-[#10B981]"><Banknote className="w-6 h-6" /></span>
                     <div className="flex-1">
                       <p className="font-bold text-gray-900">Cash on Delivery</p>
                       <p className="text-sm text-gray-500">Pay when you receive your order</p>
@@ -431,7 +431,7 @@ export default function Checkout() {
                     Back to Shipping
                   </button>
                   <button onClick={() => handlePlaceOrder()} disabled={isProcessing || breakdownLoading || !breakdown}
-                    className={`flex-1 flex items-center justify-center gap-2.5 px-6 py-4 text-base font-bold text-white rounded-xl transition shadow-sm bg-[#FF6B35] hover:bg-[#e85d2a] ${(isProcessing || breakdownLoading || !breakdown) && 'opacity-70 cursor-not-allowed'}`}>
+                    className={`flex-1 flex items-center justify-center gap-2.5 px-6 py-4 text-base font-bold text-white rounded-xl transition shadow-sm bg-[#10B981] hover:bg-[#059669] ${(isProcessing || breakdownLoading || !breakdown) && 'opacity-70 cursor-not-allowed'}`}>
                     {isProcessing ? (<>Processing <Loader2 className="w-5 h-5 animate-spin" /></>)
                       : breakdownLoading ? (<>Calculating… <Loader2 className="w-5 h-5 animate-spin" /></>)
                       : (<>Place Order · Rs. {total.toLocaleString()}</>)}
@@ -459,7 +459,7 @@ export default function Checkout() {
                     <div key={item.id || item._id} className="flex gap-3">
                       <div className="relative shrink-0 w-16 h-16 overflow-hidden bg-gray-50 border border-gray-100 rounded-xl">
                         <img src={getImageUrl(item.image)} alt={item.name} className="object-contain w-full h-full p-1" />
-                        <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[20px] h-5 px-1 text-[11px] font-bold text-white bg-[#1A3C8A] rounded-full">{item.quantity}</span>
+                        <span className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-5 h-5 px-1 text-[11px] font-bold text-white bg-[#1E293B] rounded-full">{item.quantity}</span>
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-gray-900 line-clamp-2">{item.name}</p>
@@ -468,7 +468,7 @@ export default function Checkout() {
                           {hasSalePrice && <span className="text-xs text-gray-400 line-through">Rs. {(origPrice * item.quantity).toLocaleString()}</span>}
                         </div>
                         {serverItem?.discountSource && serverItem.discountSource !== 'original' && (
-                          <span className="text-[10px] font-semibold text-[#FF6B35] capitalize">{serverItem.discountSource.replace('_', ' ')}</span>
+                          <span className="text-[10px] font-semibold text-[#10B981] capitalize">{serverItem.discountSource.replace('_', ' ')}</span>
                         )}
                       </div>
                     </div>
@@ -481,9 +481,9 @@ export default function Checkout() {
                 {!appliedCouponCode ? (
                   <div className="flex gap-2">
                     <input value={couponInput} onChange={e => { setCouponInput(e.target.value.toUpperCase()); }} onKeyDown={e => e.key === 'Enter' && applyCoupon()}
-                      placeholder="Coupon code" className="flex-1 px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#FF6B35]" />
+                      placeholder="Coupon code" className="flex-1 px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#10B981]" />
                     <button onClick={applyCoupon} disabled={couponLoading}
-                      className="px-4 py-2.5 text-sm font-semibold text-white bg-[#1A3C8A] rounded-xl hover:bg-[#FF6B35] disabled:opacity-60 flex items-center gap-1.5">
+                      className="px-4 py-2.5 text-sm font-semibold text-white bg-[#1E293B] rounded-xl hover:bg-[#10B981] disabled:opacity-60 flex items-center gap-1.5">
                       {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Tag className="w-4 h-4" />} Apply
                     </button>
                   </div>

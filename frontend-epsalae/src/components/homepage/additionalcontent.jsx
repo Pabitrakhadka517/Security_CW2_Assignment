@@ -45,8 +45,8 @@ export default function AdditionalContent() {
 	return (
 		<section className="relative py-10 sm:py-16 lg:py-20">
 			<div className="absolute inset-0 pointer-events-none overflow-hidden">
-				<div className="absolute -left-24 top-12 h-56 w-56 rounded-full bg-[#1A3C8A]/8 blur-3xl" />
-				<div className="absolute right-0 bottom-0 h-72 w-72 rounded-full bg-[#FF6B35]/8 blur-3xl" />
+				<div className="absolute -left-24 top-12 h-56 w-56 rounded-full bg-[#1E293B]/8 blur-3xl" />
+				<div className="absolute right-0 bottom-0 h-72 w-72 rounded-full bg-[#10B981]/8 blur-3xl" />
 			</div>
 
 			<div className="relative px-3 sm:px-6 lg:px-8 mx-auto max-w-7xl">
@@ -56,12 +56,12 @@ export default function AdditionalContent() {
 						whileInView={{ opacity: 1, y: 0 }}
 						viewport={{ once: true, margin: '-80px' }}
 						transition={{ duration: 0.6, ease: 'easeOut' }}
-						className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,_rgba(17,24,39,0.96)_0%,_rgba(26,60,138,0.96)_55%,_rgba(255,107,53,0.92)_100%)] p-4 sm:p-8 lg:p-10 text-white shadow-[0_30px_90px_-50px_rgba(15,23,42,0.55)]"
+						className="relative overflow-hidden rounded-4xl border border-white/70 bg-[linear-gradient(135deg,rgba(17,24,39,0.96)_0%,rgba(30,41,59,0.96)_55%,rgba(16,185,129,0.92)_100%)] p-4 sm:p-8 lg:p-10 text-white shadow-[0_30px_90px_-50px_rgba(15,23,42,0.55)]"
 					>
 						<div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.12),transparent_28%)]" />
 						<div className="relative">
 							<div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 sm:px-4 py-2 text-xs font-semibold uppercase tracking-[0.24em] text-white/90 backdrop-blur-md">
-								<Sparkles className="h-4 w-4 text-orange-200" />
+								<Sparkles className="h-4 w-4 text-emerald-200" />
 								Trending now
 							</div>
 
@@ -76,7 +76,7 @@ export default function AdditionalContent() {
 							<div className="mt-7 flex flex-wrap gap-3">
 								{TRUST_POINTS.map(({ icon: Icon, label }) => (
 									<div key={label} className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 sm:px-4 py-2 text-sm font-medium text-white/90 backdrop-blur-md">
-										<Icon className="h-4 w-4 text-orange-200" />
+										<Icon className="h-4 w-4 text-emerald-200" />
 										{label}
 									</div>
 								))}
@@ -143,16 +143,16 @@ export default function AdditionalContent() {
 										<p className="mt-1 text-xs text-slate-500">Premium presentation and smooth product discovery</p>
 									</div>
 									<div className="text-right">
-										<p className="text-sm font-semibold text-[#FF6B35]">{product.price}</p>
+										<p className="text-sm font-semibold text-[#10B981]">{product.price}</p>
 										<p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Trending</p>
 									</div>
 								</motion.div>
 							))}
 						</div>
 
-						<div className="mt-5 rounded-[1.5rem] bg-[linear-gradient(135deg,_#0f172a_0%,_#1A3C8A_60%,_#FF6B35_100%)] p-5 text-white shadow-[0_20px_50px_-32px_rgba(15,23,42,0.45)]">
+						<div className="mt-5 rounded-3xl bg-[linear-gradient(135deg,#0f172a_0%,#1E293B_60%,#10B981_100%)] p-5 text-white shadow-[0_20px_50px_-32px_rgba(15,23,42,0.45)]">
 							<div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.28em] text-white/80">
-								<ShieldCheck className="h-4 w-4 text-orange-200" />
+								<ShieldCheck className="h-4 w-4 text-emerald-200" />
 								Trusted checkout experience
 							</div>
 							<p className="mt-3 text-sm leading-6 text-white/82">

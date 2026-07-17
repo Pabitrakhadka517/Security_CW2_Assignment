@@ -170,7 +170,7 @@ export default function Cart() {
           <p className="text-gray-500 mb-8">Looks like you haven't added anything yet.</p>
           <Link
             to="/products"
-            className="inline-flex items-center gap-2 px-8 py-4 font-bold text-white bg-linear-to-r from-[#1A3C8A] to-[#FF6B35] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all btn-press"
+            className="inline-flex items-center gap-2 px-8 py-4 font-bold text-white bg-linear-to-r from-[#1E293B] to-[#10B981] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all btn-press"
           >
             <ShoppingCart className="w-5 h-5" /> Start Shopping
           </Link>
@@ -197,7 +197,7 @@ export default function Cart() {
               <h1 className="text-2xl font-semibold text-gray-900">Shopping Cart</h1>
               <p className="text-sm text-gray-500 mt-1">{cart.length} {cart.length === 1 ? 'item' : 'items'}</p>
             </div>
-            <Link to="/products" className="text-sm font-semibold text-[#1A3C8A] hover:underline hidden sm:block">
+            <Link to="/products" className="text-sm font-semibold text-[#1E293B] hover:underline hidden sm:block">
               + Add more items
             </Link>
           </div>
@@ -236,7 +236,7 @@ export default function Cart() {
                     <div className="flex-1 min-w-0">
                       <h3
                         onClick={() => navigate(`/product/${item.id}`)}
-                        className="text-sm sm:text-base font-bold text-gray-900 line-clamp-2 cursor-pointer hover:text-[#1A3C8A] transition-colors mb-1"
+                        className="text-sm sm:text-base font-bold text-gray-900 line-clamp-2 cursor-pointer hover:text-[#1E293B] transition-colors mb-1"
                       >
                         {item.name}
                       </h3>
@@ -253,7 +253,7 @@ export default function Cart() {
                             <button
                               onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
                               aria-label={`Decrease quantity of ${item.name}`}
-                              className="qty-btn px-3 py-2 text-gray-600 hover:bg-[#1A3C8A] hover:text-white transition-all"
+                              className="qty-btn px-3 py-2 text-gray-600 hover:bg-[#1E293B] hover:text-white transition-all"
                             >
                               <Minus className="w-3.5 h-3.5" />
                             </button>
@@ -262,7 +262,7 @@ export default function Cart() {
                               onClick={() => updateQuantity(item.id, item.quantity + 1)}
                               aria-label={`Increase quantity of ${item.name}`}
                               disabled={getItemStock(item) != null && item.quantity >= getItemStock(item)}
-                              className="qty-btn px-3 py-2 text-gray-600 hover:bg-[#1A3C8A] hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-600"
+                              className="qty-btn px-3 py-2 text-gray-600 hover:bg-[#1E293B] hover:text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent disabled:hover:text-gray-600"
                             >
                               <Plus className="w-3.5 h-3.5" />
                             </button>
@@ -298,7 +298,7 @@ export default function Cart() {
             {/* Continue shopping */}
             <Link
               to="/products"
-              className="flex items-center gap-2 text-sm font-semibold text-[#1A3C8A] hover:underline py-2 sm:hidden"
+              className="flex items-center gap-2 text-sm font-semibold text-[#1E293B] hover:underline py-2 sm:hidden"
             >
               + Add more items
             </Link>
@@ -330,7 +330,7 @@ export default function Cart() {
                       <button
                         onClick={applyCoupon}
                         disabled={couponLoading}
-                        className="px-4 py-2.5 bg-[#1A3C8A] text-white font-bold text-xs rounded-xl hover:bg-[#163180] transition-all btn-press disabled:opacity-50 shrink-0"
+                        className="px-4 py-2.5 bg-[#1E293B] text-white font-bold text-xs rounded-xl hover:bg-[#0B1220] transition-all btn-press disabled:opacity-50 shrink-0"
                       >
                         {couponLoading ? '…' : 'Apply'}
                       </button>
@@ -422,7 +422,7 @@ export default function Cart() {
                     sessionStorage.setItem('epasaley_discount', JSON.stringify({ discount, appliedCoupon }))
                     navigate('/checkout', { state: { discount, appliedCoupon } })
                   }}
-                  className="w-full py-4 font-extrabold text-sm text-white bg-linear-to-r from-[#1A3C8A] to-[#FF6B35] rounded-xl shadow-lg hover:shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-4 font-extrabold text-sm text-white bg-linear-to-r from-[#1E293B] to-[#10B981] rounded-xl shadow-lg hover:shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-2"
                 >
                   Proceed to Checkout
                   <ChevronRight className="w-4 h-4" />

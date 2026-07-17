@@ -17,7 +17,7 @@ const ACTION_META = {
   LOGIN_SUCCESS: { icon: ShieldCheck, color: 'text-emerald-600 bg-emerald-50', label: 'Signed in successfully' },
   LOGIN_FAILED: { icon: AlertTriangle, color: 'text-red-600 bg-red-50', label: 'Failed sign-in attempt' },
   LOGIN_BLOCKED_LOCKOUT: { icon: Lock, color: 'text-red-600 bg-red-50', label: 'Sign-in blocked (account locked)' },
-  LOGIN_BLOCKED_RATE_LIMIT: { icon: AlertTriangle, color: 'text-orange-600 bg-orange-50', label: 'Sign-in blocked (too many attempts)' },
+  LOGIN_BLOCKED_RATE_LIMIT: { icon: AlertTriangle, color: 'text-emerald-600 bg-emerald-50', label: 'Sign-in blocked (too many attempts)' },
   LOGOUT: { icon: LogOut, color: 'text-slate-500 bg-slate-100', label: 'Signed out' },
   REGISTER: { icon: UserPlus, color: 'text-blue-600 bg-blue-50', label: 'Account created' },
   TOKEN_REFRESH: { icon: RefreshCw, color: 'text-slate-500 bg-slate-100', label: 'Session refreshed' },

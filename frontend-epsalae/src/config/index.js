@@ -89,19 +89,19 @@ export const getImageUrl = (imagePath, placeholder = PLACEHOLDER) => {
 };
 
 // ============================================
-// DESIGN SYSTEM - Premium Deep Blue & Orange Theme
+// DESIGN SYSTEM - Charcoal & Emerald Theme
 // ============================================
 
 export const theme = {
   // Primary Colors
   colors: {
-    primary: '#1A3C8A',      // Deep Blue - Main brand color
-    primaryDark: '#112960',  // Darker blue for hover states
-    primaryLight: '#2D52B2', // Lighter blue for backgrounds
+    primary: '#1E293B',      // Charcoal - Main brand color
+    primaryDark: '#0B1220',  // Darker charcoal for hover states
+    primaryLight: '#334155', // Lighter charcoal for backgrounds
 
-    brandOrange: '#FF6B35',  // Vibrant Orange - Branding & accents
-    brandOrangeDark: '#E0531F', // Darker orange
-    brandOrangeLight: '#FF885B', // Lighter orange
+    brandAccent: '#10B981',      // Emerald - Branding & accents
+    brandAccentDark: '#059669',  // Darker emerald
+    brandAccentLight: '#34D399', // Lighter emerald
 
     success: '#10B981',      // Emerald Green - Success, checkout
     successDark: '#059669',  // Darker green
@@ -124,9 +124,9 @@ export const theme = {
     info: '#3B82F6',
 
     // Gradients
-    gradientPrimary: 'linear-gradient(135deg, #1A3C8A 0%, #FF6B35 100%)',
-    gradientBlue: 'linear-gradient(135deg, #1A3C8A 0%, #2D52B2 100%)',
-    gradientOrange: 'linear-gradient(135deg, #FF6B35 0%, #FF885B 100%)',
+    gradientPrimary: 'linear-gradient(135deg, #1E293B 0%, #10B981 100%)',
+    gradientCharcoal: 'linear-gradient(135deg, #1E293B 0%, #334155 100%)',
+    gradientEmerald: 'linear-gradient(135deg, #10B981 0%, #34D399 100%)',
   },
 
   // Border Radius
@@ -144,8 +144,8 @@ export const theme = {
     md: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)',
     lg: '0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.02)',
     xl: '0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
-    card: '0 10px 30px rgba(26, 60, 138, 0.04)',
-    button: '0 10px 20px rgba(255, 107, 53, 0.15)',
+    card: '0 10px 30px rgba(30,41,59, 0.04)',
+    button: '0 10px 20px rgba(16,185,129, 0.15)',
   },
 
   // Typography

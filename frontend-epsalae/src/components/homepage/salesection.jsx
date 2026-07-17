@@ -70,7 +70,7 @@ function SaleProductCard({ product, sale }) {
 
         {/* Discount badge — top left */}
         {discount > 0 && (
-          <div className="absolute top-2 left-2 bg-[#FF6B35] text-white text-xs font-bold px-2 py-1 rounded-full">
+          <div className="absolute top-2 left-2 bg-[#10B981] text-white text-xs font-bold px-2 py-1 rounded-full">
             -{discount}%
           </div>
         )}
@@ -91,7 +91,7 @@ function SaleProductCard({ product, sale }) {
         {isLowStock && (
           <div className="absolute bottom-0 left-0 right-0 bg-linear-to-t from-black/70 to-transparent px-3 py-2">
             <div className="flex items-center gap-1 text-white text-[10px] font-bold">
-              <Flame className="w-3 h-3 text-orange-400" />
+              <Flame className="w-3 h-3 text-emerald-400" />
               Only {stockLimit} left!
             </div>
           </div>
@@ -113,7 +113,7 @@ function SaleProductCard({ product, sale }) {
             )}
           </div>
           <button onClick={handleAdd}
-            className="p-2 bg-[#FF6B35] hover:bg-orange-500 text-white rounded-xl transition shrink-0 shadow-sm shadow-orange-200">
+            className="p-2 bg-[#10B981] hover:bg-emerald-500 text-white rounded-xl transition shrink-0 shadow-sm shadow-emerald-200">
             <ShoppingCart className="w-4 h-4" />
           </button>
         </div>
@@ -145,12 +145,12 @@ function SaleCategoryStrip({ sales, activeSaleId, onSelect }) {
             <button key={sale.id || sale.slug} onClick={() => onSelect(sale.id || sale.slug)}
               className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-semibold whitespace-nowrap transition-all shrink-0 ${
                 isActive
-                  ? 'bg-[#FF6B35] border-[#FF6B35] text-white shadow-md shadow-orange-200'
-                  : 'bg-white border-gray-200 text-gray-700 hover:border-[#FF6B35] hover:text-[#FF6B35]'
+                  ? 'bg-[#10B981] border-[#10B981] text-white shadow-md shadow-emerald-200'
+                  : 'bg-white border-gray-200 text-gray-700 hover:border-[#10B981] hover:text-[#10B981]'
               }`}>
               {sale.badge_label ? (
                 <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white"
-                  style={{ background: isActive ? 'rgba(255,255,255,0.25)' : (sale.badge_color || '#FF6B35') }}>
+                  style={{ background: isActive ? 'rgba(255,255,255,0.25)' : (sale.badge_color || '#10B981') }}>
                   {sale.badge_label}
                 </span>
               ) : (
@@ -215,7 +215,7 @@ export default function SaleSection() {
       <div className="max-w-7xl mx-auto">
         {/* Section heading */}
         <div className="flex items-center gap-3 mb-6">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-100 text-[#FF6B35]"><Tag className="w-5 h-5" /></span>
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-[#10B981]"><Tag className="w-5 h-5" /></span>
           <div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">Live Sales &amp; Offers</h2>
             <p className="text-xs text-gray-500">{sales.length} sale{sales.length !== 1 ? 's' : ''} running right now</p>
@@ -239,13 +239,13 @@ export default function SaleSection() {
               <div key={sale.id || sale.slug} className="rounded-3xl border border-gray-100 bg-white shadow-sm overflow-hidden">
 
                 {/* Banner header */}
-                <div className={`relative ${sale.banner ? '' : 'bg-linear-to-r from-[#0A1E46] via-[#1A3C8A] to-[#FF6B35]'}`}
+                <div className={`relative ${sale.banner ? '' : 'bg-linear-to-r from-[#0A1E46] via-[#1E293B] to-[#10B981]'}`}
                   style={sale.banner ? { background: `url(${sale.banner}) center/cover no-repeat` } : {}}>
                   <div className={`px-5 sm:px-7 py-6 sm:py-7 ${sale.banner ? 'bg-black/55' : ''}`}>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <span className="inline-flex items-center gap-1 text-orange-300 text-[11px] font-bold uppercase tracking-widest">
+                          <span className="inline-flex items-center gap-1 text-emerald-300 text-[11px] font-bold uppercase tracking-widest">
                             <Tag className="w-3.5 h-3.5" /> Special Sale
                           </span>
                           {sale.season && (
@@ -266,7 +266,7 @@ export default function SaleSection() {
                             if (url && url.startsWith('/')) { navigate(url); return }
                             navigate(`/sale/${sale.slug}`)
                           }}
-                          className="flex items-center gap-2 bg-white text-gray-900 hover:bg-orange-50 font-semibold px-4 sm:px-5 py-2.5 rounded-xl text-sm transition whitespace-nowrap">
+                          className="flex items-center gap-2 bg-white text-gray-900 hover:bg-emerald-50 font-semibold px-4 sm:px-5 py-2.5 rounded-xl text-sm transition whitespace-nowrap">
                           {sale.cta_label?.trim() || 'View All'} <ArrowRight className="w-4 h-4" />
                         </button>
                       </div>
@@ -286,7 +286,7 @@ export default function SaleSection() {
                       {products.length > 6 && (
                         <div className="text-center mt-6">
                           <button onClick={() => navigate(`/sale/${sale.slug}`)}
-                            className="inline-flex items-center gap-2 px-6 py-2.5 border-2 border-[#FF6B35] text-[#FF6B35] hover:bg-[#FF6B35] hover:text-white font-semibold rounded-xl text-sm transition">
+                            className="inline-flex items-center gap-2 px-6 py-2.5 border-2 border-[#10B981] text-[#10B981] hover:bg-[#10B981] hover:text-white font-semibold rounded-xl text-sm transition">
                             View all {products.length} products <ArrowRight className="w-4 h-4" />
                           </button>
                         </div>

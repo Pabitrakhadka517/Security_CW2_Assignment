@@ -92,7 +92,6 @@ export default function ProductCrud() {
       };
 
       const productId = editingProduct?._id || editingProduct?.id;
-      console.log('💾 Saving product:', { productId, isEdit: !!productId, data });
 
       if (productId) {
         await updateProduct(productId, data);
@@ -104,7 +103,6 @@ export default function ProductCrud() {
       closeModal();
       await fetchAllProducts();
     } catch (error) {
-      console.error('❌ Save failed:', error);
       toast.error(error?.response?.data?.message || 'Failed to save');
     } finally {
       setIsSaving(false);
@@ -133,12 +131,10 @@ export default function ProductCrud() {
 
   const handleDelete = async (id) => {
     try {
-      console.log('🗑️ Attempting to delete product:', id);
       await deleteProduct(id);
       toast.success('Product deleted');
       fetchAllProducts();
     } catch (error) {
-      console.error('❌ Delete failed:', error);
       toast.error(error?.response?.data?.message || 'Delete failed');
     }
   };
@@ -168,17 +164,17 @@ export default function ProductCrud() {
   const lowStockCount = products.filter(p => p.stock <= 5).length;
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto">
+    <div className="ds-page space-y-5 max-w-7xl mx-auto">
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-800">Products</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Manage your store inventory</p>
+          <h1 className="ds-page-title">Products</h1>
+          <p className="ds-page-sub">Manage your store inventory</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className="bg-[#FF6B35] hover:bg-orange-500 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2"
+          className="ds-btn ds-btn-primary"
         >
           <Plus size={16} /> Add New Product
         </button>
@@ -186,64 +182,64 @@ export default function ProductCrud() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="ds-card ds-card-pad">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
-              <Package className="w-4 h-4 text-[#1A3C8A]" />
+              <Package className="w-4 h-4 text-[#1E293B]" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">Total</p>
-              <p className="text-lg font-bold text-gray-800">{products.length}</p>
+              <p className="text-xs text-(--ds-text-muted)">Total</p>
+              <p className="text-lg font-bold text-(--ds-text)">{products.length}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="ds-card ds-card-pad">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-emerald-50 rounded-lg flex items-center justify-center">
               <Eye className="w-4 h-4 text-emerald-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">Active</p>
-              <p className="text-lg font-bold text-gray-800">{activeCount}</p>
+              <p className="text-xs text-(--ds-text-muted)">Active</p>
+              <p className="text-lg font-bold text-(--ds-text)">{activeCount}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="ds-card ds-card-pad">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-red-50 rounded-lg flex items-center justify-center">
               <AlertCircle className="w-4 h-4 text-red-500" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">Low Stock</p>
-              <p className="text-lg font-bold text-gray-800">{lowStockCount}</p>
+              <p className="text-xs text-(--ds-text-muted)">Low Stock</p>
+              <p className="text-lg font-bold text-(--ds-text)">{lowStockCount}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="ds-card ds-card-pad">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-orange-50 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-4 h-4 text-[#FF6B35]" />
+            <div className="w-9 h-9 bg-emerald-50 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-4 h-4 text-[#10B981]" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">Categories</p>
-              <p className="text-lg font-bold text-gray-800">{categories.length}</p>
+              <p className="text-xs text-(--ds-text-muted)">Categories</p>
+              <p className="text-lg font-bold text-(--ds-text)">{categories.length}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Table Card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-800">All Products</h2>
+      <div className="ds-card overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-(--ds-border)">
+          <h2 className="ds-section-title">All Products</h2>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--ds-text-faint)" />
             <input
               type="text"
               placeholder="Search products..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none w-56"
+              className="ds-input pl-9 w-56"
             />
           </div>
         </div>
@@ -252,30 +248,30 @@ export default function ProductCrud() {
           <TableSkeleton rows={8} cols={6} />
         ) : filtered.length === 0 ? (
           <div className="py-16 text-center">
-            <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="font-semibold text-gray-600">No products found</p>
-            <p className="text-sm text-gray-400 mt-1">Add your first product to get started!</p>
+            <Package className="w-12 h-12 text-(--ds-text-faint) mx-auto mb-3" />
+            <p className="font-semibold text-(--ds-text-muted)">No products found</p>
+            <p className="text-sm text-(--ds-text-faint) mt-1">Add your first product to get started!</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="ds-table">
               <thead>
-                <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-semibold">
-                  <th className="px-5 py-3 text-left">Product</th>
-                  <th className="px-5 py-3 text-left">Category</th>
-                  <th className="px-5 py-3 text-center">Price</th>
-                  <th className="px-5 py-3 text-center">Stock</th>
-                  <th className="px-5 py-3 text-center">Offer</th>
-                  <th className="px-5 py-3 text-center">Status</th>
-                  <th className="px-5 py-3 text-center">Actions</th>
+                <tr>
+                  <th className="text-left">Product</th>
+                  <th className="text-left">Category</th>
+                  <th className="text-center">Price</th>
+                  <th className="text-center">Stock</th>
+                  <th className="text-center">Offer</th>
+                  <th className="text-center">Status</th>
+                  <th className="text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody>
                 {filtered.map((product) => (
-                  <tr key={product._id || product.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-4">
+                  <tr key={product._id || product.id}>
+                    <td>
                       <div className="flex items-center gap-3">
-                        <div className="overflow-hidden border border-gray-200 w-10 h-10 rounded-lg shrink-0">
+                        <div className="overflow-hidden border border-(--ds-border-strong) w-10 h-10 rounded-lg shrink-0">
                           {product.imageUrl ? (
                             <img
                               src={getImageUrl(product.imageUrl)}
@@ -290,50 +286,50 @@ export default function ProductCrud() {
                           )}
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-800">{product.name}</p>
-                          <p className="text-xs text-gray-400 line-clamp-1">{product.description || 'No description'}</p>
+                          <p className="font-semibold text-(--ds-text)">{product.name}</p>
+                          <p className="text-xs text-(--ds-text-faint) line-clamp-1">{product.description || 'No description'}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
-                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700">
+                    <td>
+                      <span className="ds-badge ds-badge-info">
                         {getCategoryName(product.category_id || product.categoryId || product.category?._id || product.category?.id || product.category)}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-center">
-                      <div className="font-bold text-[#1A3C8A]">Rs. {product.price}</div>
+                    <td className="text-center">
+                      <div className="font-bold text-[#1E293B]">Rs. {product.price}</div>
                       {product.discountPrice > 0 && (
-                        <div className="text-xs text-gray-400 line-through">Rs. {product.discountPrice}</div>
+                        <div className="text-xs text-(--ds-text-faint) line-through">Rs. {product.discountPrice}</div>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-center">
-                      <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
-                        product.stock === 0 ? 'bg-red-100 text-red-700'
-                        : product.stock <= 10 ? 'bg-amber-100 text-amber-700'
-                        : 'bg-emerald-100 text-emerald-700'
+                    <td className="text-center">
+                      <span className={`ds-badge ${
+                        product.stock === 0 ? 'ds-badge-danger'
+                        : product.stock <= 10 ? 'ds-badge-warning'
+                        : 'ds-badge-success'
                       }`}>
                         {product.stock === 0 ? 'Out of stock'
                           : product.stock <= 10 ? `Low: ${product.stock}`
                           : `In stock: ${product.stock}`}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-center">
+                    <td className="text-center">
                       {product.hasOffer ? (
-                        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-orange-100 text-[#FF6B35]">Yes</span>
+                        <span className="ds-badge ds-badge-warning">Yes</span>
                       ) : (
-                        <span className="text-xs text-gray-400">—</span>
+                        <span className="text-xs text-(--ds-text-faint)">—</span>
                       )}
                     </td>
-                    <td className="px-5 py-4 text-center">
+                    <td className="text-center">
                       <StatusPill isActive={product.isActive} />
                     </td>
-                    <td className="px-5 py-4">
+                    <td>
                       <div className="flex justify-center gap-2">
                         <button
                           onClick={() => handleEdit(product)}
                           title={`Edit ${product.name}`}
                           aria-label={`Edit ${product.name}`}
-                          className="bg-[#1A3C8A] hover:bg-blue-900 text-white px-3 py-1.5 rounded-lg text-sm"
+                          className="ds-btn ds-btn-blue ds-btn-icon"
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
@@ -341,7 +337,7 @@ export default function ProductCrud() {
                           onClick={() => setPendingDelete(product)}
                           title={`Delete ${product.name}`}
                           aria-label={`Delete ${product.name}`}
-                          className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm"
+                          className="ds-btn ds-btn-danger ds-btn-icon"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -364,14 +360,14 @@ export default function ProductCrud() {
       >
         <form onSubmit={(e) => { e.preventDefault(); handleSave(); }} className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Product Name *</label>
+                <label className="ds-label">Product Name *</label>
                 <input required name="name" value={form.name} onChange={handleChange} placeholder="iPhone 15 Pro Max"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none text-sm" />
+                  className="ds-input" />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Category *</label>
+                <label className="ds-label">Category *</label>
                 <select required name="category_id" value={form.category_id} onChange={handleChange}
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none text-sm">
+                  className="ds-input">
                   <option value="">Select category</option>
                   {categories.map(c => {
                     const catId = c._id || c.id;
@@ -381,32 +377,32 @@ export default function ProductCrud() {
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Price (Rs.) *</label>
+                  <label className="ds-label">Price (Rs.) *</label>
                   <input required type="number" name="price" value={form.price} onChange={handleChange} placeholder="29999"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none text-sm" />
+                    className="ds-input" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1.5">Discount Price</label>
+                  <label className="ds-label">Discount Price</label>
                   <input type="number" name="discountPrice" value={form.discountPrice} onChange={handleChange} placeholder="24999"
-                    className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none text-sm" />
+                    className="ds-input" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Stock Quantity</label>
+                <label className="ds-label">Stock Quantity</label>
                 <input type="number" name="stock" value={form.stock} onChange={handleChange} placeholder="100"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none text-sm" />
+                  className="ds-input" />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
+                <label className="ds-label">Description</label>
                 <textarea name="description" value={form.description} onChange={handleChange} rows={3}
                   placeholder="Describe this product..."
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none resize-none text-sm" />
+                  className="ds-textarea resize-none" />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Product Image</label>
+                <label className="ds-label">Product Image</label>
                 <button type="button" onClick={() => document.getElementById('file-upload').click()} disabled={uploading}
-                  className="w-full py-3 bg-[#1A3C8A] hover:bg-blue-900 text-white font-semibold rounded-xl flex items-center justify-center gap-2 text-sm disabled:opacity-70">
+                  className="ds-btn ds-btn-blue w-full">
                   {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
                   {uploading ? 'Uploading...' : 'Upload Image'}
                 </button>
@@ -424,12 +420,12 @@ export default function ProductCrud() {
 
               <div className="flex flex-wrap gap-6 py-2">
                 <label className="flex items-center gap-2 cursor-pointer text-sm">
-                  <input type="checkbox" name="hasOffer" checked={form.hasOffer} onChange={handleChange} className="w-4 h-4 text-[#FF6B35] rounded" />
-                  <span className="font-medium text-gray-700">Has Special Offer</span>
+                  <input type="checkbox" name="hasOffer" checked={form.hasOffer} onChange={handleChange} className="w-4 h-4 text-[#10B981] rounded" />
+                  <span className="font-medium text-(--ds-text)">Has Special Offer</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer text-sm">
-                  <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} className="w-4 h-4 text-[#1A3C8A] rounded" />
-                  <span className="font-medium text-gray-700">Product is Active</span>
+                  <input type="checkbox" name="isActive" checked={form.isActive} onChange={handleChange} className="w-4 h-4 text-[#1E293B] rounded" />
+                  <span className="font-medium text-(--ds-text)">Product is Active</span>
                 </label>
               </div>
 
@@ -437,25 +433,25 @@ export default function ProductCrud() {
               {form.hasOffer && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Sale Start (optional)</label>
+                    <label className="ds-label">Sale Start (optional)</label>
                     <input type="datetime-local" name="saleStartDate" value={form.saleStartDate} onChange={handleChange}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#FF6B35]" />
+                      className="ds-input" />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-1.5">Sale End (optional)</label>
+                    <label className="ds-label">Sale End (optional)</label>
                     <input type="datetime-local" name="saleEndDate" value={form.saleEndDate} onChange={handleChange}
-                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:border-[#FF6B35]" />
+                      className="ds-input" />
                   </div>
                 </div>)}
 
               <div className="flex gap-3 pt-2">
                 <button type="submit" disabled={isSaving || uploading}
-                  className="flex-1 py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-bold rounded-xl text-sm transition flex items-center justify-center gap-2 disabled:opacity-70">
+                  className="ds-btn ds-btn-primary flex-1">
                   {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
                   {editingProduct ? 'Update Product' : 'Create Product'}
                 </button>
                 <button type="button" onClick={closeModal}
-                  className="px-6 py-2.5 font-semibold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 text-sm transition">
+                  className="ds-btn ds-btn-secondary">
                   Cancel
                 </button>
               </div>

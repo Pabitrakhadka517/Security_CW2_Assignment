@@ -3,12 +3,13 @@ import { useEffect, useState } from 'react';
 import { useOrderStore } from '../store/orderstore';
 import toast from 'react-hot-toast';
 import {
-  Package, Truck, CheckCircle, Clock, AlertCircle, Loader2, Eye, X,
+  Package, Truck, CheckCircle, Clock, AlertCircle, Loader2, Eye,
   MapPin, Phone, User, ShoppingBag, Calendar, RefreshCw, Copy,
   TrendingUp, DollarSign, Search
 } from 'lucide-react';
 import { TableSkeleton } from '../ui/Skeleton';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import Modal from '../ui/Modal';
 
 export default function OrderCRUD() {
   const { orders, pagination, loading, error, fetchOrders, updateOrderStatus } = useOrderStore();
@@ -110,7 +111,7 @@ export default function OrderCRUD() {
   };
 
   const statusTabColors = {
-    all: 'bg-[#1A3C8A] text-white',
+    all: 'bg-[#1E293B] text-white',
     pending: 'bg-yellow-100 text-yellow-800',
     processing: 'bg-blue-100 text-blue-800',
     shipped: 'bg-purple-100 text-purple-800',
@@ -119,17 +120,17 @@ export default function OrderCRUD() {
   };
 
   return (
-    <div className="space-y-5 max-w-7xl mx-auto">
+    <div className="ds-page space-y-5 max-w-7xl mx-auto">
 
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-800">Orders</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Manage and fulfill customer orders</p>
+          <h1 className="ds-page-title">Orders</h1>
+          <p className="ds-page-sub">Manage and fulfill customer orders</p>
         </div>
         <button
           onClick={() => fetchOrders()}
-          className="bg-[#FF6B35] hover:bg-orange-500 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2"
+          className="ds-btn ds-btn-primary"
         >
           <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
           Refresh
@@ -138,47 +139,47 @@ export default function OrderCRUD() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="ds-card ds-card-pad">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-4 h-4 text-[#1A3C8A]" />
+              <TrendingUp className="w-4 h-4 text-[#1E293B]" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">Revenue</p>
-              <p className="text-base font-bold text-gray-800">Rs. {totalRevenue.toLocaleString()}</p>
+              <p className="text-xs text-(--ds-text-muted)">Revenue</p>
+              <p className="text-base font-bold text-(--ds-text)">Rs. {totalRevenue.toLocaleString()}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="ds-card ds-card-pad">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-orange-50 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-4 h-4 text-[#FF6B35]" />
+            <div className="w-9 h-9 bg-emerald-50 rounded-lg flex items-center justify-center">
+              <DollarSign className="w-4 h-4 text-[#10B981]" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">Pending Value</p>
-              <p className="text-base font-bold text-gray-800">Rs. {pendingRevenue.toLocaleString()}</p>
+              <p className="text-xs text-(--ds-text-muted)">Pending Value</p>
+              <p className="text-base font-bold text-(--ds-text)">Rs. {pendingRevenue.toLocaleString()}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="ds-card ds-card-pad">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-emerald-50 rounded-lg flex items-center justify-center">
               <CheckCircle className="w-4 h-4 text-emerald-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">Delivered</p>
-              <p className="text-lg font-bold text-gray-800">{orderCounts.delivered}</p>
+              <p className="text-xs text-(--ds-text-muted)">Delivered</p>
+              <p className="text-lg font-bold text-(--ds-text)">{orderCounts.delivered}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="ds-card ds-card-pad">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-yellow-50 rounded-lg flex items-center justify-center">
               <Clock className="w-4 h-4 text-yellow-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">Pending</p>
-              <p className="text-lg font-bold text-gray-800">{orderCounts.pending}</p>
+              <p className="text-xs text-(--ds-text-muted)">Pending</p>
+              <p className="text-lg font-bold text-(--ds-text)">{orderCounts.pending}</p>
             </div>
           </div>
         </div>
@@ -192,7 +193,7 @@ export default function OrderCRUD() {
             onClick={() => setStatusFilter(status)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
               statusFilter === status
-                ? 'border-[#FF6B35] ring-2 ring-[#FF6B35]/20 ' + statusTabColors[status]
+                ? 'border-[#10B981] ring-2 ring-[#10B981]/20 ' + statusTabColors[status]
                 : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
             }`}
           >
@@ -210,9 +211,9 @@ export default function OrderCRUD() {
       )}
 
       {/* Table Card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-800">All Orders</h2>
+      <div className="ds-card overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-(--ds-border)">
+          <h2 className="ds-section-title">All Orders</h2>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -220,7 +221,7 @@ export default function OrderCRUD() {
               placeholder="Search orders..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none w-60"
+              className="ds-input pl-9 w-60"
             />
           </div>
         </div>
@@ -230,29 +231,29 @@ export default function OrderCRUD() {
         ) : filteredOrders.length === 0 ? (
           <div className="text-center py-16">
             <Package className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-            <p className="font-semibold text-gray-600">No orders found</p>
+            <p className="font-semibold text-(--ds-text-muted)">No orders found</p>
             <p className="text-sm text-gray-400 mt-1">{searchQuery ? 'Try a different search term' : 'Waiting for your first sale!'}</p>
             {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="mt-3 text-sm text-[#FF6B35] hover:underline">
+              <button onClick={() => setSearchQuery('')} className="mt-3 text-sm text-[#10B981] hover:underline">
                 Clear search
               </button>
             )}
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="ds-table">
               <thead>
-                <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-semibold">
-                  <th className="px-5 py-3 text-left">Order ID</th>
-                  <th className="px-5 py-3 text-left">Customer</th>
-                  <th className="px-5 py-3 text-center">Items</th>
-                  <th className="px-5 py-3 text-center">Total</th>
-                  <th className="px-5 py-3 text-center">Date</th>
-                  <th className="px-5 py-3 text-center">Status</th>
-                  <th className="px-5 py-3 text-center">Actions</th>
+                <tr >
+                  <th className="text-left">Order ID</th>
+                  <th className="text-left">Customer</th>
+                  <th className="text-center">Items</th>
+                  <th className="text-center">Total</th>
+                  <th className="text-center">Date</th>
+                  <th className="text-center">Status</th>
+                  <th className="text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody>
                 {filteredOrders.map((order, i) => {
                   const config = statusConfig[order.status] || statusConfig.pending;
                   const fullOrderId = order.orderId || order.order_id || order._id || order.id || `order-${i}`;
@@ -268,15 +269,15 @@ export default function OrderCRUD() {
                   };
 
                   return (
-                    <tr key={fullOrderId} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-5 py-4">
+                    <tr key={fullOrderId}>
+                      <td>
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-xs font-bold text-[#1A3C8A] bg-blue-50 px-2 py-1 rounded">
+                          <span className="font-mono text-xs font-bold text-[#1E293B] bg-blue-50 px-2 py-1 rounded">
                             #{shortOrderId}
                           </span>
                           <button
                             onClick={copyOrderId}
-                            className="p-1 text-gray-400 hover:text-[#FF6B35] rounded transition"
+                            className="p-1 text-gray-400 hover:text-[#10B981] rounded transition"
                             title="Copy full Order ID"
                             aria-label={`Copy order ID for order ${shortOrderId}`}
                           >
@@ -284,9 +285,9 @@ export default function OrderCRUD() {
                           </button>
                         </div>
                       </td>
-                      <td className="px-5 py-4">
+                      <td>
                         <p className="font-semibold text-gray-800 flex items-center gap-1.5">
-                          <User className="w-3.5 h-3.5 text-[#1A3C8A]" />
+                          <User className="w-3.5 h-3.5 text-[#1E293B]" />
                           {customerName}
                         </p>
                         <p className="text-xs text-gray-500 flex items-center gap-1 mt-0.5">
@@ -296,28 +297,28 @@ export default function OrderCRUD() {
                           <MapPin className="w-3 h-3" /> {order.city}{order.district ? `, ${order.district}` : ''}
                         </p>
                       </td>
-                      <td className="px-5 py-4 text-center">
+                      <td className="text-center">
                         <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700">
                           {order.items?.length || 0}
                         </span>
                       </td>
-                      <td className="px-5 py-4 text-center font-bold text-[#1A3C8A]">
+                      <td className="text-center font-bold text-[#1E293B]">
                         Rs. {(order.totalAmount || 0).toLocaleString()}
                       </td>
-                      <td className="px-5 py-4 text-center text-xs text-gray-500">
+                      <td className="text-center text-xs text-(--ds-text-muted)">
                         {formatDate(order.created_at)}
                       </td>
-                      <td className="px-5 py-4 text-center">
+                      <td className="text-center">
                         <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-0.5 rounded-full ${config.bg} ${config.text}`}>
                           {getStatusIcon(order.status)}
                           {config.label}
                         </span>
                       </td>
-                      <td className="px-5 py-4">
+                      <td>
                         <div className="flex justify-center gap-2">
                           <button
                             onClick={() => setSelectedOrder(order)}
-                            className="bg-[#1A3C8A] hover:bg-blue-900 text-white px-3 py-1.5 rounded-lg text-sm"
+                            className="ds-btn ds-btn-blue ds-btn-icon"
                             title="View Details"
                             aria-label={`View order ${order.orderNumber || shortOrderId}`}
                           >
@@ -326,7 +327,7 @@ export default function OrderCRUD() {
                           {order.status !== 'delivered' && order.status !== 'cancelled' && (
                             <button
                               onClick={() => handleStatusUpdate(fullOrderId, nextStatus(order.status))}
-                              className="bg-[#FF6B35] hover:bg-orange-500 text-white px-3 py-1.5 rounded-lg text-xs font-semibold"
+                              className="ds-btn ds-btn-primary ds-btn-icon text-xs"
                               aria-label={`Advance order ${order.orderNumber || shortOrderId} to ${statusConfig[nextStatus(order.status)]?.label || nextStatus(order.status)}`}
                             >
                               Next →
@@ -375,27 +376,23 @@ export default function OrderCRUD() {
         };
 
         return (
-          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-              {/* Modal Header */}
-              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-                <div>
-                  <h2 className="font-bold text-gray-800">Order Details</h2>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="font-mono text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded">
-                      {modalFullOrderId}
-                    </span>
-                    <button onClick={copyModalOrderId} className="p-1 text-gray-400 hover:text-[#FF6B35] rounded transition" title="Copy Order ID">
-                      <Copy className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                </div>
-                <button onClick={() => setSelectedOrder(null)} className="p-2 rounded-lg hover:bg-gray-100 transition">
-                  <X className="w-5 h-5 text-gray-500" />
-                </button>
-              </div>
-
-              <div className="p-6 space-y-5">
+          <Modal
+            isOpen={!!selectedOrder}
+            onClose={() => setSelectedOrder(null)}
+            size="lg"
+            title={
+              <span className="inline-flex flex-wrap items-center gap-2">
+                Order Details
+                <span className="inline-flex items-center gap-1 font-mono text-xs font-normal text-(--ds-text-muted) bg-(--ds-card-muted) px-2 py-0.5 rounded">
+                  {modalFullOrderId}
+                  <button onClick={copyModalOrderId} className="text-(--ds-text-faint) hover:text-[#10B981] transition" title="Copy Order ID">
+                    <Copy className="w-3.5 h-3.5" />
+                  </button>
+                </span>
+              </span>
+            }
+          >
+              <div className="space-y-5">
                 {/* Status & Date */}
                 <div className="flex items-center justify-between">
                   <span className={`inline-flex items-center gap-2 text-xs font-semibold px-2.5 py-0.5 rounded-full ${statusConfig[selectedOrder.status]?.bg} ${statusConfig[selectedOrder.status]?.text}`}>
@@ -411,7 +408,7 @@ export default function OrderCRUD() {
                 {/* Customer & Address */}
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="p-4 bg-gray-50 rounded-xl">
-                    <h3 className="font-semibold text-[#1A3C8A] mb-3 flex items-center gap-2 text-sm">
+                    <h3 className="font-semibold text-[#1E293B] mb-3 flex items-center gap-2 text-sm">
                       <User className="w-4 h-4" /> Customer
                     </h3>
                     <p className="font-medium text-sm text-gray-800">{modalCustomerName}</p>
@@ -420,7 +417,7 @@ export default function OrderCRUD() {
                     </p>
                   </div>
                   <div className="p-4 bg-gray-50 rounded-xl">
-                    <h3 className="font-semibold text-[#1A3C8A] mb-3 flex items-center gap-2 text-sm">
+                    <h3 className="font-semibold text-[#1E293B] mb-3 flex items-center gap-2 text-sm">
                       <MapPin className="w-4 h-4" /> Delivery Address
                     </h3>
                     <p className="font-medium text-sm text-gray-800">{selectedOrder.address}</p>
@@ -433,7 +430,7 @@ export default function OrderCRUD() {
 
                 {/* Order Items */}
                 <div className="p-4 bg-gray-50 rounded-xl">
-                  <h3 className="font-semibold text-[#1A3C8A] mb-3 flex items-center gap-2 text-sm">
+                  <h3 className="font-semibold text-[#1E293B] mb-3 flex items-center gap-2 text-sm">
                     <ShoppingBag className="w-4 h-4" /> Order Items
                   </h3>
                   <div className="space-y-3">
@@ -452,9 +449,9 @@ export default function OrderCRUD() {
                         </div>
                         <div className="flex-1">
                           <p className="font-semibold text-sm text-gray-800">{item.name}</p>
-                          <p className="text-xs text-gray-500">Qty: {item.quantity || 1}</p>
+                          <p className="text-xs text-(--ds-text-muted)">Qty: {item.quantity || 1}</p>
                         </div>
-                        <p className="font-bold text-sm text-[#1A3C8A]">
+                        <p className="font-bold text-sm text-[#1E293B]">
                           Rs. {((item.price || 0) * (item.quantity || 1)).toLocaleString()}
                         </p>
                       </div>
@@ -495,7 +492,7 @@ export default function OrderCRUD() {
                 })()}
 
                 {/* Total */}
-                <div className="flex items-center justify-between bg-[#1A3C8A] rounded-xl p-4 text-white">
+                <div className="flex items-center justify-between bg-[#1E293B] rounded-xl p-4 text-white">
                   <span className="font-bold">Total Amount</span>
                   <span className="text-2xl font-bold">Rs. {(selectedOrder.totalAmount || 0).toLocaleString()}</span>
                 </div>
@@ -508,21 +505,20 @@ export default function OrderCRUD() {
                         handleStatusUpdate(modalFullOrderId, nextStatus(selectedOrder.status));
                         setSelectedOrder(null);
                       }}
-                      className="flex-1 py-3 bg-[#FF6B35] hover:bg-orange-500 text-white font-bold rounded-xl text-sm transition"
+                      className="ds-btn ds-btn-primary flex-1 py-3"
                     >
                       Mark as {statusConfig[nextStatus(selectedOrder.status)]?.label}
                     </button>
                     <button
                       onClick={() => setPendingCancel({ id: modalFullOrderId, label: modalCustomerName })}
-                      className="px-6 py-3 font-bold text-white bg-red-500 hover:bg-red-600 rounded-xl text-sm transition"
+                      className="ds-btn ds-btn-danger py-3"
                     >
                       Cancel Order
                     </button>
                   </div>
                 )}
               </div>
-            </div>
-          </div>
+          </Modal>
         );
       })()}
 

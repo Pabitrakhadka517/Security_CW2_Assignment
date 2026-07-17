@@ -120,10 +120,10 @@ export default function BulkUpload() {
   ] : [];
 
   return (
-    <div className="p-6 max-w-5xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Bulk Upload</h1>
-        <p className="mt-1 text-gray-600">Import categories, products, banners and sales from CSV, Excel or JSON files.</p>
+    <div className="ds-page space-y-5 max-w-7xl mx-auto">
+      <div>
+        <h1 className="ds-page-title">Bulk Upload</h1>
+        <p className="ds-page-sub">Import categories, products, banners and sales from CSV, Excel or JSON files.</p>
       </div>
 
       {/* Entity tabs */}
@@ -133,7 +133,7 @@ export default function BulkUpload() {
             key={e.key}
             onClick={() => { setEntity(e.key); setReport(null); setRequestError(''); setDataFile(null); setZipFile(null); }}
             className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${
-              entity === e.key ? 'bg-[#1A3C8A] text-white shadow' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
+              entity === e.key ? 'bg-[#1E293B] text-white shadow' : 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50'
             }`}
           >
             {e.label}
@@ -162,7 +162,7 @@ export default function BulkUpload() {
         onDrop={(e) => { e.preventDefault(); setDragOver(false); acceptDataFile(e.dataTransfer.files?.[0]); }}
         onClick={() => dataInputRef.current?.click()}
         className={`cursor-pointer border-2 border-dashed rounded-2xl p-10 text-center transition ${
-          dragOver ? 'border-[#1A3C8A] bg-blue-50' : 'border-gray-300 bg-white hover:border-gray-400'
+          dragOver ? 'border-[#10B981] bg-emerald-50' : 'border-gray-300 bg-white hover:border-gray-400'
         }`}
       >
         <input ref={dataInputRef} type="file" accept=".csv,.xlsx,.xls,.json" className="hidden"
@@ -202,7 +202,7 @@ export default function BulkUpload() {
         <button
           onClick={handleUpload}
           disabled={!dataFile || uploading}
-          className="inline-flex items-center gap-2 px-6 py-3 font-bold text-white bg-[#1A3C8A] rounded-xl hover:bg-[#112960] disabled:opacity-40 disabled:cursor-not-allowed transition"
+          className="inline-flex items-center gap-2 px-6 py-3 font-bold text-white bg-[#1E293B] rounded-xl hover:bg-[#0B1220] disabled:opacity-40 disabled:cursor-not-allowed transition"
         >
           {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
           Upload
@@ -215,14 +215,14 @@ export default function BulkUpload() {
               <span>{progress}%</span>
             </div>
             <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
-              <div className="h-full bg-[#1A3C8A] rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+              <div className="h-full bg-[#1E293B] rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
             </div>
           </div>
         )}
 
         {uploadPhase === 'processing' && (
           <div className="flex items-center gap-3 text-sm text-gray-600">
-            <span className="w-4 h-4 rounded-full border-2 border-[#1A3C8A] border-t-transparent animate-spin" />
+            <span className="w-4 h-4 rounded-full border-2 border-[#1E293B] border-t-transparent animate-spin" />
             Processing your file... this may take a moment
           </div>
         )}

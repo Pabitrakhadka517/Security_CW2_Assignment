@@ -121,10 +121,10 @@ function App() {
               background: 'linear-gradient(135deg, rgba(239,246,255,0.98) 0%, rgba(219,234,254,0.98) 100%)',
               color: '#1e3a8a',
               border: '1px solid rgba(147,197,253,0.5)',
-              boxShadow: '0 8px 32px -4px rgba(26,60,138,0.15), 0 2px 8px -2px rgba(26,60,138,0.10)',
+              boxShadow: '0 8px 32px -4px rgba(30,41,59,0.15), 0 2px 8px -2px rgba(30,41,59,0.10)',
             },
             iconTheme: {
-              primary: '#1A3C8A',
+              primary: '#1E293B',
               secondary: '#dbeafe',
             },
           },

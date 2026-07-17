@@ -8,9 +8,9 @@ import { useFavoritesStore } from '@/store/favoritesstore'
 import { authEndpoints } from '../api/userapi'
 import { useUserAuth } from '../store/authstore'
 import { useProductStore } from '../store/productstore'
+import { LogoMark } from '../ui/Logo'
 import { useCategoryStore } from '../store/categorystore'
 import { motion, AnimatePresence } from 'framer-motion'
-import logo from '../../assets/logo1080.png'
 
 export default function Navbar() {
   const navigate = useNavigate()
@@ -85,18 +85,18 @@ export default function Navbar() {
   return (
     <>
       {/* Premium Announcement Bar */}
-      <div className="relative z-50 w-full overflow-hidden border-b border-white/10 bg-[linear-gradient(90deg,rgba(8,12,20,0.98)_0%,rgba(26,60,138,0.96)_48%,rgba(255,107,53,0.94)_100%)] text-xs font-medium text-white/95 shadow-[0_14px_40px_-30px_rgba(15,23,42,0.65)]">
+      <div className="relative z-50 w-full overflow-hidden border-b border-white/10 bg-[linear-gradient(90deg,rgba(8,12,20,0.98)_0%,rgba(30,41,59,0.96)_48%,rgba(16,185,129,0.94)_100%)] text-xs font-medium text-white/95 shadow-[0_14px_40px_-30px_rgba(15,23,42,0.65)]">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.16),transparent_28%),radial-gradient(circle_at_bottom_left,rgba(255,255,255,0.08),transparent_24%)]" />
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-2 sm:px-6 lg:px-8">
           <div className="flex items-center gap-3 rounded-full border border-white/15 bg-white/8 px-3 py-1.5 backdrop-blur-md shrink-0">
             <span className="relative flex h-2.5 w-2.5 shrink-0">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-orange-300 opacity-60"></span>
-              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-orange-400"></span>
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-300 opacity-60"></span>
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
             </span>
             <span className="whitespace-nowrap">
               MEGA SALE: Up to 50% Off!&nbsp;
               <span className="inline-flex items-center gap-1">
-                Code:&nbsp;<strong className="text-orange-300 tracking-wider bg-orange-500/20 px-1.5 py-0.5 rounded">EPASALEY</strong>
+                Code:&nbsp;<strong className="text-emerald-300 tracking-wider bg-emerald-500/20 px-1.5 py-0.5 rounded">EPASALEY</strong>
               </span>
             </span>
           </div>
@@ -123,14 +123,17 @@ export default function Navbar() {
           }`}>
 
             {/* Logo with scale on scroll */}
-            <Link to="/" className="flex items-center group shrink-0">
-              <img 
-                src={logo} 
-                alt="Epasaley Logo" 
-                className={`object-contain transition-all duration-300 ${
-                  scrolled ? 'w-20 h-20' : 'w-28 h-28'
-                }`}
-              />
+            <Link to="/" className="flex items-center gap-2.5 group shrink-0">
+              <div className={`flex items-center justify-center rounded-xl bg-linear-to-br from-[#1E293B] to-[#10B981] transition-all duration-300 ${
+                scrolled ? 'w-9 h-9' : 'w-10 h-10'
+              }`}>
+                <LogoMark className="w-1/2 h-1/2 text-white" />
+              </div>
+              <span className={`font-bold text-gray-900 transition-all duration-300 ${
+                scrolled ? 'text-lg' : 'text-xl'
+              }`}>
+                epasal<span className="text-[#10B981]">ey</span>
+              </span>
             </Link>
             {/* Desktop Navigation & Actions */}
             <div className="flex items-center gap-1">
@@ -188,7 +191,7 @@ export default function Navbar() {
                                 to={`/products?category=${cat._id || cat.id}`}
                                 role="menuitem"
                                 onClick={() => setCategoriesOpen(false)}
-                                className="block px-4 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-slate-50 hover:text-[#FF6B35]"
+                                className="block px-4 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-slate-50 hover:text-[#10B981]"
                               >
                                 {cat.name}
                               </Link>
@@ -204,14 +207,14 @@ export default function Navbar() {
                 <Link
                   to="/sales"
                   aria-current={isActive('/sales') ? 'page' : undefined}
-                  className={`relative flex items-center gap-2 rounded-full px-5 py-3 font-semibold text-[#FF6B35] transition-all duration-300 hover:-translate-y-0.5 hover:bg-orange-50 ${
-                    isActive('/sales') ? 'bg-orange-50 ring-1 ring-[#FF6B35]/30' : ''
+                  className={`relative flex items-center gap-2 rounded-full px-5 py-3 font-semibold text-[#10B981] transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-50 ${
+                    isActive('/sales') ? 'bg-emerald-50 ring-1 ring-[#10B981]/30' : ''
                   }`}
                 >
                   <Flame className="w-4 h-4" />
                   Sales
                   {liveSaleCount > 0 && (
-                    <span className="absolute -top-0.5 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#FF6B35] px-1 text-[10px] font-bold text-white animate-pulse">
+                    <span className="absolute -top-0.5 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#10B981] px-1 text-[10px] font-bold text-white animate-pulse">
                       {liveSaleCount}
                     </span>
                   )}
@@ -344,7 +347,7 @@ export default function Navbar() {
                 ) : (
                   <Link
                     to="/login"
-                    className="flex items-center gap-2 rounded-full bg-[#1A3C8A] px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#112960] shadow-md shadow-blue-200"
+                    className="flex items-center gap-2 rounded-full bg-[#1E293B] px-5 py-2.5 text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-0.5 hover:bg-[#0B1220] shadow-md shadow-slate-300"
                   >
                     <LogIn className="w-4 h-4" />
                     Login
@@ -430,7 +433,7 @@ export default function Navbar() {
                     <Link
                       to="/login"
                       onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-4 rounded-3xl bg-[#1A3C8A] px-6 py-4 font-semibold text-white shadow-lg"
+                      className="flex items-center gap-4 rounded-3xl bg-[#1E293B] px-6 py-4 font-semibold text-white shadow-lg"
                     >
                       <LogIn className="w-6 h-6" />
                       Login / Sign Up

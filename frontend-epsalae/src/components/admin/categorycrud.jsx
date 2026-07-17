@@ -70,11 +70,11 @@ export default function CategoryCrud() {
           palette: {
             window: "#ffffff",
             sourceBg: "#f8f8f8",
-            windowBorder: "#FF6B35",
-            tabIcon: "#FF6B35",
+            windowBorder: "#10B981",
+            tabIcon: "#10B981",
             inactiveTabIcon: "#555",
-            link: "#FF6B35",
-            action: "#FF6B35"
+            link: "#10B981",
+            action: "#10B981"
           }
         }
       },
@@ -103,7 +103,6 @@ export default function CategoryCrud() {
 
     try {
       const categoryId = editingCat?._id || editingCat?.id;
-      console.log('💾 Saving category:', { categoryId, isEdit: !!categoryId, payload });
 
       if (categoryId) {
         await updateCategory(categoryId, payload);
@@ -115,7 +114,6 @@ export default function CategoryCrud() {
       closeModal();
       await fetchCategories();
     } catch (error) {
-      console.error('❌ Save failed:', error);
       toast.error(error?.response?.data?.message || 'Failed to save category');
     }
   };
@@ -140,13 +138,11 @@ export default function CategoryCrud() {
 
   const handleDelete = async (id) => {
     try {
-      console.log('🗑️ Deleting category:', id);
       await deleteCategory(id);
       toast.success('Category deleted');
       await fetchCategories();
       await fetchProducts();
     } catch (error) {
-      console.error('❌ Delete failed:', error);
       toast.error(error?.response?.data?.message || 'Delete failed');
     }
   };
@@ -164,8 +160,8 @@ export default function CategoryCrud() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-800">Categories</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Organize your products with categories</p>
+          <h1 className="ds-page-title">Categories</h1>
+          <p className="ds-page-sub">Organize your products with categories</p>
         </div>
         <button
           onClick={() => {
@@ -173,7 +169,7 @@ export default function CategoryCrud() {
             setForm({ name: '', slug: '', description: '', imageUrl: null, isActive: true });
             setShowModal(true);
           }}
-          className="bg-[#FF6B35] hover:bg-orange-500 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2"
+          className="ds-btn ds-btn-primary"
         >
           <Plus size={16} /> Add Category
         </button>
@@ -181,53 +177,53 @@ export default function CategoryCrud() {
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="ds-card ds-card-pad">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
-              <Tag className="w-4 h-4 text-[#1A3C8A]" />
+              <Tag className="w-4 h-4 text-[#1E293B]" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">Total</p>
-              <p className="text-lg font-bold text-gray-800">{categories.length}</p>
+              <p className="text-xs text-(--ds-text-muted)">Total</p>
+              <p className="text-lg font-bold text-(--ds-text)">{categories.length}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="ds-card ds-card-pad">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-emerald-50 rounded-lg flex items-center justify-center">
               <Eye className="w-4 h-4 text-emerald-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">Active</p>
-              <p className="text-lg font-bold text-gray-800">{activeCount}</p>
+              <p className="text-xs text-(--ds-text-muted)">Active</p>
+              <p className="text-lg font-bold text-(--ds-text)">{activeCount}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl border border-gray-100 p-4">
+        <div className="ds-card ds-card-pad">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-purple-50 rounded-lg flex items-center justify-center">
               <ImageIcon className="w-4 h-4 text-purple-600" />
             </div>
             <div>
-              <p className="text-xs text-gray-500">Products</p>
-              <p className="text-lg font-bold text-gray-800">{products.length}</p>
+              <p className="text-xs text-(--ds-text-muted)">Products</p>
+              <p className="text-lg font-bold text-(--ds-text)">{products.length}</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Table Card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h2 className="font-semibold text-gray-800">All Categories</h2>
+      <div className="ds-card overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-(--ds-border)">
+          <h2 className="ds-section-title">All Categories</h2>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-(--ds-text-faint)" />
             <input
               type="text"
               placeholder="Search categories..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none w-56"
+              className="ds-input pl-9 w-56"
             />
           </div>
         </div>
@@ -250,27 +246,27 @@ export default function CategoryCrud() {
                 setForm({ name: '', slug: '', description: '', imageUrl: null, isActive: true });
                 setShowModal(true);
               }}
-              className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white rounded-xl bg-[#FF6B35] hover:bg-orange-500 transition"
+              className="ds-btn ds-btn-primary"
             >
               <Plus className="w-4 h-4" /> Create first category
             </button>
           }
         >
           <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+            <table className="ds-table">
               <thead>
-                <tr className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider font-semibold">
-                  <th className="px-5 py-3 text-left">Category</th>
-                  <th className="px-5 py-3 text-left">Slug</th>
-                  <th className="px-5 py-3 text-center">Products</th>
-                  <th className="px-5 py-3 text-center">Status</th>
-                  <th className="px-5 py-3 text-center">Actions</th>
+                <tr>
+                  <th className="text-left">Category</th>
+                  <th className="text-left">Slug</th>
+                  <th className="text-center">Products</th>
+                  <th className="text-center">Status</th>
+                  <th className="text-center">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
+              <tbody>
                 {filtered.map((cat) => (
-                  <tr key={cat._id || cat.id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-5 py-4">
+                  <tr key={cat._id || cat.id} >
+                    <td>
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 overflow-hidden border border-gray-200 rounded-lg shrink-0">
                           {cat.imageUrl ? (
@@ -282,37 +278,35 @@ export default function CategoryCrud() {
                           )}
                         </div>
                         <div>
-                          <p className="font-semibold text-gray-800">{cat.name}</p>
-                          <p className="text-xs text-gray-400 line-clamp-1">{cat.description || 'No description'}</p>
+                          <p className="font-semibold text-(--ds-text)">{cat.name}</p>
+                          <p className="text-xs text-(--ds-text-faint) line-clamp-1">{cat.description || 'No description'}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-5 py-4">
-                      <code className="px-2 py-1 font-mono text-xs text-gray-600 bg-gray-100 rounded">
+                    <td>
+                      <code className="px-2 py-1 font-mono text-xs text-(--ds-text-muted) bg-(--ds-card-muted) rounded">
                         /{cat.slug}
                       </code>
                     </td>
-                    <td className="px-5 py-4 text-center">
+                    <td className="text-center">
                       {(() => {
                         const count = cat.productCount ?? getProductCount(cat._id || cat.id);
                         return (
-                          <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
-                            count > 0 ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-500'
-                          }`}>
+                          <span className={`ds-badge ${count > 0 ? 'ds-badge-info' : 'ds-badge-muted'}`}>
                             {count} {count === 1 ? 'Product' : 'Products'}
                           </span>
                         );
                       })()}
                     </td>
-                    <td className="px-5 py-4 text-center">
+                    <td className="text-center">
                       <StatusPill isActive={cat.isActive} />
                     </td>
-                    <td className="px-5 py-4">
+                    <td>
                       <div className="flex justify-center gap-2">
-                        <button onClick={() => handleEdit(cat)} title={`Edit ${cat.name}`} aria-label={`Edit ${cat.name}`} className="bg-[#1A3C8A] hover:bg-blue-900 text-white px-3 py-1.5 rounded-lg text-sm">
+                        <button onClick={() => handleEdit(cat)} title={`Edit ${cat.name}`} aria-label={`Edit ${cat.name}`} className="ds-btn ds-btn-blue ds-btn-icon">
                           <Edit2 className="w-3.5 h-3.5" />
                         </button>
-                        <button onClick={() => setPendingDelete(cat)} title={`Delete ${cat.name}`} aria-label={`Delete ${cat.name}`} className="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded-lg text-sm">
+                        <button onClick={() => setPendingDelete(cat)} title={`Delete ${cat.name}`} aria-label={`Delete ${cat.name}`} className="ds-btn ds-btn-danger ds-btn-icon">
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
@@ -334,18 +328,18 @@ export default function CategoryCrud() {
       >
         <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Category Name *</label>
+                <label className="ds-label">Category Name *</label>
                 <input
                   required
                   value={form.name}
                   onChange={(e) => handleNameChange(e.target.value)}
                   placeholder="e.g., Fashion, Electronics, Home & Living"
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none text-sm"
+                  className="ds-input"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Slug (Auto-generated)</label>
+                <label className="ds-label">Slug (Auto-generated)</label>
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-gray-400">store.com/</span>
                   <input readOnly value={form.slug} placeholder="fashion"
@@ -354,22 +348,22 @@ export default function CategoryCrud() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description *</label>
+                <label className="ds-label">Description *</label>
                 <textarea
                   required
                   value={form.description}
                   onChange={(e) => setForm(prev => ({ ...prev, description: e.target.value }))}
                   rows={3}
                   placeholder="Brief description for SEO and display..."
-                  className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:border-[#FF6B35] focus:outline-none resize-none text-sm"
+                  className="ds-textarea resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">Category Image (1:1) *</label>
+                <label className="ds-label">Category Image (1:1) *</label>
                 {!form.imageUrl ? (
                   <button type="button" onClick={openUploadWidget} disabled={uploading}
-                    className="w-full py-3 bg-[#1A3C8A] hover:bg-blue-900 text-white font-semibold rounded-xl flex items-center justify-center gap-2 text-sm disabled:opacity-70">
+                    className="ds-btn ds-btn-blue w-full">
                     {uploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Uploading...</> : <><Upload className="w-4 h-4" /> Upload Image</>}
                   </button>
                 ) : (
@@ -377,7 +371,7 @@ export default function CategoryCrud() {
                     <img src={getImageUrl(form.imageUrl)} alt="Category" className="object-cover w-full h-48" />
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/40 transition">
                       <button type="button" onClick={openUploadWidget}
-                        className="px-4 py-2 bg-white text-[#1A3C8A] font-semibold rounded-lg text-sm hover:bg-gray-100 transition">
+                        className="px-4 py-2 bg-white text-[#1E293B] font-semibold rounded-lg text-sm hover:bg-gray-100 transition">
                         Change Image
                       </button>
                     </div>
@@ -392,19 +386,19 @@ export default function CategoryCrud() {
               <div className="flex items-center gap-3 py-1">
                 <input type="checkbox" id="active" checked={form.isActive}
                   onChange={(e) => setForm(prev => ({ ...prev, isActive: e.target.checked }))}
-                  className="w-4 h-4 text-[#FF6B35] rounded" />
-                <label htmlFor="active" className="text-sm font-medium text-gray-700 cursor-pointer">
+                  className="w-4 h-4 text-[#10B981] rounded" />
+                <label htmlFor="active" className="text-sm font-medium text-(--ds-text) cursor-pointer">
                   Category is Active (Visible on site)
                 </label>
               </div>
 
               <div className="flex gap-3 pt-2">
                 <button type="submit" disabled={uploading}
-                  className="flex-1 py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-bold rounded-xl text-sm transition disabled:opacity-70">
+                  className="ds-btn ds-btn-primary flex-1">
                   {editingCat ? 'Update Category' : 'Create Category'}
                 </button>
                 <button type="button" onClick={closeModal}
-                  className="px-6 py-2.5 font-semibold text-gray-700 border border-gray-200 rounded-xl hover:bg-gray-50 text-sm transition">
+                  className="ds-btn ds-btn-secondary">
                   Cancel
                 </button>
               </div>

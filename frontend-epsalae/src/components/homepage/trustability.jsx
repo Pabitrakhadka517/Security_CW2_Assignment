@@ -28,8 +28,8 @@ export default function Trustability() {
       icon: RefreshCw, 
       title: "Easy Returns", 
       desc: "7 days hassle-free returns",
-      color: "text-orange-600",
-      bg: "bg-orange-50/50"
+      color: "text-emerald-600",
+      bg: "bg-emerald-50/50"
     },
     { 
       icon: Headphones, 
@@ -63,7 +63,7 @@ export default function Trustability() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.08, duration: 0.5 }}
-              className="flex flex-col items-center p-6 text-center transition-all duration-300 rounded-3xl bg-white border border-gray-100/70 shadow-[0_8px_30px_rgb(0,0,0,0.01)] hover:shadow-[0_20px_40px_rgba(26,60,138,0.04)] hover:border-blue-100/30 group"
+              className="flex flex-col items-center p-6 text-center transition-all duration-300 rounded-3xl bg-white border border-gray-100/70 shadow-[0_8px_30px_rgb(0,0,0,0.01)] hover:shadow-[0_20px_40px_rgba(30,41,59,0.04)] hover:border-blue-100/30 group"
             >
               <div className={`flex items-center justify-center w-14 h-14 ${feature.bg} rounded-2xl mb-4 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3`}>
                 <feature.icon className={`w-7 h-7 ${feature.color}`} />

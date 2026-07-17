@@ -18,14 +18,14 @@ import {
 } from 'lucide-react';
 
 /* ── colour tokens ───────────────────────────────────────────── */
-const ORANGE = '#FF6B35';
-const BLUE   = '#1A3C8A';
+const ORANGE = '#10B981';
+const BLUE   = '#1E293B';
 const STATUS_COLORS = {
   pending:    '#F59E0B', confirmed: '#3B82F6', processing: '#8B5CF6',
   shipped: '#06B6D4', on_the_way: '#14B8A6', delivered: '#10B981',
   cancelled: '#EF4444', received: '#22C55E',
 };
-const CAT_PAL = [ORANGE,'#1A3C8A','#10B981','#8B5CF6','#F59E0B','#06B6D4','#EF4444','#EC4899'];
+const CAT_PAL = [ORANGE,'#1E293B','#10B981','#8B5CF6','#F59E0B','#06B6D4','#EF4444','#EC4899'];
 
 const fmt   = (n) => new Intl.NumberFormat('en-NP').format(n ?? 0);
 const fmtRs = (n) => `Rs. ${fmt(n)}`;
@@ -106,13 +106,13 @@ function ChartCard({ title, action, children }) {
 function StatTile({ label, value, icon: Icon, iconBg, iconColor, path }) {
   return (
     <Link to={path}
-      className="group bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md hover:border-orange-200 hover:-translate-y-0.5 transition-all duration-200">
+      className="group bg-white rounded-2xl p-5 border border-gray-100 shadow-sm hover:shadow-md hover:border-emerald-200 hover:-translate-y-0.5 transition-all duration-200">
       <div className={`w-10 h-10 ${iconBg} rounded-xl flex items-center justify-center mb-4`}>
         <Icon className={`w-5 h-5 ${iconColor}`} />
       </div>
       <p className="text-2xl font-bold text-gray-800">{fmt(value)}</p>
       <p className="text-xs text-gray-500 mt-0.5 font-medium">{label}</p>
-      <p className="mt-2 text-[11px] text-[#FF6B35] font-semibold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <p className="mt-2 text-[11px] text-[#10B981] font-semibold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         Manage <ArrowUpRight className="w-3 h-3" />
       </p>
     </Link>
@@ -123,15 +123,15 @@ function StatTile({ label, value, icon: Icon, iconBg, iconColor, path }) {
 function QuickAction({ label, desc, icon: Icon, iconBg, iconColor, path }) {
   return (
     <Link to={path}
-      className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-orange-200 hover:-translate-y-0.5 transition-all duration-200 group">
+      className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-emerald-200 hover:-translate-y-0.5 transition-all duration-200 group">
       <div className={`w-10 h-10 ${iconBg} rounded-xl flex items-center justify-center shrink-0`}>
         <Icon className={`w-5 h-5 ${iconColor}`} />
       </div>
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-gray-800 group-hover:text-[#FF6B35] transition-colors">{label}</p>
+        <p className="text-sm font-semibold text-gray-800 group-hover:text-[#10B981] transition-colors">{label}</p>
         <p className="text-xs text-gray-400 truncate">{desc}</p>
       </div>
-      <ArrowUpRight className="w-4 h-4 text-gray-300 group-hover:text-[#FF6B35] shrink-0 ml-auto transition-colors" />
+      <ArrowUpRight className="w-4 h-4 text-gray-300 group-hover:text-[#10B981] shrink-0 ml-auto transition-colors" />
     </Link>
   );
 }
@@ -173,7 +173,8 @@ export default function AdminDashboard() {
   const coupons    = couponStore.coupons   ?? [];
 
   // Server-side stats cover the WHOLE order book; the loaded `orders` page
-  // (most recent 100) is only used for the trend chart below.
+  // (most recent 100) is only used for the trend chart below and the KPI
+  // week-over-week deltas (see `kpiTrends`).
   const stats = orderStore.stats;
   const totalRevenue    = stats?.totalRevenue    ?? orders.reduce((s, o) => s + (o.totalAmount || 0), 0);
   const pendingOrders   = stats?.pendingOrders   ?? orders.filter(o => o.status === 'pending').length;
@@ -184,6 +185,36 @@ export default function AdminDashboard() {
 
   /* ── chart data ── */
   const now = new Date();
+
+  // Real week-over-week deltas for the KPI cards, computed from the loaded
+  // orders page (last 7 days vs the 7 days before that) — replaces the
+  // previously hardcoded/fake trend percentages.
+  const kpiTrends = useMemo(() => {
+    const dayMs = 24 * 60 * 60 * 1000;
+    const currentStart  = new Date(now.getTime() - 7 * dayMs);
+    const previousStart = new Date(now.getTime() - 14 * dayMs);
+    let curRevenue = 0, prevRevenue = 0, curOrders = 0, prevOrders = 0, curPending = 0, prevPending = 0;
+    orders.forEach(o => {
+      if (!o.created_at) return;
+      const d = new Date(o.created_at);
+      if (d >= currentStart) {
+        curOrders += 1;
+        if (o.status !== 'cancelled') curRevenue += o.totalAmount || 0;
+        if (o.status === 'pending') curPending += 1;
+      } else if (d >= previousStart) {
+        prevOrders += 1;
+        if (o.status !== 'cancelled') prevRevenue += o.totalAmount || 0;
+        if (o.status === 'pending') prevPending += 1;
+      }
+    });
+    const pct = (cur, prev) => (prev ? ((cur - prev) / prev) * 100 : null);
+    return {
+      revenue: pct(curRevenue, prevRevenue),
+      orders:  pct(curOrders, prevOrders),
+      pending: pct(curPending, prevPending),
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orders]);
 
   const revenueTrend = useMemo(() => {
     const map = {};
@@ -270,7 +301,7 @@ export default function AdminDashboard() {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-[#FF6B35] mx-auto mb-3" />
+          <Loader2 className="w-10 h-10 animate-spin text-[#10B981] mx-auto mb-3" />
           <p className="text-gray-500 text-sm font-medium">Loading dashboard…</p>
         </div>
       </div>
@@ -307,16 +338,15 @@ export default function AdminDashboard() {
         <MetricCard
           label="Total Revenue"
           value={`Rs. ${fmt(totalRevenue)}`}
-          pct={4.35}
+          pct={kpiTrends.revenue}
           icon={Banknote}
-          iconBg="bg-orange-100"
-          iconColor="text-[#FF6B35]"
+          iconBg="bg-emerald-100"
+          iconColor="text-[#10B981]"
           link="/admin/ordercrud"
         />
         <MetricCard
           label="Total Products"
           value={products.length}
-          pct={2.59}
           icon={Package}
           iconBg="bg-violet-100"
           iconColor="text-violet-600"
@@ -325,7 +355,7 @@ export default function AdminDashboard() {
         <MetricCard
           label="Total Orders"
           value={orders.length}
-          pct={0.43}
+          pct={kpiTrends.orders}
           icon={ShoppingCart}
           iconBg="bg-emerald-100"
           iconColor="text-emerald-600"
@@ -334,7 +364,7 @@ export default function AdminDashboard() {
         <MetricCard
           label="Pending Orders"
           value={pendingOrders}
-          pct={pendingOrders > 0 ? -0.95 : 0}
+          pct={kpiTrends.pending}
           icon={Clock}
           iconBg="bg-blue-100"
           iconColor="text-blue-600"
@@ -393,7 +423,7 @@ export default function AdminDashboard() {
               </div>
               <div className="text-center">
                 <p className="text-xs text-gray-500 mb-1">Due Amount</p>
-                <p className="text-xl font-bold text-[#FF6B35]">Rs. {fmt(dueAmt)}</p>
+                <p className="text-xl font-bold text-[#10B981]">Rs. {fmt(dueAmt)}</p>
               </div>
             </div>
           </ChartCard>
@@ -433,7 +463,7 @@ export default function AdminDashboard() {
         {/* Order Status donut — 2/3 */}
         <div className="xl:col-span-2">
           <ChartCard title="Order Status Distribution" action={
-            <Link to="/admin/ordercrud" className="text-xs font-semibold text-[#FF6B35] hover:text-orange-600 flex items-center gap-1">
+            <Link to="/admin/ordercrud" className="text-xs font-semibold text-[#10B981] hover:text-emerald-600 flex items-center gap-1">
               All Orders <ArrowUpRight className="w-3 h-3" />
             </Link>
           }>
@@ -515,7 +545,7 @@ export default function AdminDashboard() {
         {/* Top Selling Products — 2/3 */}
         <div className="xl:col-span-2">
           <ChartCard title="Top Selling Products" action={
-            <Link to="/admin/productcrud" className="text-xs font-semibold text-[#FF6B35] hover:text-orange-600 flex items-center gap-1">
+            <Link to="/admin/productcrud" className="text-xs font-semibold text-[#10B981] hover:text-emerald-600 flex items-center gap-1">
               All Products <ArrowUpRight className="w-3 h-3" />
             </Link>
           }>
@@ -577,7 +607,7 @@ export default function AdminDashboard() {
             <span className="text-xs text-gray-400">Click any tile to manage</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <StatTile label="Products"      value={products.length}                                         icon={Package}       iconBg="bg-orange-50"  iconColor="text-[#FF6B35]"   path="/admin/productcrud"   />
+            <StatTile label="Products"      value={products.length}                                         icon={Package}       iconBg="bg-emerald-50"  iconColor="text-[#10B981]"   path="/admin/productcrud"   />
             <StatTile label="Categories"    value={categoryStore.categories?.length}                        icon={Tag}           iconBg="bg-purple-50"  iconColor="text-purple-600"  path="/admin/categorycrud"  />
             <StatTile label="Total Orders"  value={orders.length}                                           icon={ShoppingCart}  iconBg="bg-emerald-50" iconColor="text-emerald-600" path="/admin/ordercrud"     />
             <StatTile label="Active Coupons" value={activeCoupons}                                          icon={TicketPercent} iconBg="bg-pink-50"    iconColor="text-pink-600"    path="/admin/promocodecrud" />
@@ -587,8 +617,8 @@ export default function AdminDashboard() {
         <div>
           <h2 className="text-sm font-bold text-gray-800 mb-4">Quick Actions</h2>
           <div className="space-y-2">
-            <QuickAction label="Add Product"    desc="Create a new product listing"   icon={Package}       iconBg="bg-orange-50"  iconColor="text-[#FF6B35]"   path="/admin/productcrud"   />
-            <QuickAction label="Create Sale"    desc="Set up a sale category"          icon={BadgePercent}  iconBg="bg-orange-50"  iconColor="text-[#FF6B35]"   path="/admin/salecrud"      />
+            <QuickAction label="Add Product"    desc="Create a new product listing"   icon={Package}       iconBg="bg-emerald-50"  iconColor="text-[#10B981]"   path="/admin/productcrud"   />
+            <QuickAction label="Create Sale"    desc="Set up a sale category"          icon={BadgePercent}  iconBg="bg-emerald-50"  iconColor="text-[#10B981]"   path="/admin/salecrud"      />
             <QuickAction label="Manage Orders"  desc="View & update order statuses"   icon={ShoppingCart}  iconBg="bg-emerald-50" iconColor="text-emerald-600" path="/admin/ordercrud"     />
             <QuickAction label="Add Promo Code" desc="Create discounts for customers" icon={TicketPercent} iconBg="bg-pink-50"    iconColor="text-pink-600"    path="/admin/promocodecrud" />
           </div>
@@ -599,9 +629,9 @@ export default function AdminDashboard() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
           <h2 className="text-sm font-bold text-gray-800 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-[#FF6B35]" /> Recent Orders
+            <Activity className="w-4 h-4 text-[#10B981]" /> Recent Orders
           </h2>
-          <Link to="/admin/ordercrud" className="text-xs font-semibold text-[#FF6B35] hover:text-orange-600 flex items-center gap-1 transition-colors">
+          <Link to="/admin/ordercrud" className="text-xs font-semibold text-[#10B981] hover:text-emerald-600 flex items-center gap-1 transition-colors">
             View all <ArrowUpRight className="w-3 h-3" />
           </Link>
         </div>
@@ -635,10 +665,10 @@ export default function AdminDashboard() {
                   }[order.status] ?? 'bg-gray-50 text-gray-600';
 
                   return (
-                    <tr key={order._id || order.id || i} className="hover:bg-orange-50/30 transition-colors">
+                    <tr key={order._id || order.id || i} className="hover:bg-emerald-50/30 transition-colors">
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-linear-to-br from-[#FF6B35] to-amber-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-linear-to-br from-[#10B981] to-amber-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
                             {(order.name || order.first_name || 'G').charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0">

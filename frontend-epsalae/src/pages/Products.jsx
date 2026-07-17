@@ -58,7 +58,7 @@ function FilterPanel({ categories, selectedCategory, setSelectedCategory, priceR
             onClick={() => { setSelectedCategory('all'); onClose?.(); }}
             className={`flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
               selectedCategory === 'all'
-                ? 'bg-[#1A3C8A] text-white shadow-md shadow-blue-200'
+                ? 'bg-[#1E293B] text-white shadow-md shadow-blue-200'
                 : 'text-gray-700 hover:bg-gray-100'
             }`}
           >
@@ -74,7 +74,7 @@ function FilterPanel({ categories, selectedCategory, setSelectedCategory, priceR
                 key={catId}
                 onClick={() => { setSelectedCategory(catId); onClose?.(); }}
                 className={`flex items-center justify-between w-full px-4 py-2.5 rounded-xl text-sm font-semibold transition-all ${
-                  active ? 'bg-[#1A3C8A] text-white shadow-md shadow-blue-200' : 'text-gray-700 hover:bg-gray-100'
+                  active ? 'bg-[#1E293B] text-white shadow-md shadow-blue-200' : 'text-gray-700 hover:bg-gray-100'
                 }`}
               >
                 <span>{cat.name}</span>
@@ -92,11 +92,11 @@ function FilterPanel({ categories, selectedCategory, setSelectedCategory, priceR
           type="range" min="0" max="100000" step="500"
           value={priceRange[1]}
           onChange={(e) => setPriceRange([0, Number(e.target.value)])}
-          className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#1A3C8A]"
+          className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#1E293B]"
         />
         <div className="flex justify-between mt-3 text-sm font-bold text-gray-700">
           <span>Rs. 0</span>
-          <span className="text-[#1A3C8A]">Rs. {priceRange[1].toLocaleString()}</span>
+          <span className="text-[#1E293B]">Rs. {priceRange[1].toLocaleString()}</span>
         </div>
       </div>
     </div>
@@ -206,7 +206,7 @@ export default function Products() {
         <div className="px-4 py-6 mx-auto max-w-7xl sm:px-6 sm:py-10">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-4">
-            <Link to="/" className="hover:text-[#1A3C8A] transition-colors font-medium">Home</Link>
+            <Link to="/" className="hover:text-[#1E293B] transition-colors font-medium">Home</Link>
             <ChevronRight className="w-4 h-4 text-gray-300" />
             <span className="text-gray-900 font-semibold">{currentCategoryName}</span>
           </nav>
@@ -227,7 +227,7 @@ export default function Products() {
                 placeholder="Search products…"
                 value={localSearch}
                 onChange={e => setLocalSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-[#1A3C8A] focus:bg-white transition-all coupon-input"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-[#1E293B] focus:bg-white transition-all coupon-input"
               />
               {localSearch && (
                 <button onClick={() => setLocalSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
@@ -245,7 +245,7 @@ export default function Products() {
           <aside className="hidden lg:block w-56 xl:w-64 shrink-0">
             <div className="sticky top-24 bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
               <h2 className="font-extrabold text-gray-900 text-sm mb-6 flex items-center gap-2">
-                <SlidersHorizontal className="w-4 h-4 text-[#1A3C8A]" /> Filters
+                <SlidersHorizontal className="w-4 h-4 text-[#1E293B]" /> Filters
               </h2>
               <FilterPanel
                 categories={categories}
@@ -270,7 +270,7 @@ export default function Products() {
                 >
                   <Filter className="w-4 h-4" /> Filters
                   {activeFilterCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#FF6B35] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#10B981] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                       {activeFilterCount}
                     </span>
                   )}
@@ -280,13 +280,13 @@ export default function Products() {
                 <div className="flex gap-1 p-1 bg-white border border-gray-200 rounded-xl">
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#1A3C8A] text-white shadow' : 'text-gray-400 hover:text-gray-700'}`}
+                    className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#1E293B] text-white shadow' : 'text-gray-400 hover:text-gray-700'}`}
                   >
                     <Grid3x3 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#1A3C8A] text-white shadow' : 'text-gray-400 hover:text-gray-700'}`}
+                    className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#1E293B] text-white shadow' : 'text-gray-400 hover:text-gray-700'}`}
                   >
                     <List className="w-4 h-4" />
                   </button>
@@ -298,7 +298,7 @@ export default function Products() {
                 <select
                   value={sortBy}
                   onChange={e => setSortBy(e.target.value)}
-                  className="px-4 py-2 text-sm font-semibold bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#1A3C8A] text-gray-700 cursor-pointer transition-all"
+                  className="px-4 py-2 text-sm font-semibold bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#1E293B] text-gray-700 cursor-pointer transition-all"
                 >
                   {SORT_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
@@ -341,7 +341,7 @@ export default function Products() {
               emptyAction={
                 <button
                   onClick={() => { setSelectedCategory('all'); setPriceRange([0, 100000]); setLocalSearch(''); }}
-                  className="px-6 py-2.5 bg-[#1A3C8A] text-white font-semibold rounded-full text-sm hover:bg-[#163180] transition-colors"
+                  className="px-6 py-2.5 bg-[#1E293B] text-white font-semibold rounded-full text-sm hover:bg-[#0B1220] transition-colors"
                 >
                   Clear All Filters
                 </button>
@@ -370,8 +370,8 @@ export default function Products() {
                         </div>
                         <div className="flex-1 flex flex-col justify-between py-1">
                           <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#FF6B35] mb-1">{getCategoryName(product)}</p>
-                            <h3 className="font-bold text-gray-900 group-hover:text-[#1A3C8A] transition-colors line-clamp-2 text-sm sm:text-base">{formatProductName(product.name)}</h3>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#10B981] mb-1">{getCategoryName(product)}</p>
+                            <h3 className="font-bold text-gray-900 group-hover:text-[#1E293B] transition-colors line-clamp-2 text-sm sm:text-base">{formatProductName(product.name)}</h3>
                           </div>
                           <div className="flex items-center justify-between mt-2">
                             <div>
@@ -388,7 +388,7 @@ export default function Products() {
                             <button
                               onClick={(e) => handleAddToCart(e, product)}
                               disabled={(product.stock || 0) === 0}
-                              className="p-2.5 bg-[#1A3C8A] text-white rounded-xl hover:bg-[#163180] transition-all disabled:bg-gray-200 disabled:text-gray-400 btn-press"
+                              className="p-2.5 bg-[#1E293B] text-white rounded-xl hover:bg-[#0B1220] transition-all disabled:bg-gray-200 disabled:text-gray-400 btn-press"
                             >
                               <ShoppingCart className="w-4 h-4" />
                             </button>
@@ -437,7 +437,7 @@ export default function Products() {
                           <button
                             onClick={(e) => handleAddToCart(e, product)}
                             disabled={(product.stock || 0) === 0}
-                            className="quick-add-btn w-full py-2 bg-[#1A3C8A] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-md hover:bg-[#163180] disabled:bg-gray-300 disabled:text-gray-500 btn-press"
+                            className="quick-add-btn w-full py-2 bg-[#1E293B] text-white text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 shadow-md hover:bg-[#0B1220] disabled:bg-gray-300 disabled:text-gray-500 btn-press"
                           >
                             <ShoppingCart className="w-3 h-3" />
                             {(product.stock || 0) > 0 ? 'Add to Cart' : 'Out of Stock'}
@@ -452,8 +452,8 @@ export default function Products() {
                       </div>
 
                       <div className="p-3.5">
-                        <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#FF6B35] mb-0.5 truncate">{getCategoryName(product)}</p>
-                        <h3 className="text-sm font-bold text-gray-900 line-clamp-2 group-hover:text-[#1A3C8A] transition-colors mb-2">
+                        <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#10B981] mb-0.5 truncate">{getCategoryName(product)}</p>
+                        <h3 className="text-sm font-bold text-gray-900 line-clamp-2 group-hover:text-[#1E293B] transition-colors mb-2">
                           {formatProductName(product.name)}
                         </h3>
                         <div className="flex items-baseline gap-1.5">
@@ -514,7 +514,7 @@ export default function Products() {
             >
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-extrabold text-gray-900 flex items-center gap-2">
-                  <SlidersHorizontal className="w-5 h-5 text-[#1A3C8A]" /> Filters
+                  <SlidersHorizontal className="w-5 h-5 text-[#1E293B]" /> Filters
                 </h2>
                 <button onClick={() => setShowMobileFilters(false)} className="p-2 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors">
                   <X className="w-5 h-5 text-gray-600" />
@@ -531,7 +531,7 @@ export default function Products() {
               />
               <button
                 onClick={() => setShowMobileFilters(false)}
-                className="w-full mt-8 py-3.5 bg-[#1A3C8A] text-white font-bold rounded-xl text-sm hover:bg-[#163180] transition-colors btn-press"
+                className="w-full mt-8 py-3.5 bg-[#1E293B] text-white font-bold rounded-xl text-sm hover:bg-[#0B1220] transition-colors btn-press"
               >
                 Apply Filters ({totalProducts} results)
               </button>

@@ -143,7 +143,7 @@ export default function SearchBar() {
                   <button
                     type="button"
                     onClick={() => pickCategory('')}
-                    className={`flex w-full items-center px-4 py-2.5 text-sm transition hover:bg-slate-50 ${!selectedCategory ? 'font-semibold text-[#1A3C8A]' : 'text-slate-700'}`}
+                    className={`flex w-full items-center px-4 py-2.5 text-sm transition hover:bg-slate-50 ${!selectedCategory ? 'font-semibold text-[#1E293B]' : 'text-slate-700'}`}
                   >
                     All Categories
                   </button>
@@ -152,7 +152,7 @@ export default function SearchBar() {
                       key={cat._id || cat.id}
                       type="button"
                       onClick={() => pickCategory(cat._id || cat.id)}
-                      className={`flex w-full items-center px-4 py-2.5 text-sm transition hover:bg-slate-50 ${selectedCategory === (cat._id || cat.id) ? 'font-semibold text-[#1A3C8A]' : 'text-slate-700'}`}
+                      className={`flex w-full items-center px-4 py-2.5 text-sm transition hover:bg-slate-50 ${selectedCategory === (cat._id || cat.id) ? 'font-semibold text-[#1E293B]' : 'text-slate-700'}`}
                     >
                       {cat.name}
                     </button>
@@ -175,7 +175,7 @@ export default function SearchBar() {
               onChange={e => { setQuery(e.target.value); setOpen(true) }}
               onFocus={() => setOpen(true)}
               placeholder={selectedCategory ? `Search in ${selectedCatLabel}…` : 'Search products, brands, categories…'}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-9 text-sm text-slate-900 outline-none transition focus:border-[#1A3C8A] focus:bg-white focus:ring-4 focus:ring-[#1A3C8A]/10 placeholder:text-slate-400"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 py-2.5 pl-10 pr-9 text-sm text-slate-900 outline-none transition focus:border-[#1E293B] focus:bg-white focus:ring-4 focus:ring-[#1E293B]/10 placeholder:text-slate-400"
             />
             {query && (
               <button
@@ -234,7 +234,7 @@ export default function SearchBar() {
                       <button
                         type="button"
                         onClick={() => doSearch()}
-                        className="flex w-full items-center gap-2 text-sm font-medium text-[#1A3C8A] hover:underline"
+                        className="flex w-full items-center gap-2 text-sm font-medium text-[#1E293B] hover:underline"
                       >
                         <Search className="h-3.5 w-3.5" />
                         See all results for "{query}"
@@ -280,7 +280,7 @@ export default function SearchBar() {
                           key={t}
                           type="button"
                           onClick={() => pickTrending(t)}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-[#1A3C8A] hover:bg-[#1A3C8A]/5 hover:text-[#1A3C8A]"
+                          className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-600 transition hover:border-[#1E293B] hover:bg-[#1E293B]/5 hover:text-[#1E293B]"
                         >
                           <TrendingUp className="h-3 w-3" /> {t}
                         </button>

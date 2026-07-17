@@ -44,7 +44,7 @@ export default function OrderSuccess() {
   return (
     <>
       <style>{printStyles}</style>
-      <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+      <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
         <div className="max-w-xl px-4 py-8 mx-auto sm:py-10">
 
           {/* Success header */}
@@ -60,7 +60,7 @@ export default function OrderSuccess() {
           <div className="overflow-hidden bg-white border border-gray-100 shadow-sm print-invoice rounded-2xl">
 
             {/* Order id strip */}
-            <div className="flex items-center justify-between gap-3 px-5 py-4 bg-[#1A3C8A] text-white">
+            <div className="flex items-center justify-between gap-3 px-5 py-4 bg-[#1E293B] text-white">
               <div className="min-w-0">
                 <p className="text-[11px] uppercase tracking-wide text-white/60">Order Number</p>
                 <p className="font-mono text-lg font-bold truncate">{orderNumber}</p>
@@ -102,7 +102,7 @@ export default function OrderSuccess() {
                 {vatAmount > 0 && <div className="flex justify-between text-gray-600"><span>VAT (13%)</span><span>Rs. {vatAmount.toLocaleString()}</span></div>}
                 <div className="flex justify-between text-gray-600"><span>Shipping</span><span className={shipping === 0 ? 'text-emerald-600 font-semibold' : ''}>{shipping === 0 ? 'FREE' : `Rs. ${shipping.toLocaleString()}`}</span></div>
                 <div className="flex justify-between pt-2 text-base font-bold text-gray-900 border-t border-gray-100">
-                  <span>Total</span><span className="text-[#1A3C8A]">Rs. {total.toLocaleString()}</span>
+                  <span>Total</span><span className="text-[#1E293B]">Rs. {total.toLocaleString()}</span>
                 </div>
               </div>
 
@@ -142,10 +142,10 @@ export default function OrderSuccess() {
             <button onClick={() => window.print()} className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-gray-700 transition border-2 border-gray-200 rounded-xl hover:bg-gray-50">
               <FileText className="w-4 h-4" /> Print
             </button>
-            <button onClick={() => navigate('/track-order')} className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white transition bg-[#1A3C8A] rounded-xl hover:bg-[#112960]">
+            <button onClick={() => navigate('/track-order')} className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white transition bg-[#1E293B] rounded-xl hover:bg-[#0B1220]">
               <Package className="w-4 h-4" /> Track Order
             </button>
-            <button onClick={() => navigate('/products')} className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white transition bg-[#FF6B35] rounded-xl hover:bg-[#e85d2a]">
+            <button onClick={() => navigate('/products')} className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white transition bg-[#10B981] rounded-xl hover:bg-[#059669]">
               <Home className="w-4 h-4" /> Shop More
             </button>
           </div>

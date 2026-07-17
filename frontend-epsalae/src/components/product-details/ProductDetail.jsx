@@ -151,7 +151,7 @@ export default function ProductDetail() {
           <p className="text-gray-500 mb-8 text-sm">{error || 'This item may be discontinued or unavailable.'}</p>
           <button
             onClick={() => navigate('/products')}
-            className="inline-flex items-center gap-2 px-8 py-3 bg-[#1A3C8A] text-white font-bold rounded-full text-sm hover:bg-[#163180] transition-all btn-press"
+            className="inline-flex items-center gap-2 px-8 py-3 bg-[#1E293B] text-white font-bold rounded-full text-sm hover:bg-[#0B1220] transition-all btn-press"
           >
             <ArrowLeft className="w-4 h-4" /> Browse Products
           </button>
@@ -166,13 +166,13 @@ export default function ProductDetail() {
       <div className="border-b border-gray-100 bg-white/80 backdrop-blur-md sticky top-0 z-10">
         <div className="px-4 py-3 mx-auto max-w-7xl sm:px-6">
           <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs text-gray-500 overflow-x-auto scrollbar-hide">
-            <Link to="/" className="hover:text-[#1A3C8A] font-semibold whitespace-nowrap transition-colors">Home</Link>
+            <Link to="/" className="hover:text-[#1E293B] font-semibold whitespace-nowrap transition-colors">Home</Link>
             <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" aria-hidden="true" />
-            <Link to="/products" className="hover:text-[#1A3C8A] font-semibold whitespace-nowrap transition-colors">Products</Link>
+            <Link to="/products" className="hover:text-[#1E293B] font-semibold whitespace-nowrap transition-colors">Products</Link>
             <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" aria-hidden="true" />
             {categoryId && (
               <>
-                <Link to={`/products?category=${categoryId}`} className="hover:text-[#1A3C8A] font-semibold whitespace-nowrap transition-colors">{getCategoryName()}</Link>
+                <Link to={`/products?category=${categoryId}`} className="hover:text-[#1E293B] font-semibold whitespace-nowrap transition-colors">{getCategoryName()}</Link>
                 <ChevronRight className="w-3.5 h-3.5 text-gray-300 shrink-0" aria-hidden="true" />
               </>
             )}
@@ -217,7 +217,7 @@ export default function ProductDetail() {
                 <motion.button
                   whileTap={{ scale: 0.9 }}
                   onClick={handleShare}
-                  className="p-3 rounded-2xl bg-white/90 shadow-md backdrop-blur-sm text-gray-400 hover:text-[#1A3C8A] transition-all"
+                  className="p-3 rounded-2xl bg-white/90 shadow-md backdrop-blur-sm text-gray-400 hover:text-[#1E293B] transition-all"
                 >
                   <Share2 className="w-5 h-5" />
                 </motion.button>
@@ -255,7 +255,7 @@ export default function ProductDetail() {
           >
             {/* Category & status chips */}
             <div className="flex flex-wrap gap-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 text-[#1A3C8A] text-xs font-bold rounded-full">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 border border-blue-100 text-[#1E293B] text-xs font-bold rounded-full">
                 <Sparkles className="w-3.5 h-3.5" /> {getCategoryName()}
               </span>
               {(product.stock || 0) > 0 ? (
@@ -269,7 +269,7 @@ export default function ProductDetail() {
                 </span>
               )}
               {discountPct > 0 && (
-                <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-orange-50 border border-orange-100 text-orange-700 text-xs font-bold rounded-full">
+                <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 border border-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
                   <BadgeCheck className="w-3.5 h-3.5" /> Save {discountPct}%
                 </span>
               )}
@@ -310,7 +310,7 @@ export default function ProductDetail() {
 
             {/* Description */}
             {product.description && (
-              <p className="text-sm text-gray-600 leading-relaxed border-l-4 border-[#1A3C8A]/20 pl-4">
+              <p className="text-sm text-gray-600 leading-relaxed border-l-4 border-[#1E293B]/20 pl-4">
                 {product.description}
               </p>
             )}
@@ -322,7 +322,7 @@ export default function ProductDetail() {
                 <button
                   onClick={() => setQuantity(q => Math.max(1, q - 1))}
                   disabled={(product.stock || 0) === 0}
-                  className="qty-btn px-4 py-3 text-gray-600 hover:bg-[#1A3C8A] hover:text-white disabled:opacity-30 transition-all"
+                  className="qty-btn px-4 py-3 text-gray-600 hover:bg-[#1E293B] hover:text-white disabled:opacity-30 transition-all"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
@@ -330,7 +330,7 @@ export default function ProductDetail() {
                 <button
                   onClick={() => setQuantity(q => Math.min(product.stock || 99, q + 1))}
                   disabled={(product.stock || 0) === 0}
-                  className="qty-btn px-4 py-3 text-gray-600 hover:bg-[#1A3C8A] hover:text-white disabled:opacity-30 transition-all"
+                  className="qty-btn px-4 py-3 text-gray-600 hover:bg-[#1E293B] hover:text-white disabled:opacity-30 transition-all"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -346,7 +346,7 @@ export default function ProductDetail() {
                 className={`flex items-center justify-center gap-2 py-4 rounded-2xl font-extrabold text-sm transition-all shadow-md ${
                   isAdded
                     ? 'bg-green-600 text-white shadow-green-200'
-                    : 'bg-white border-2 border-[#1A3C8A] text-[#1A3C8A] hover:bg-[#1A3C8A] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed'
+                    : 'bg-white border-2 border-[#1E293B] text-[#1E293B] hover:bg-[#1E293B] hover:text-white disabled:opacity-40 disabled:cursor-not-allowed'
                 }`}
               >
                 <AnimatePresence mode="wait">
@@ -366,7 +366,7 @@ export default function ProductDetail() {
                 whileTap={{ scale: 0.97 }}
                 onClick={handleBuyNow}
                 disabled={(product.stock || 0) === 0}
-                className="flex items-center justify-center gap-2 py-4 rounded-2xl font-extrabold text-sm bg-linear-to-r from-[#1A3C8A] to-[#FF6B35] text-white shadow-lg hover:shadow-xl hover:opacity-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 py-4 rounded-2xl font-extrabold text-sm bg-linear-to-r from-[#1E293B] to-[#10B981] text-white shadow-lg hover:shadow-xl hover:opacity-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Zap className="w-5 h-5" /> Buy Now
               </motion.button>

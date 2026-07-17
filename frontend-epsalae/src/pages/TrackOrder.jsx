@@ -46,8 +46,8 @@ const normalizeOrder = (rawOrder) => {
   };
 };
 
-const BRAND = '#1A3C8A';
-const ACCENT = '#FF6B35';
+const BRAND = '#1E293B';
+const ACCENT = '#10B981';
 
 export default function TrackOrder() {
   const [orderId, setOrderId] = useState('');
@@ -59,7 +59,7 @@ export default function TrackOrder() {
   const billRef = useRef(null);
 
   const statusConfig = {
-    pending:    { ring: 'from-amber-400 to-orange-500',   chip: 'bg-amber-100 text-amber-700',     icon: Clock,        label: 'Pending',    description: 'Your order has been received and is being reviewed.' },
+    pending:    { ring: 'from-amber-400 to-emerald-500',   chip: 'bg-amber-100 text-amber-700',     icon: Clock,        label: 'Pending',    description: 'Your order has been received and is being reviewed.' },
     processing: { ring: 'from-blue-500 to-indigo-600',    chip: 'bg-blue-100 text-blue-700',       icon: Package,      label: 'Processing', description: 'Your order is being prepared for shipment.' },
     shipped:    { ring: 'from-violet-500 to-purple-600',  chip: 'bg-violet-100 text-violet-700',   icon: Truck,        label: 'Shipped',    description: 'Your order is on its way!' },
     delivered:  { ring: 'from-emerald-400 to-green-600',  chip: 'bg-emerald-100 text-emerald-700', icon: CheckCircle,  label: 'Delivered',  description: 'Your order has been delivered successfully!' },
@@ -140,12 +140,12 @@ export default function TrackOrder() {
   };
 
   const cfg = order ? (statusConfig[order.status] || statusConfig.pending) : null;
-  const inputCls = 'w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#FF6B35] focus:bg-white transition';
+  const inputCls = 'w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-white transition';
 
   return (
     <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
       {/* Hero */}
-      <div className="bg-[linear-gradient(135deg,#0A1E46_0%,#1A3C8A_55%,#FF6B35_130%)]">
+      <div className="bg-[linear-gradient(135deg,#0A1E46_0%,#1E293B_55%,#10B981_130%)]">
         <div className="max-w-3xl px-4 py-3 mx-auto">
           <Link to="/" className="inline-flex items-center gap-2 text-sm font-medium text-white/80 hover:text-white transition">
             <ArrowLeft className="w-4 h-4" /> Back to Shop
@@ -174,7 +174,7 @@ export default function TrackOrder() {
             </div>
           </div>
           <button type="submit" disabled={loading}
-            className="flex items-center justify-center w-full gap-2 py-3.5 mt-4 font-bold text-white transition bg-[#1A3C8A] hover:bg-[#FF6B35] disabled:opacity-60 rounded-xl">
+            className="flex items-center justify-center w-full gap-2 py-3.5 mt-4 font-bold text-white transition bg-[#1E293B] hover:bg-[#10B981] disabled:opacity-60 rounded-xl">
             {loading ? (<><div className="w-5 h-5 border-2 border-white rounded-full border-t-transparent animate-spin" /> Searching…</>)
               : (<><Search className="w-5 h-5" /> Track Order</>)}
           </button>
@@ -206,7 +206,7 @@ export default function TrackOrder() {
               {order.status !== 'cancelled' && (
                 <div className="relative mt-8 mb-2">
                   <div className="absolute h-1 bg-gray-200 rounded-full top-5 left-6 right-6">
-                    <div className="h-full transition-all duration-700 rounded-full bg-[#FF6B35]"
+                    <div className="h-full transition-all duration-700 rounded-full bg-[#10B981]"
                       style={{ width: `${(getStatusIndex(order.status) / (statusFlow.length - 1)) * 100}%` }} />
                   </div>
                   <div className="relative flex justify-between">
@@ -216,7 +216,7 @@ export default function TrackOrder() {
                       const current = order.status === st;
                       return (
                         <div key={st} className="flex flex-col items-center">
-                          <div className={`w-11 h-11 rounded-full flex items-center justify-center transition ${active ? 'bg-[#1A3C8A] text-white' : 'bg-gray-200 text-gray-400'} ${current ? 'ring-4 ring-orange-200' : ''}`}>
+                          <div className={`w-11 h-11 rounded-full flex items-center justify-center transition ${active ? 'bg-[#1E293B] text-white' : 'bg-gray-200 text-gray-400'} ${current ? 'ring-4 ring-emerald-200' : ''}`}>
                             <c.icon className="w-5 h-5" />
                           </div>
                           <p className={`mt-2 text-xs font-semibold ${active ? 'text-gray-900' : 'text-gray-400'}`}>{c.label}</p>
@@ -272,7 +272,7 @@ export default function TrackOrder() {
                 {/* Total */}
                 <div className="flex items-center justify-between pt-4 mt-4 border-t-2 border-gray-100">
                   <span className="font-bold text-gray-900">Total Amount</span>
-                  <span className="text-xl font-extrabold text-[#1A3C8A]">Rs. {Number(order.totalAmount).toLocaleString()}</span>
+                  <span className="text-xl font-extrabold text-[#1E293B]">Rs. {Number(order.totalAmount).toLocaleString()}</span>
                 </div>
               </div>
             </div>
@@ -304,7 +304,7 @@ export default function TrackOrder() {
 function Info({ icon: Icon, label, value, mono }) {
   return (
     <div className="flex items-start gap-3 p-3 border border-gray-100 rounded-xl bg-gray-50/60">
-      <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-white text-[#1A3C8A] shrink-0 border border-gray-100">
+      <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-white text-[#1E293B] shrink-0 border border-gray-100">
         <Icon className="w-4 h-4" />
       </span>
       <div className="min-w-0">

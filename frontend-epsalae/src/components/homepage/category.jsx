@@ -60,8 +60,8 @@ export default function TopCategories() {
   return (
     <section className="relative py-8 overflow-hidden sm:py-14 lg:py-20">
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute left-0 top-0 h-56 w-56 rounded-full bg-[#1A3C8A]/6 blur-3xl" />
-        <div className="absolute right-0 bottom-0 h-72 w-72 rounded-full bg-[#FF6B35]/6 blur-3xl" />
+        <div className="absolute left-0 top-0 h-56 w-56 rounded-full bg-[#1E293B]/6 blur-3xl" />
+        <div className="absolute right-0 bottom-0 h-72 w-72 rounded-full bg-[#10B981]/6 blur-3xl" />
         <div className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full left-1/2 top-1/2 h-80 w-80 bg-slate-200/40 blur-3xl" />
       </div>
 
@@ -73,7 +73,7 @@ export default function TopCategories() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.65, ease: PREMIUM_EASE }}
-            className="inline-flex items-center gap-2 px-4 py-2 mb-4 text-sm font-semibold text-[#1A3C8A] premium-pill shadow-[0_10px_30px_-24px_rgba(15,23,42,0.35)]"
+            className="inline-flex items-center gap-2 px-4 py-2 mb-4 text-sm font-semibold text-[#1E293B] premium-pill shadow-[0_10px_30px_-24px_rgba(15,23,42,0.35)]"
           >
             <Sparkles className="w-4 h-4" />
             Browse by Category
@@ -129,7 +129,7 @@ function CategoryCard({ cat, index, navigate }) {
     >
       {/* Image Container - Fixed aspect ratio */}
       <div className="relative flex aspect-square items-center justify-center overflow-hidden bg-[linear-gradient(180deg,rgba(248,250,252,0.95)_0%,rgba(255,255,255,1)_100%)] p-6 sm:p-7">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(26,60,138,0.08),transparent_45%),radial-gradient(circle_at_bottom,rgba(255,107,53,0.08),transparent_45%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(30,41,59,0.08),transparent_45%),radial-gradient(circle_at_bottom,rgba(16,185,129,0.08),transparent_45%)] opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
         <div className="absolute h-px inset-x-6 top-6 bg-linear-to-r from-transparent via-slate-200 to-transparent opacity-70" />
         <img
           src={imgSrc}
@@ -144,10 +144,10 @@ function CategoryCard({ cat, index, navigate }) {
 
       {/* Content */}
       <div className="p-5 text-center border-t border-slate-100 bg-white/95 backdrop-blur-sm sm:p-6">
-        <h3 className="text-lg font-semibold tracking-tight text-slate-900 transition-colors line-clamp-1 group-hover:text-[#FF6B35]">
+        <h3 className="text-lg font-semibold tracking-tight text-slate-900 transition-colors line-clamp-1 group-hover:text-[#10B981]">
           {cat.name}
         </h3>
-        <p className="mt-2.5 inline-flex items-center justify-center gap-1.5 text-xs font-semibold tracking-wide text-[#1A3C8A] transition-all duration-300 group-hover:text-[#FF6B35]">
+        <p className="mt-2.5 inline-flex items-center justify-center gap-1.5 text-xs font-semibold tracking-wide text-[#1E293B] transition-all duration-300 group-hover:text-[#10B981]">
           Explore Collection
           <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
         </p>
