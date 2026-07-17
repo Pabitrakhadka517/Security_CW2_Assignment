@@ -37,8 +37,12 @@ router.put(
 		}).optional(),
 		avatarUrl: Joi.string().uri().optional(),
 		savedAddresses: Joi.array().optional(),
-		currentPassword: Joi.string().when('email', { is: Joi.exist(), then: Joi.required(), otherwise: Joi.optional() })
-			.messages({ 'any.required': 'Current password is required to change email' }),
+		// Deliberately NOT required-when-email-present here: the profile form
+		// always submits the current email even when it isn't changing, and
+		// this schema has no way to know the stored value to tell the two
+		// cases apart. updateProfile itself compares against the stored email
+		// and enforces currentPassword only when it's an actual change.
+		currentPassword: Joi.string().optional(),
 	}) }),
 	userProfileController.updateProfile
 );

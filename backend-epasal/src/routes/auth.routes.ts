@@ -181,8 +181,12 @@ router.put('/admin/profile', requireAdmin, accountChangeLimiter, validateRequest
   body: Joi.object({
     name:  Joi.string().min(2).optional(),
     email: Joi.string().email().optional(),
-    currentPassword: Joi.string().when('email', { is: Joi.exist(), then: Joi.required(), otherwise: Joi.optional() })
-      .messages({ 'any.required': 'Current password is required to change email' }),
+    // Deliberately NOT required-when-email-present here: the profile form
+    // always submits the current email even when it isn't changing, and
+    // this schema has no way to know the stored value to tell the two
+    // cases apart. updateAdminProfile itself compares against the stored
+    // email and enforces currentPassword only when it's an actual change.
+    currentPassword: Joi.string().optional(),
   }),
 }), authController.updateAdminProfile);
 router.put('/admin/password', requireAdmin, accountChangeLimiter, validateRequest({
