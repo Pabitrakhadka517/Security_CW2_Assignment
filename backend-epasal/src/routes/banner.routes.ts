@@ -2,6 +2,7 @@ import { Router } from 'express';
 import bannerController from '../controllers/banner.controller';
 import { validateRequest } from '../middlewares/validateRequest';
 import { requireAdmin } from '../middlewares/authMiddleware';
+import { checkPasswordExpiry } from '../middlewares/passwordExpiry';
 import { uploadSingle } from '../middlewares/upload';
 import { requirePermission } from '../middlewares/rbac';
 import {
@@ -75,6 +76,7 @@ router.get(
 router.post(
   '/',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('banner:create'),
   uploadSingle,
   validateRequest(createBannerSchema),
@@ -84,6 +86,7 @@ router.post(
 router.put(
   '/:id',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('banner:update:any'),
   uploadSingle,
   validateRequest(updateBannerSchema),
@@ -93,6 +96,7 @@ router.put(
 router.delete(
   '/:id',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('banner:delete:any'),
   validateRequest(deleteBannerSchema),
   bannerController.deleteBanner

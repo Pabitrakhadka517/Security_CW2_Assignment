@@ -169,6 +169,13 @@ router.delete('/sessions/:sessionId', requireAuth, validateRequest({
 }), sessionController.revokeMySession);
 
 // Admin profile management
+// NOTE: deliberately NOT behind checkPasswordExpiry, unlike the rest of the
+// admin API (products/orders/coupons/etc. — see those route files). An
+// expired-password admin still needs to see their own name/email and reach
+// the change-password form (the admin header's Profile panel calls
+// /admin/me and /admin/profile on every open); only the change-password
+// endpoint itself would need excluding either way, or they could never fix
+// it, but excluding all three keeps the header usable while they do.
 router.get('/admin/me', requireAdmin, authController.getAdminProfile);
 router.put('/admin/profile', requireAdmin, accountChangeLimiter, validateRequest({
   body: Joi.object({
@@ -181,7 +188,7 @@ router.put('/admin/profile', requireAdmin, accountChangeLimiter, validateRequest
 router.put('/admin/password', requireAdmin, accountChangeLimiter, validateRequest({
   body: Joi.object({
     currentPassword: Joi.string().required(),
-    newPassword:     Joi.string().min(6).required(),
+    newPassword:     strongPasswordSchema,
   }),
 }), authController.changeAdminPassword);
 

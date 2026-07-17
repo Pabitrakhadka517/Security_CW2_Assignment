@@ -2,6 +2,7 @@ import { Router } from 'express';
 import productController from '../controllers/product.controller';
 import { validateRequest } from '../middlewares/validateRequest';
 import { requireAdmin, optionalAuth } from '../middlewares/authMiddleware';
+import { checkPasswordExpiry } from '../middlewares/passwordExpiry';
 import { uploadSingle } from '../middlewares/upload';
 import { requirePermission } from '../middlewares/rbac';
 import {
@@ -89,6 +90,7 @@ router.get(
 router.post(
   '/',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('product:create'),
   uploadSingle,
   validateRequest(createProductSchema),
@@ -98,6 +100,7 @@ router.post(
 router.put(
   '/:id',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('product:update:any'),
   uploadSingle,
   validateRequest(updateProductSchema),
@@ -107,6 +110,7 @@ router.put(
 router.delete(
   '/:id',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('product:delete:any'),
   validateRequest(deleteProductSchema),
   productController.deleteProduct

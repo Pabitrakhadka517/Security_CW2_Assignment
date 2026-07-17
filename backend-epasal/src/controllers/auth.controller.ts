@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import crypto from 'crypto';
-import { Admin } from '../models/Admin';
-import { generateAccessToken, generateRefreshToken, decodeToken, verifyRefreshToken } from '../utils/tokenGenerator';
+import { Admin, IAdmin } from '../models/Admin';
+import { generateAccessToken, generateRefreshToken, generateMFAPendingToken, decodeToken, verifyRefreshToken } from '../utils/tokenGenerator';
 import { BadRequestError, UnauthorizedError, LockedError } from '../utils/errors';
 import { asyncHandler } from '../middlewares/asyncHandler';
 import { RefreshToken } from '../models/RefreshToken';
@@ -11,6 +11,39 @@ import { createAuditContext } from '../middlewares/auditLogger';
 import { sendSuccess } from '../utils/responseHelper';
 import * as sessionService from '../services/session.service';
 import { alertService } from '../services/alert.service';
+import { validatePasswordChange } from '../services/password.service';
+
+/**
+ * Issue access/refresh tokens and the standard login response for an admin
+ * whose credentials (and MFA, if enabled) have already been verified.
+ * Shared by the normal login path and the post-MFA-challenge path so token
+ * issuance logic lives in exactly one place (mirrors issueUserSession).
+ */
+export const issueAdminSession = async (req: Request, res: Response, admin: IAdmin): Promise<void> => {
+  const payload = { id: admin._id.toString(), email: admin.email, role: 'admin' as const };
+  const accessToken = generateAccessToken(payload);
+  const refreshToken = generateRefreshToken(payload);
+
+  const session = await sessionService.createSession(admin._id.toString(), 'admin', req, refreshToken);
+  const maxAge = (session.expiresAt as Date).getTime() - Date.now();
+  res.cookie('refreshToken', refreshToken, refreshCookieOptions(maxAge));
+
+  res.status(200).json({
+    success: true,
+    message: 'Login successful',
+    data: {
+      token: accessToken,
+      accessToken,
+      admin: {
+        id: admin._id,
+        adminId: admin.adminId,
+        name: admin.name,
+        email: admin.email,
+        role: admin.role,
+      },
+    },
+  });
+};
 
 /**
  * LOGIN ENDPOINT - Get JWT token with Email + Password
@@ -76,45 +109,24 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
   admin.lastLogin = new Date();
   await admin.save();
 
+  // MFA-enabled admins don't get an access token yet — only a short-lived
+  // pending token that's only good for the /auth/mfa/challenge step (mirrors
+  // the same gate on the regular-user login path).
+  if (admin.mfaEnabled) {
+    const mfaPendingToken = generateMFAPendingToken(admin._id.toString(), 'admin');
+    res.status(200).json({
+      success: true,
+      message: 'MFA verification required',
+      requiresMFA: true,
+      data: { requiresMFA: true, mfaPendingToken },
+    });
+    return;
+  }
+
   await auditService.log({ ...ctx, userId: admin._id.toString(), userEmail: admin.email, userRole: admin.role as any, action: 'ADMIN_LOGIN_SUCCESS', status: 'SUCCESS', riskLevel: 'LOW' });
   await auditService.detectSuspiciousActivity(ctx.ipAddress, admin._id.toString());
 
-  // Generate access and refresh tokens
-  const payload = {
-    id: admin._id.toString(),
-    email: admin.email,
-    role: 'admin' as const,
-  };
-
-  const accessToken = generateAccessToken(payload);
-  const refreshToken = generateRefreshToken(payload);
-
-  // Track the session (device fingerprint, concurrent-session limit, absolute
-  // expiry) instead of writing the RefreshToken row directly.
-  const session = await sessionService.createSession(admin._id.toString(), 'admin', req, refreshToken);
-
-  // Set httpOnly cookie for refresh token
-  const maxAge = (session.expiresAt as Date).getTime() - Date.now();
-  res.cookie('refreshToken', refreshToken, refreshCookieOptions(maxAge));
-
-  // Return access token to client
-  // NOTE: `token` and `accessToken` are both included for backward compatibility.
-  // Prefer `token` going forward (matches FRONTEND_API_GUIDE.txt).
-  res.status(200).json({
-    success: true,
-    message: 'Login successful',
-    data: {
-      token: accessToken,
-      accessToken,
-      admin: {
-        id: admin._id,
-        adminId: admin.adminId,
-        name: admin.name,
-        email: admin.email,
-        role: admin.role,
-      },
-    },
-  });
+  await issueAdminSession(req, res, admin);
 });
 
 /**
@@ -253,19 +265,19 @@ export const changeAdminPassword = asyncHandler(async (req: Request, res: Respon
 
   const { currentPassword, newPassword } = req.body || {};
   if (!currentPassword || !newPassword) throw new BadRequestError('Current and new password are required');
-  if (newPassword.length < 6) throw new BadRequestError('New password must be at least 6 characters');
 
-  const admin = await Admin.findById(adminId).select('+password');
+  const admin = await Admin.findById(adminId).select('+password +passwordHistory');
   if (!admin) throw new UnauthorizedError('Admin not found');
 
-  const isMatch = await admin.comparePassword(currentPassword);
-  if (!isMatch) {
-    await auditService.log({ ...createAuditContext(req), userId: adminId, userEmail: admin.email, userRole: 'admin', action: 'PASSWORD_CHANGE_FAILED', status: 'FAILURE', riskLevel: 'MEDIUM', metadata: { reason: 'incorrect_current_password' } });
-    throw new BadRequestError('Current password is incorrect');
+  const validation = await validatePasswordChange(admin, currentPassword, newPassword);
+  if (!validation.valid) {
+    await auditService.log({ ...createAuditContext(req), userId: adminId, userEmail: admin.email, userRole: 'admin', action: 'PASSWORD_CHANGE_FAILED', status: 'FAILURE', riskLevel: 'MEDIUM', metadata: { reason: validation.error } });
+    throw new BadRequestError(validation.error);
   }
 
   admin.password = newPassword;
   await admin.save();
+  await admin.updatePasswordHistory(admin.password as string);
   await auditService.log({ ...createAuditContext(req), userId: adminId, userEmail: admin.email, userRole: 'admin', action: 'PASSWORD_CHANGED', status: 'SUCCESS', riskLevel: 'MEDIUM' });
 
   // A changed password invalidates every other session — keep the one making

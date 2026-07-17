@@ -2,6 +2,7 @@ import { Router } from 'express';
 import categoryController from '../controllers/category.controller';
 import { validateRequest } from '../middlewares/validateRequest';
 import { requireAdmin } from '../middlewares/authMiddleware';
+import { checkPasswordExpiry } from '../middlewares/passwordExpiry';
 import { uploadSingle } from '../middlewares/upload';
 import { requirePermission } from '../middlewares/rbac';
 import {
@@ -80,6 +81,7 @@ router.get(
 router.post(
   '/',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('category:create'),
   uploadSingle,
   validateRequest(createCategorySchema),
@@ -89,6 +91,7 @@ router.post(
 router.put(
   '/:id',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('category:update:any'),
   uploadSingle,
   validateRequest(updateCategorySchema),
@@ -98,6 +101,7 @@ router.put(
 router.delete(
   '/:id',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('category:delete:any'),
   validateRequest(deleteCategorySchema),
   categoryController.deleteCategory

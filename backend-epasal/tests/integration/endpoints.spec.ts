@@ -22,8 +22,13 @@ afterAll(async () => {
   await mongod.stop()
 })
 
+// Real access tokens always carry a genuine Mongo _id (set at login from
+// admin._id.toString()) -- checkPasswordExpiry now does Admin.findById(req.user.id)
+// on every admin route, which throws a CastError on a non-ObjectId string like
+// the old literal 'admin1'. Using a syntactically valid (if non-existent) ObjectId
+// here matches what a real token actually contains.
 const adminToken = jwt.sign(
-  { id: 'admin1', email: 'a@a.com', role: 'admin' },
+  { id: new mongoose.Types.ObjectId().toString(), email: 'a@a.com', role: 'admin' },
   process.env.JWT_ADMIN_SECRET as string,
   { expiresIn: '15m' }
 )

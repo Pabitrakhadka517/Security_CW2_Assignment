@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import multer from 'multer';
 import { requireAdmin } from '../middlewares/authMiddleware';
+import { checkPasswordExpiry } from '../middlewares/passwordExpiry';
 import {
   bulkCategoriesHandler, bulkProductsHandler, bulkBannersHandler,
   bulkSeasonalSalesHandler, downloadTemplate,
@@ -60,7 +61,7 @@ const enforceDataFileSize = (req: any, _res: any, next: any) => {
 const router = Router();
 
 // Every bulk route is admin-only.
-router.use(requireAdmin);
+router.use(requireAdmin, checkPasswordExpiry);
 
 router.get('/templates/:entity', downloadTemplate);
 

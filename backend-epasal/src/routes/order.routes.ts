@@ -103,6 +103,7 @@ router.get(
 router.get(
   '/',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('order:read:any'),
   validateRequest(getOrdersQuerySchema),
   orderController.getOrders
@@ -111,6 +112,7 @@ router.get(
 router.get(
   '/stats',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('order:read:any'),
   orderController.getOrderStatistics
 );
@@ -118,6 +120,7 @@ router.get(
 router.get(
   '/status/:status',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('order:read:any'),
   validateRequest(getOrdersQuerySchema),
   orderController.getOrdersByStatus
@@ -126,6 +129,7 @@ router.get(
 router.get(
   '/user/:userId',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('order:read:any'),
   validateRequest(getOrdersQuerySchema),
   orderController.getOrdersByUser
@@ -134,6 +138,7 @@ router.get(
 router.get(
   '/:id',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('order:read:any'),
   validateRequest(getOrderByIdSchema),
   orderController.getOrderById
@@ -142,6 +147,7 @@ router.get(
 router.get(
   '/:id/status',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('order:read:any'),
   validateRequest(getOrderByIdSchema),
   orderController.getOrderStatus
@@ -150,6 +156,7 @@ router.get(
 router.put(
   '/:id/status',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('order:update:any'),
   validateRequest(updateOrderStatusSchema),
   orderController.updateOrderStatus

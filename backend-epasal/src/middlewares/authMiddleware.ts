@@ -71,6 +71,47 @@ export const requireAdmin = authenticate(true);
 export const requireAuth = authenticate(false);
 
 /**
+ * Authenticate either a user or admin token — tries the user secret first,
+ * then falls back to the admin secret. Unlike `optionalAuth`, this fails
+ * closed with a 401 if neither verifies. Used for self-service routes both
+ * roles legitimately hit (e.g. MFA setup/challenge), where a plain
+ * `requireAuth`/`requireAdmin` split would otherwise lock one role out.
+ */
+export const requireAuthAny = (req: Request, _res: Response, next: NextFunction): void => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    next(new UnauthorizedError('No token provided'));
+    return;
+  }
+
+  const token = authHeader.split(' ')[1];
+  if (!token) {
+    next(new UnauthorizedError('Invalid token format'));
+    return;
+  }
+
+  try {
+    req.user = verifyAccessToken(token, false);
+    next();
+    return;
+  } catch {
+    // Fall through to the admin secret below.
+  }
+
+  try {
+    req.user = verifyAccessToken(token, true);
+    next();
+  } catch (error) {
+    if (error instanceof Error && error.name === 'TokenExpiredError') {
+      next(new UnauthorizedError('Access token expired', 'TOKEN_EXPIRED'));
+    } else {
+      next(new UnauthorizedError('Invalid or expired token'));
+    }
+  }
+};
+
+/**
  * Optional authentication - doesn't fail if no token
  */
 export const optionalAuth = (req: Request, _res: Response, next: NextFunction): void => {

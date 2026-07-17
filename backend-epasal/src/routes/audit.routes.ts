@@ -1,13 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { asyncHandler } from '../middlewares/asyncHandler';
 import { requireAdmin } from '../middlewares/authMiddleware';
+import { checkPasswordExpiry } from '../middlewares/passwordExpiry';
 import * as auditService from '../services/audit.service';
 import { sendSuccess } from '../utils/responseHelper';
 import { createAuditContext } from '../middlewares/auditLogger';
 
 const router = Router();
 
-router.use(requireAdmin);
+router.use(requireAdmin, checkPasswordExpiry);
 
 /**
  * GET /api/v1/admin/audit/logs

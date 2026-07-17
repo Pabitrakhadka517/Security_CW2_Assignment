@@ -2,6 +2,7 @@ import { Router } from 'express';
 import Joi from 'joi';
 import saleCategoryController from '../controllers/saleCategory.controller';
 import { requireAdmin } from '../middlewares/authMiddleware';
+import { checkPasswordExpiry } from '../middlewares/passwordExpiry';
 import { validateRequest } from '../middlewares/validateRequest';
 import { uploadSingle } from '../middlewares/upload';
 
@@ -65,20 +66,21 @@ router.get('/active', saleCategoryController.getActive);
 router.get('/slug/:slug', saleCategoryController.getBySlug);
 
 // ---- Admin routes ---------------------------------------------------------
-router.get('/', requireAdmin, saleCategoryController.getAll);
-router.get('/:id', requireAdmin, validateRequest({ params: idParamSchema }), saleCategoryController.getById);
-router.post('/', requireAdmin, validateRequest(createSchema), saleCategoryController.create);
-router.put('/:id', requireAdmin, validateRequest(updateSchema), saleCategoryController.update);
-router.delete('/:id', requireAdmin, validateRequest({ params: idParamSchema }), saleCategoryController.delete);
-router.put('/:id/products', requireAdmin, validateRequest({
+router.get('/', requireAdmin, checkPasswordExpiry, saleCategoryController.getAll);
+router.get('/:id', requireAdmin, checkPasswordExpiry, validateRequest({ params: idParamSchema }), saleCategoryController.getById);
+router.post('/', requireAdmin, checkPasswordExpiry, validateRequest(createSchema), saleCategoryController.create);
+router.put('/:id', requireAdmin, checkPasswordExpiry, validateRequest(updateSchema), saleCategoryController.update);
+router.delete('/:id', requireAdmin, checkPasswordExpiry, validateRequest({ params: idParamSchema }), saleCategoryController.delete);
+router.put('/:id/products', requireAdmin, checkPasswordExpiry, validateRequest({
   params: idParamSchema,
   body: Joi.object({ products: Joi.array().items(productItemSchema).required() }),
 }), saleCategoryController.setProducts);
-router.post('/:id/banner', requireAdmin, validateRequest({ params: idParamSchema }), uploadSingle, saleCategoryController.uploadBanner);
+router.post('/:id/banner', requireAdmin, checkPasswordExpiry, validateRequest({ params: idParamSchema }), uploadSingle, saleCategoryController.uploadBanner);
 
 router.post(
   '/:id/products-by-category',
   requireAdmin,
+  checkPasswordExpiry,
   validateRequest({
     params: idParamSchema,
     body: Joi.object({

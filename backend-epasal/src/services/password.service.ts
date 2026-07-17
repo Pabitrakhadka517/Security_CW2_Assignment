@@ -1,10 +1,18 @@
 import zxcvbn from 'zxcvbn';
-import { IUser } from '../models/User';
 import {
   IPasswordStrengthResult,
   IPasswordComplexityResult,
   IPasswordChangeResult,
 } from '../types';
+
+/**
+ * Structural interface (not IUser directly) so the same validation pipeline
+ * works for both the User and Admin models — both implement this surface.
+ */
+interface PasswordCheckable {
+  comparePassword(password: string): Promise<boolean>;
+  checkPasswordReuse(newPassword: string): Promise<boolean>;
+}
 
 const MIN_ZXCVBN_SCORE = 3;
 const MIN_LENGTH = 12;
@@ -51,7 +59,7 @@ export const validatePasswordComplexity = (password: string): IPasswordComplexit
  * Returns the first failure encountered so the caller can surface one clear message.
  */
 export const validatePasswordChange = async (
-  user: IUser,
+  user: PasswordCheckable,
   currentPassword: string,
   newPassword: string
 ): Promise<IPasswordChangeResult> => {

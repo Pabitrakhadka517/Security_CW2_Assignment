@@ -2,11 +2,12 @@ import { Router } from 'express';
 import Joi from 'joi';
 import * as sessionController from '../controllers/session.controller';
 import { requireAdmin } from '../middlewares/authMiddleware';
+import { checkPasswordExpiry } from '../middlewares/passwordExpiry';
 import { validateRequest } from '../middlewares/validateRequest';
 
 const router = Router();
 
-router.use(requireAdmin);
+router.use(requireAdmin, checkPasswordExpiry);
 
 const userIdParam = validateRequest({ params: Joi.object({ userId: Joi.string().required() }) });
 

@@ -1,11 +1,13 @@
 import { Request, Response } from 'express';
-import { User } from '../models/User';
+import { User, IUser } from '../models/User';
+import { Admin, IAdmin } from '../models/Admin';
 import { asyncHandler } from '../middlewares/asyncHandler';
 import { BadRequestError, UnauthorizedError } from '../utils/errors';
 import { verifyMFAPendingToken } from '../utils/tokenGenerator';
 import * as auditService from '../services/audit.service';
 import { createAuditContext } from '../middlewares/auditLogger';
 import { issueUserSession } from './user.controller';
+import { issueAdminSession } from './auth.controller';
 import * as sessionService from '../services/session.service';
 import {
   generateMFASecret,
@@ -16,10 +18,24 @@ import {
   verifyBackupCode,
 } from '../services/mfa.service';
 
-const requireUserId = (req: Request): string => {
+type MFARole = 'user' | 'admin';
+type MFAAccount = IUser | IAdmin;
+
+/**
+ * Both User and Admin models carry the same MFA fields (mfaSecret,
+ * mfaEnabled, mfaBackupCodes) and lockout methods, so every handler below
+ * operates on whichever model matches the caller's verified role instead of
+ * duplicating each handler per role.
+ */
+const findAccount = (id: string, role: MFARole, select = ''): Promise<MFAAccount | null> => {
+  return role === 'admin' ? Admin.findById(id).select(select) : User.findById(id).select(select);
+};
+
+const requireAccountContext = (req: Request): { id: string; role: MFARole } => {
   const id = req.user?.id;
   if (!id) throw new UnauthorizedError('Authentication required');
-  return id;
+  const role: MFARole = req.user?.role === 'admin' || req.user?.role === 'super_admin' ? 'admin' : 'user';
+  return { id, role };
 };
 
 /**
@@ -28,13 +44,13 @@ const requireUserId = (req: Request): string => {
  * can render the QR code and confirm possession via /verify-setup.
  */
 export const setupMFA = asyncHandler(async (req: Request, res: Response) => {
-  const userId = requireUserId(req);
-  const user = await User.findById(userId);
-  if (!user) throw new UnauthorizedError('User not found');
+  const { id, role } = requireAccountContext(req);
+  const account = await findAccount(id, role);
+  if (!account) throw new UnauthorizedError('Account not found');
 
-  const { secret, otpauthUrl } = generateMFASecret(user.email);
-  user.mfaSecret = secret;
-  await user.save();
+  const { secret, otpauthUrl } = generateMFASecret(account.email);
+  account.mfaSecret = secret;
+  await account.save();
 
   const qrCode = await generateQRCode(otpauthUrl);
 
@@ -43,33 +59,33 @@ export const setupMFA = asyncHandler(async (req: Request, res: Response) => {
 
 /**
  * POST /api/v1/auth/mfa/verify-setup
- * Confirms the user actually holds the secret (via a live TOTP code) before
- * flipping mfaEnabled on, then issues one-time backup codes.
+ * Confirms the caller actually holds the secret (via a live TOTP code)
+ * before flipping mfaEnabled on, then issues one-time backup codes.
  */
 export const verifySetup = asyncHandler(async (req: Request, res: Response) => {
-  const userId = requireUserId(req);
+  const { id, role } = requireAccountContext(req);
   const { token } = req.body || {};
   if (!token) throw new BadRequestError('Verification code is required');
 
-  const user = await User.findById(userId).select('+mfaSecret');
-  if (!user || !user.mfaSecret) throw new BadRequestError('MFA setup has not been started');
+  const account = await findAccount(id, role, '+mfaSecret');
+  if (!account || !account.mfaSecret) throw new BadRequestError('MFA setup has not been started');
 
-  if (!verifyTOTP(user.mfaSecret, token)) {
+  if (!verifyTOTP(account.mfaSecret, token)) {
     throw new BadRequestError('Invalid verification code');
   }
 
   const backupCodes = generateBackupCodes();
-  user.mfaEnabled = true;
-  user.mfaBackupCodes = backupCodes.map(hashBackupCode);
-  await user.save();
+  account.mfaEnabled = true;
+  account.mfaBackupCodes = backupCodes.map(hashBackupCode);
+  await account.save();
 
-  await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'MFA_ENABLED', status: 'SUCCESS', riskLevel: 'LOW' });
+  await auditService.log({ ...createAuditContext(req), userId: id, userEmail: account.email, userRole: role, action: 'MFA_ENABLED', status: 'SUCCESS', riskLevel: 'LOW' });
 
   // Force re-login everywhere (including this device) — a stolen access
   // token from before MFA was enabled must not survive the change.
-  const revokedCount = await sessionService.revokeAllUserSessions(userId, 'mfa_changed');
+  const revokedCount = await sessionService.revokeAllUserSessions(id, 'mfa_changed');
   if (revokedCount > 0) {
-    await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'LOGOUT', status: 'SUCCESS', riskLevel: 'LOW', metadata: { reason: 'mfa_changed', revokedSessions: revokedCount } });
+    await auditService.log({ ...createAuditContext(req), userId: id, userEmail: account.email, userRole: role, action: 'LOGOUT', status: 'SUCCESS', riskLevel: 'LOW', metadata: { reason: 'mfa_changed', revokedSessions: revokedCount } });
   }
 
   res.json({ success: true, message: 'MFA enabled successfully', data: { backupCodes } });
@@ -81,33 +97,33 @@ export const verifySetup = asyncHandler(async (req: Request, res: Response) => {
  * isn't enough to turn off a second factor.
  */
 export const disableMFA = asyncHandler(async (req: Request, res: Response) => {
-  const userId = requireUserId(req);
+  const { id, role } = requireAccountContext(req);
   const { token, password } = req.body || {};
   if (!token || !password) throw new BadRequestError('Password and verification code are required');
 
-  const user = await User.findById(userId).select('+password +mfaSecret');
-  if (!user) throw new UnauthorizedError('User not found');
+  const account = await findAccount(id, role, '+password +mfaSecret');
+  if (!account) throw new UnauthorizedError('Account not found');
 
-  const isPasswordValid = await user.comparePassword(password);
+  const isPasswordValid = await account.comparePassword(password);
   if (!isPasswordValid) throw new UnauthorizedError('Incorrect password');
 
-  if (!user.mfaEnabled || !user.mfaSecret || !verifyTOTP(user.mfaSecret, token)) {
+  if (!account.mfaEnabled || !account.mfaSecret || !verifyTOTP(account.mfaSecret, token)) {
     throw new BadRequestError('Invalid verification code');
   }
 
-  user.mfaEnabled = false;
-  user.mfaSecret = undefined;
-  user.mfaBackupCodes = [];
-  await user.save();
+  account.mfaEnabled = false;
+  account.mfaSecret = undefined;
+  account.mfaBackupCodes = [];
+  await account.save();
 
-  await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'MFA_DISABLED', status: 'SUCCESS', riskLevel: 'MEDIUM' });
+  await auditService.log({ ...createAuditContext(req), userId: id, userEmail: account.email, userRole: role, action: 'MFA_DISABLED', status: 'SUCCESS', riskLevel: 'MEDIUM' });
 
   // Force re-login everywhere — disabling MFA is itself a sensitive change,
   // and any session opened while MFA was on should not silently continue
   // in a now-weaker-auth state.
-  const revokedCount = await sessionService.revokeAllUserSessions(userId, 'mfa_changed');
+  const revokedCount = await sessionService.revokeAllUserSessions(id, 'mfa_changed');
   if (revokedCount > 0) {
-    await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'LOGOUT', status: 'SUCCESS', riskLevel: 'LOW', metadata: { reason: 'mfa_changed', revokedSessions: revokedCount } });
+    await auditService.log({ ...createAuditContext(req), userId: id, userEmail: account.email, userRole: role, action: 'LOGOUT', status: 'SUCCESS', riskLevel: 'LOW', metadata: { reason: 'mfa_changed', revokedSessions: revokedCount } });
   }
 
   res.json({ success: true, message: 'MFA disabled successfully' });
@@ -117,18 +133,20 @@ export const disableMFA = asyncHandler(async (req: Request, res: Response) => {
  * GET /api/v1/auth/mfa/status
  */
 export const getMFAStatus = asyncHandler(async (req: Request, res: Response) => {
-  const userId = requireUserId(req);
-  const user = await User.findById(userId).select('mfaEnabled');
-  if (!user) throw new UnauthorizedError('User not found');
+  const { id, role } = requireAccountContext(req);
+  const account = await findAccount(id, role, 'mfaEnabled');
+  if (!account) throw new UnauthorizedError('Account not found');
 
-  res.json({ success: true, data: { mfaEnabled: user.mfaEnabled } });
+  res.json({ success: true, data: { mfaEnabled: account.mfaEnabled } });
 });
 
 /**
  * POST /api/v1/auth/mfa/challenge
  * Step 2 of login. Auth here is the mfa-pending token (not a normal access
  * token), so this route is deliberately NOT behind requireAuth — it verifies
- * the pending token itself against MFA_PENDING_SECRET.
+ * the pending token itself against MFA_PENDING_SECRET. The pending token
+ * carries the role it was issued for, so the right collection (User vs
+ * Admin) and the right session/token issuance path get used below.
  */
 export const mfaChallenge = asyncHandler(async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
@@ -144,42 +162,48 @@ export const mfaChallenge = asyncHandler(async (req: Request, res: Response) => 
     throw new UnauthorizedError('Invalid or expired MFA session');
   }
 
+  const role: MFARole = decoded.role === 'admin' ? 'admin' : 'user';
   const { token, useBackupCode } = req.body || {};
   if (!token) throw new BadRequestError('Verification code is required');
 
-  const user = await User.findById(decoded.userId).select('+mfaSecret +mfaBackupCodes');
-  if (!user || !user.mfaEnabled || !user.mfaSecret) {
+  const account = await findAccount(decoded.userId, role, '+mfaSecret +mfaBackupCodes');
+  if (!account || !account.mfaEnabled || !account.mfaSecret) {
     throw new UnauthorizedError('MFA not enabled for this account');
   }
 
   let verified = false;
 
   if (useBackupCode) {
-    const index = await verifyBackupCode(token, user.mfaBackupCodes || []);
+    const index = await verifyBackupCode(token, account.mfaBackupCodes || []);
     if (index !== -1) {
       verified = true;
-      user.mfaBackupCodes = (user.mfaBackupCodes || []).filter((_, i) => i !== index);
+      account.mfaBackupCodes = (account.mfaBackupCodes || []).filter((_, i) => i !== index);
     }
   } else {
-    verified = verifyTOTP(user.mfaSecret, token);
+    verified = verifyTOTP(account.mfaSecret, token);
   }
 
   const ctx = createAuditContext(req);
+  const loginSuccessAction = role === 'admin' ? 'ADMIN_LOGIN_SUCCESS' : 'LOGIN_SUCCESS';
 
   if (!verified) {
-    await user.incrementLoginAttempts();
-    await auditService.log({ ...ctx, userId: user._id.toString(), userEmail: user.email, userRole: 'user', action: 'MFA_CHALLENGE_FAILED', status: 'FAILURE', riskLevel: 'HIGH' });
-    await auditService.detectSuspiciousActivity(ctx.ipAddress, user._id.toString());
+    await account.incrementLoginAttempts();
+    await auditService.log({ ...ctx, userId: account._id.toString(), userEmail: account.email, userRole: role, action: 'MFA_CHALLENGE_FAILED', status: 'FAILURE', riskLevel: 'HIGH' });
+    await auditService.detectSuspiciousActivity(ctx.ipAddress, account._id.toString());
     throw new UnauthorizedError('Invalid MFA code');
   }
 
-  await user.resetLoginAttempts();
-  await auditService.log({ ...ctx, userId: user._id.toString(), userEmail: user.email, userRole: 'user', action: 'MFA_CHALLENGE_SUCCESS', status: 'SUCCESS', riskLevel: 'LOW', metadata: { usedBackupCode: !!useBackupCode } });
+  await account.resetLoginAttempts();
+  await auditService.log({ ...ctx, userId: account._id.toString(), userEmail: account.email, userRole: role, action: 'MFA_CHALLENGE_SUCCESS', status: 'SUCCESS', riskLevel: 'LOW', metadata: { usedBackupCode: !!useBackupCode } });
   if (useBackupCode) {
-    await auditService.log({ ...ctx, userId: user._id.toString(), userEmail: user.email, userRole: 'user', action: 'MFA_BACKUP_CODE_USED', status: 'SUCCESS', riskLevel: 'MEDIUM' });
+    await auditService.log({ ...ctx, userId: account._id.toString(), userEmail: account.email, userRole: role, action: 'MFA_BACKUP_CODE_USED', status: 'SUCCESS', riskLevel: 'MEDIUM' });
   }
-  await auditService.log({ ...ctx, userId: user._id.toString(), userEmail: user.email, userRole: 'user', action: 'LOGIN_SUCCESS', status: 'SUCCESS', riskLevel: 'LOW', metadata: { loginMethod: 'email_password', mfa: true, usedBackupCode: !!useBackupCode } });
-  await auditService.detectSuspiciousActivity(ctx.ipAddress, user._id.toString());
+  await auditService.log({ ...ctx, userId: account._id.toString(), userEmail: account.email, userRole: role, action: loginSuccessAction, status: 'SUCCESS', riskLevel: 'LOW', metadata: { loginMethod: 'email_password', mfa: true, usedBackupCode: !!useBackupCode } });
+  await auditService.detectSuspiciousActivity(ctx.ipAddress, account._id.toString());
 
-  await issueUserSession(req, res, user);
+  if (role === 'admin') {
+    await issueAdminSession(req, res, account as IAdmin);
+  } else {
+    await issueUserSession(req, res, account as IUser);
+  }
 });

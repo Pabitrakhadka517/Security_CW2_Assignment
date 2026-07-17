@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { asyncHandler } from '../middlewares/asyncHandler';
 import { requireAdmin } from '../middlewares/authMiddleware';
+import { checkPasswordExpiry } from '../middlewares/passwordExpiry';
 import { validateRequest } from '../middlewares/validateRequest';
 import { ipListService } from '../services/ipList.service';
 import { sendSuccess } from '../utils/responseHelper';
@@ -9,7 +10,7 @@ import { blockIPSchema, allowIPSchema, ipParamSchema } from '../validations/ipRu
 
 const router = Router();
 
-router.use(requireAdmin);
+router.use(requireAdmin, checkPasswordExpiry);
 
 /**
  * GET /api/v1/admin/ip/stats

@@ -1,16 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 import { User } from '../models/User';
+import { Admin } from '../models/Admin';
 import * as auditService from '../services/audit.service';
 import { createAuditContext } from './auditLogger';
 
 /**
- * Blocks access to protected user routes once a password has expired (90-day
- * policy) or an admin has flagged the account with `mustChangePassword`.
- * Must run after `requireAuth` (needs `req.user`) and must NOT be applied to
- * the change-password route itself, or an expired user could never fix it.
+ * Blocks access to protected routes once a password has expired (90-day
+ * policy) or an account has been flagged with `mustChangePassword`. Must run
+ * after `requireAuth`/`requireAuthAny` (needs `req.user`) and must NOT be
+ * applied to the change-password route itself, or an expired account could
+ * never fix it.
  *
- * Admin accounts don't carry this policy (no passwordExpiresAt field on the
- * Admin model), so this only acts on the 'user' role.
+ * Applies to both 'user' and 'admin'/'super_admin' roles — each model tracks
+ * its own passwordExpiresAt/mustChangePassword fields.
  */
 export const checkPasswordExpiry = async (
   req: Request,
@@ -18,25 +20,29 @@ export const checkPasswordExpiry = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    if (!req.user || req.user.role !== 'user') {
+    if (!req.user) {
       next();
       return;
     }
 
-    const user = await User.findById(req.user.id).select('passwordExpiresAt mustChangePassword');
-    if (!user) {
+    const isAdmin = req.user.role === 'admin' || req.user.role === 'super_admin';
+    const account = isAdmin
+      ? await Admin.findById(req.user.id).select('passwordExpiresAt mustChangePassword')
+      : await User.findById(req.user.id).select('passwordExpiresAt mustChangePassword');
+
+    if (!account) {
       next();
       return;
     }
 
-    const isExpired = user.mustChangePassword || user.passwordExpiresAt.getTime() < Date.now();
+    const isExpired = account.mustChangePassword || account.passwordExpiresAt.getTime() < Date.now();
     if (isExpired) {
       await auditService.log({
         ...createAuditContext(req),
         action: 'PASSWORD_EXPIRED',
         status: 'BLOCKED',
         riskLevel: 'LOW',
-        metadata: { mustChangePassword: user.mustChangePassword },
+        metadata: { mustChangePassword: account.mustChangePassword },
       });
       res.status(403).json({
         success: false,

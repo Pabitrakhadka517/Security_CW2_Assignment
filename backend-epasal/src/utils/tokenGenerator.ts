@@ -59,6 +59,7 @@ export const decodeToken = (token: string): any => {
 
 interface MFAPendingPayload {
   userId: string;
+  role: 'user' | 'admin';
   purpose: 'mfa-pending';
 }
 
@@ -67,10 +68,13 @@ interface MFAPendingPayload {
  * the TOTP/backup-code step, so a stolen access token can never be minted
  * without also clearing MFA. Signed with its own secret (not JWT_SECRET) so
  * it can't be confused with — or replayed as — a normal access token.
+ *
+ * Carries `role` so /auth/mfa/challenge knows whether to look up the pending
+ * account in the User or Admin collection.
  */
-export const generateMFAPendingToken = (userId: string): string => {
+export const generateMFAPendingToken = (userId: string, role: 'user' | 'admin' = 'user'): string => {
   const secret = ensureSecret(process.env.MFA_PENDING_SECRET, 'MFA pending secret');
-  const payload: MFAPendingPayload = { userId, purpose: 'mfa-pending' };
+  const payload: MFAPendingPayload = { userId, role, purpose: 'mfa-pending' };
   return jwt.sign(payload, secret, { expiresIn: '5m' });
 };
 

@@ -53,7 +53,7 @@ async function run(): Promise<void> {
   const existing = await Admin.findOne({ email });
 
   if (!existing) {
-    await new Admin({
+    const admin = await new Admin({
       adminId: 'admin001',
       name,
       email,
@@ -61,6 +61,10 @@ async function run(): Promise<void> {
       role: 'super_admin',
       isActive: true,
     }).save();
+    // Seed password history with the hash the pre-save hook just produced, so
+    // the very first change-password call can already check reuse against it
+    // (mirrors User's register flow — see user.controller.ts#register).
+    await admin.updatePasswordHistory(admin.password as string);
     console.log(`🎉 Admin created: ${email}`);
     console.log('   Password set from ADMIN_PASSWORD. Change it after first login.');
   } else if (forceReset) {
@@ -69,6 +73,7 @@ async function run(): Promise<void> {
     existing.isActive = true;
     existing.password = password; // marks modified -> pre-save hook re-hashes
     await existing.save();
+    await existing.updatePasswordHistory(existing.password as string);
     console.log(`♻️  Admin reset (name/role/password updated): ${email}`);
   } else {
     console.log(`ℹ️  Admin already exists: ${email} — left unchanged.`);

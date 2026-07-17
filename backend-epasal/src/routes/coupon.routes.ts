@@ -2,6 +2,7 @@ import { Router } from 'express';
 import couponController from '../controllers/coupon.controller';
 import { validateRequest } from '../middlewares/validateRequest';
 import { requireAdmin, optionalAuth } from '../middlewares/authMiddleware';
+import { checkPasswordExpiry } from '../middlewares/passwordExpiry';
 import { couponLimiter } from '../middlewares/rateLimiter';
 import { requirePermission } from '../middlewares/rbac';
 import {
@@ -74,6 +75,7 @@ router.post(
 router.get(
   '/',
   requireAdmin,
+  checkPasswordExpiry,
   validateRequest(getCouponsQuerySchema),
   couponController.getCoupons
 );
@@ -81,6 +83,7 @@ router.get(
 router.get(
   '/:code/analytics',
   requireAdmin,
+  checkPasswordExpiry,
   validateRequest(getCouponByCodeSchema),
   couponController.getCouponAnalytics
 );
@@ -88,6 +91,7 @@ router.get(
 router.get(
   '/:code',
   requireAdmin,
+  checkPasswordExpiry,
   validateRequest(getCouponByCodeSchema),
   couponController.getCouponByCode
 );
@@ -95,6 +99,7 @@ router.get(
 router.post(
   '/',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('coupon:create'),
   validateRequest(createCouponSchema),
   couponController.createCoupon
@@ -103,6 +108,7 @@ router.post(
 router.put(
   '/:code',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('coupon:update:any'),
   validateRequest(updateCouponSchema),
   couponController.updateCoupon
@@ -111,6 +117,7 @@ router.put(
 router.delete(
   '/:code',
   requireAdmin,
+  checkPasswordExpiry,
   requirePermission('coupon:delete:any'),
   validateRequest(deleteCouponSchema),
   couponController.deleteCoupon
