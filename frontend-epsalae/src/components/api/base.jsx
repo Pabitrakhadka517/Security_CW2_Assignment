@@ -3,6 +3,7 @@
 // tries one silent /auth/refresh before bailing out. Cookies are sent so the
 // refresh httpOnly cookie reaches the backend.
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import { API_URL } from '@/config';
 import { getRoleFromToken } from '@/utils/jwt';
 
@@ -53,6 +54,16 @@ const isAdminPath = () => {
   try { return window.location.pathname.startsWith('/admin'); } catch (e) { return false; }
 };
 
+// Most admin routes (products/orders/coupons/etc.) are gated by
+// checkPasswordExpiry once the 90-day policy kicks in — every one of those
+// calls would otherwise fail silently or show a generic error. Unlike the
+// user-facing app, there's no dedicated "your password expired" screen for
+// admins, and /admin/me + /admin/password stay reachable specifically so
+// the header's Profile panel can still fix it in place — so this only
+// surfaces a persistent toast (once per page load) instead of forcing a
+// logout/redirect that could strand the admin without a way to recover.
+let passwordExpiredToastShown = false;
+
 // Try refresh once on 401; only redirect to /admin/login when we're actually
 // on an admin page (so a stray 401 from a public call doesn't kick a normal
 // shopper out of the storefront).
@@ -61,6 +72,15 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config || {};
     const status = error.response?.status;
+    const code = error.response?.data?.code;
+
+    if (status === 403 && code === 'PASSWORD_EXPIRED') {
+      if (!passwordExpiredToastShown) {
+        passwordExpiredToastShown = true;
+        toast.error('Your password has expired. Open your profile menu and change it to continue using the dashboard.', { duration: 8000 });
+      }
+      return Promise.reject(error);
+    }
 
     if (status === 401 && !original._retried) {
       original._retried = true;
@@ -88,5 +108,15 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// MFA self-service for the logged-in admin — same backend routes the user
+// side uses, just called through the admin-scoped client so the adminToken
+// (verified against JWT_ADMIN_SECRET) is what gets sent.
+export const adminMfaEndpoints = {
+  status: () => api.get('/auth/mfa/status'),
+  setup: () => api.post('/auth/mfa/setup'),
+  verifySetup: (payload) => api.post('/auth/mfa/verify-setup', payload),
+  disable: (payload) => api.post('/auth/mfa/disable', payload),
+};
 
 export default api;

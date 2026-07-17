@@ -3,9 +3,10 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import {
   Search, ChevronDown, LogOut, Menu, X,
   User, Lock, Eye, EyeOff, Check, Loader2, AlertCircle,
+  ShieldCheck, ShieldOff, KeyRound, Copy, AlertTriangle, Download,
 } from 'lucide-react';
 import { useAdminAuth } from '../store/authstore';
-import api from '../api/base';
+import api, { adminMfaEndpoints } from '../api/base';
 import toast from 'react-hot-toast';
 
 const ROUTE_META = {
@@ -22,7 +23,7 @@ const ROUTE_META = {
 
 /* ── Profile slide-over panel ───────────────────────────────── */
 function ProfilePanel({ open, onClose, admin, loginAdmin }) {
-  const [tab, setTab]             = useState('profile'); // 'profile' | 'password'
+  const [tab, setTab]             = useState('profile'); // 'profile' | 'password' | 'mfa'
   const [name, setName]           = useState('');
   const [email, setEmail]         = useState('');
   const [saving, setSaving]       = useState(false);
@@ -36,6 +37,22 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
   const [pwdSaving, setPwdSaving] = useState(false);
   const [error, setError]         = useState('');
 
+  // MFA tab state
+  const [mfaChecking, setMfaChecking]   = useState(true);
+  const [mfaEnabled, setMfaEnabled]     = useState(false);
+  const [mfaStep, setMfaStep]           = useState('status'); // status | qr | backup-codes
+  const [mfaQrCode, setMfaQrCode]       = useState(null);
+  const [mfaSecret, setMfaSecret]       = useState(null);
+  const [mfaBackupCodes, setMfaBackupCodes] = useState([]);
+  const [mfaBusy, setMfaBusy]           = useState(false);
+  const [mfaVerifyCode, setMfaVerifyCode] = useState('');
+  const [mfaCopied, setMfaCopied]       = useState(false);
+  const [mfaBackupConfirmed, setMfaBackupConfirmed] = useState(false);
+  const [showDisableMfa, setShowDisableMfa] = useState(false);
+  const [disableMfaPwd, setDisableMfaPwd]   = useState('');
+  const [disableMfaCode, setDisableMfaCode] = useState('');
+  const [showDisableMfaPwd, setShowDisableMfaPwd] = useState(false);
+
   // Sync form when panel opens
   useEffect(() => {
     if (open && admin) {
@@ -45,6 +62,76 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
       setCurPwd(''); setNewPwd(''); setConfPwd('');
     }
   }, [open, admin]);
+
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+    setMfaChecking(true);
+    setMfaStep('status');
+    adminMfaEndpoints.status()
+      .then((res) => {
+        if (cancelled) return;
+        setMfaEnabled(!!(res.data?.data?.mfaEnabled ?? res.data?.mfaEnabled));
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setMfaChecking(false); });
+    return () => { cancelled = true; };
+  }, [open]);
+
+  const startMfaSetup = async () => {
+    setMfaBusy(true);
+    try {
+      const res = await adminMfaEndpoints.setup();
+      const data = res.data?.data || res.data || {};
+      setMfaQrCode(data.qrCode);
+      setMfaSecret(data.secret);
+      setMfaStep('qr');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to start MFA setup');
+    } finally { setMfaBusy(false); }
+  };
+
+  const verifyMfaSetup = async (e) => {
+    e.preventDefault();
+    if (!mfaVerifyCode) return;
+    setMfaBusy(true);
+    try {
+      const res = await adminMfaEndpoints.verifySetup({ token: mfaVerifyCode });
+      const data = res.data?.data || res.data || {};
+      setMfaBackupCodes(data.backupCodes || []);
+      setMfaEnabled(true);
+      setMfaStep('backup-codes');
+      setMfaVerifyCode('');
+      toast.success('MFA enabled successfully');
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Invalid verification code');
+    } finally { setMfaBusy(false); }
+  };
+
+  const copyMfaSecret = async () => {
+    try {
+      await navigator.clipboard.writeText(mfaSecret);
+      setMfaCopied(true);
+      setTimeout(() => setMfaCopied(false), 2000);
+    } catch { /* clipboard unavailable */ }
+  };
+
+  const handleDisableMfa = async (e) => {
+    e.preventDefault();
+    setError('');
+    if (!disableMfaPwd || !disableMfaCode) return setError('Password and verification code are required');
+    setMfaBusy(true);
+    try {
+      await adminMfaEndpoints.disable({ password: disableMfaPwd, token: disableMfaCode });
+      setMfaEnabled(false);
+      setShowDisableMfa(false);
+      setDisableMfaPwd(''); setDisableMfaCode('');
+      setMfaStep('status');
+      toast.success('MFA disabled successfully');
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to disable MFA');
+    } finally { setMfaBusy(false); }
+  };
 
   const saveProfile = async () => {
     if (!name.trim()) return setError('Name cannot be empty');
@@ -66,7 +153,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
 
   const savePassword = async () => {
     if (!curPwd || !newPwd || !confPwd) return setError('All password fields are required');
-    if (newPwd.length < 6) return setError('New password must be at least 6 characters');
+    if (newPwd.length < 12) return setError('New password must be at least 12 characters and include uppercase, lowercase, a number, and a special character');
     if (newPwd !== confPwd) return setError('Passwords do not match');
     setPwdSaving(true); setError('');
     try {
@@ -109,6 +196,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
           {[
             { id: 'profile',  label: 'Profile',         icon: User },
             { id: 'password', label: 'Change Password',  icon: Lock },
+            { id: 'mfa',      label: 'Two-Factor',       icon: ShieldCheck },
           ].map(({ id, label, icon: Icon }) => (
             <button key={id} onClick={() => { setTab(id); setError(''); }}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
@@ -155,7 +243,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
                 <p className="text-sm font-medium text-gray-800 capitalize">{admin?.role || 'admin'}</p>
               </div>
             </div>
-          ) : (
+          ) : tab === 'password' ? (
             <div className="space-y-4">
               {[
                 { label: 'Current Password', val: curPwd, set: setCurPwd, show: showCur, toggle: () => setShowCur(v => !v) },
@@ -179,27 +267,225 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
                   </div>
                 </div>
               ))}
-              <p className="text-xs text-gray-400">Password must be at least 6 characters.</p>
+              <p className="text-xs text-gray-400">At least 12 characters, with uppercase, lowercase, a number, and a special character.</p>
+            </div>
+          ) : mfaChecking ? (
+            <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+          ) : (
+            <div className="space-y-4">
+              {mfaStep === 'status' && (
+                mfaEnabled ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-3 text-sm">
+                      <ShieldCheck size={16} className="shrink-0" />
+                      <span>MFA is active on your account.</span>
+                    </div>
+
+                    {!showDisableMfa ? (
+                      <button
+                        onClick={() => setShowDisableMfa(true)}
+                        className="w-full py-2.5 border border-red-200 text-red-600 hover:bg-red-50 font-semibold rounded-xl text-sm transition"
+                      >
+                        Disable MFA
+                      </button>
+                    ) : (
+                      <form onSubmit={handleDisableMfa} className="space-y-3">
+                        <div className="relative">
+                          <input
+                            type={showDisableMfaPwd ? 'text' : 'password'}
+                            placeholder="Current password"
+                            value={disableMfaPwd}
+                            onChange={(e) => { setDisableMfaPwd(e.target.value); setError(''); }}
+                            disabled={mfaBusy}
+                            className="w-full px-4 py-2.5 pr-11 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-orange-300/40 focus:border-orange-300 focus:bg-white transition disabled:opacity-50"
+                          />
+                          <button type="button" onClick={() => setShowDisableMfaPwd((v) => !v)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition">
+                            {showDisableMfaPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                        <input
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={6}
+                          placeholder="6-digit authenticator code"
+                          value={disableMfaCode}
+                          onChange={(e) => { setDisableMfaCode(e.target.value); setError(''); }}
+                          disabled={mfaBusy}
+                          className="w-full px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-mono tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-orange-300/40 focus:border-orange-300 focus:bg-white transition disabled:opacity-50"
+                        />
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() => { setShowDisableMfa(false); setError(''); }}
+                            disabled={mfaBusy}
+                            className="flex-1 py-2.5 border border-gray-200 text-gray-700 hover:bg-gray-50 font-semibold rounded-xl text-sm transition disabled:opacity-50"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={mfaBusy}
+                            className="flex-1 py-2.5 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl text-sm transition disabled:opacity-60 flex items-center justify-center gap-2"
+                          >
+                            <ShieldOff size={14} />
+                            {mfaBusy ? 'Disabling…' : 'Confirm Disable'}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-sm text-gray-500">
+                      Add an extra layer of security to your admin account. Once enabled, you'll need a
+                      6-digit code from an authenticator app to sign in.
+                    </p>
+                    <button
+                      onClick={startMfaSetup}
+                      disabled={mfaBusy}
+                      className="w-full py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-semibold rounded-xl text-sm transition disabled:opacity-60"
+                    >
+                      {mfaBusy ? 'Starting setup…' : 'Enable MFA'}
+                    </button>
+                  </div>
+                )
+              )}
+
+              {mfaStep === 'qr' && (
+                <div className="space-y-4">
+                  <p className="text-sm text-gray-500">Scan this with Google Authenticator or Authy.</p>
+                  {mfaQrCode && (
+                    <div className="flex justify-center">
+                      <img src={mfaQrCode} alt="MFA QR code" className="w-40 h-40 rounded-xl border border-gray-200" />
+                    </div>
+                  )}
+                  {mfaSecret && (
+                    <div>
+                      <label className="block text-xs font-medium text-gray-500 mb-1.5">
+                        Can't scan? Enter this key manually instead.
+                      </label>
+                      <div className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5">
+                        <code className="flex-1 text-xs font-mono text-gray-900 break-all">{mfaSecret}</code>
+                        <button type="button" onClick={copyMfaSecret} className="text-gray-400 hover:text-gray-600 shrink-0">
+                          {mfaCopied ? <Check size={14} /> : <Copy size={14} />}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <form onSubmit={verifyMfaSetup} className="space-y-3">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={6}
+                      placeholder="000000"
+                      value={mfaVerifyCode}
+                      onChange={(e) => setMfaVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      disabled={mfaBusy}
+                      className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-900 text-center text-lg tracking-[0.4em] font-mono focus:outline-none focus:ring-2 focus:ring-orange-300/40 focus:border-orange-300 disabled:opacity-50"
+                    />
+                    <button
+                      type="submit"
+                      disabled={mfaBusy || !mfaVerifyCode}
+                      className="w-full py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-semibold rounded-xl text-sm transition disabled:opacity-60"
+                    >
+                      {mfaBusy ? 'Verifying…' : 'Verify & Enable'}
+                    </button>
+                  </form>
+                </div>
+              )}
+
+              {mfaStep === 'backup-codes' && (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl px-4 py-3 text-sm">
+                    <AlertTriangle size={16} className="shrink-0" />
+                    <span>Save these codes somewhere safe. Each can only be used once.</span>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => { navigator.clipboard.writeText(mfaBackupCodes.join('\n')); toast.success('Codes copied'); }}
+                      className="flex-1 flex items-center justify-center gap-2 text-xs border border-gray-200 rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-50 transition"
+                    >
+                      <Copy className="w-3.5 h-3.5" /> Copy codes
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const content = 'Epasaley Admin — MFA Backup Codes\n\n' + mfaBackupCodes.join('\n') +
+                          '\n\nSave these somewhere safe. Each code can only be used once.';
+                        const blob = new Blob([content], { type: 'text/plain' });
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url; a.download = 'epasaley-admin-backup-codes.txt'; a.click();
+                        URL.revokeObjectURL(url);
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 text-xs border border-gray-200 rounded-xl px-3 py-2 text-gray-700 hover:bg-gray-50 transition"
+                    >
+                      <Download className="w-3.5 h-3.5" /> Download
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2">
+                    {mfaBackupCodes.map((code) => (
+                      <div key={code} className="flex items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-2.5 py-2">
+                        <KeyRound size={12} className="text-gray-400 shrink-0" />
+                        <code className="text-xs font-mono text-gray-900">{code}</code>
+                      </div>
+                    ))}
+                  </div>
+
+                  <label className="flex items-start gap-2.5 cursor-pointer bg-amber-50 border border-amber-200 rounded-xl p-3">
+                    <input
+                      type="checkbox"
+                      checked={mfaBackupConfirmed}
+                      onChange={(e) => setMfaBackupConfirmed(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 rounded text-amber-700 border-amber-300 focus:ring-amber-600"
+                    />
+                    <span className="text-xs text-amber-800">
+                      I have saved my backup codes. I understand they cannot be recovered if lost.
+                    </span>
+                  </label>
+
+                  <button
+                    disabled={!mfaBackupConfirmed}
+                    onClick={() => { setMfaStep('status'); setMfaBackupConfirmed(false); setMfaBackupCodes([]); }}
+                    className="w-full py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-semibold rounded-xl text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Finish setup
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
 
         {/* Footer actions */}
-        <div className="px-5 pb-6 pt-3 border-t border-gray-100 shrink-0 flex gap-3">
-          <button onClick={onClose}
-            className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition">
-            Cancel
-          </button>
-          <button
-            onClick={tab === 'profile' ? saveProfile : savePassword}
-            disabled={saving || pwdSaving}
-            className="flex-1 py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-semibold rounded-xl text-sm transition shadow-md shadow-orange-200 disabled:opacity-60 flex items-center justify-center gap-2">
-            {(saving || pwdSaving)
-              ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
-              : <><Check className="w-4 h-4" /> Save Changes</>
-            }
-          </button>
-        </div>
+        {tab !== 'mfa' ? (
+          <div className="px-5 pb-6 pt-3 border-t border-gray-100 shrink-0 flex gap-3">
+            <button onClick={onClose}
+              className="flex-1 py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition">
+              Cancel
+            </button>
+            <button
+              onClick={tab === 'profile' ? saveProfile : savePassword}
+              disabled={saving || pwdSaving}
+              className="flex-1 py-2.5 bg-[#FF6B35] hover:bg-orange-500 text-white font-semibold rounded-xl text-sm transition shadow-md shadow-orange-200 disabled:opacity-60 flex items-center justify-center gap-2">
+              {(saving || pwdSaving)
+                ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
+                : <><Check className="w-4 h-4" /> Save Changes</>
+              }
+            </button>
+          </div>
+        ) : (
+          <div className="px-5 pb-6 pt-3 border-t border-gray-100 shrink-0">
+            <button onClick={onClose}
+              className="w-full py-2.5 border border-gray-200 text-gray-600 font-semibold rounded-xl text-sm hover:bg-gray-50 transition">
+              Close
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

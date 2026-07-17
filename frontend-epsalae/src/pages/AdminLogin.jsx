@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAdminAuth } from '../components/store/authstore';
+import { authEndpoints } from '../components/api/userapi';
 import toast from 'react-hot-toast';
-import { Loader2, Eye, EyeOff, Lock, Mail, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Lock, Mail, ArrowRight, ShieldCheck, KeyRound } from 'lucide-react';
 import { API_URL } from '@/config';
 import { motion } from 'framer-motion';
 
@@ -15,9 +16,31 @@ export default function AdminLogin() {
   const navigate = useNavigate();
   const { loginAdmin, isAdmin } = useAdminAuth();
 
+  // MFA challenge (step 2 of login). Kept in component state only — never
+  // localStorage/sessionStorage — since it's a short-lived, single-purpose
+  // credential that grants nothing on its own.
+  const [mfaPendingToken, setMfaPendingToken] = useState(null);
+  const [mfaCode, setMfaCode]                 = useState('');
+  const [useBackupCode, setUseBackupCode]     = useState(false);
+
   useEffect(() => {
     if (isAdmin) navigate('/admin');
   }, [isAdmin, navigate]);
+
+  const completeLogin = (data) => {
+    const token = data.data?.token || data.token || data.accessToken;
+    const admin = data.data?.admin || data.data?.user || data.user || data.admin;
+
+    if (!token) return toast.error('No token received from server');
+
+    if (admin) {
+      try { localStorage.setItem('admin', JSON.stringify(admin)); } catch (_) {}
+    }
+
+    loginAdmin(token, admin);
+    toast.success('Welcome back!', { duration: 2000 });
+    setTimeout(() => navigate('/admin'), 500);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -36,20 +59,30 @@ export default function AdminLogin() {
       const data = await response.json();
       if (!response.ok) return toast.error(data.message || 'Login failed');
 
-      const token = data.data?.token || data.token || data.accessToken;
-      const admin = data.data?.admin || data.data?.user || data.user || data.admin;
-
-      if (!token) return toast.error('No token received from server');
-
-      if (admin) {
-        try { localStorage.setItem('admin', JSON.stringify(admin)); } catch (_) {}
+      if (data.requiresMFA || data.data?.requiresMFA) {
+        setMfaPendingToken(data.data?.mfaPendingToken || data.mfaPendingToken);
+        return;
       }
 
-      loginAdmin(token, admin);
-      toast.success('Welcome back!', { duration: 2000 });
-      setTimeout(() => navigate('/admin'), 500);
+      completeLogin(data);
     } catch (error) {
       toast.error('Login error: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMfaSubmit = async (e) => {
+    e.preventDefault();
+    if (!mfaCode || !mfaPendingToken) return;
+
+    setLoading(true);
+    try {
+      const res = await authEndpoints.mfaChallenge({ token: mfaCode, useBackupCode }, mfaPendingToken);
+      const data = res.data?.data || res.data || {};
+      completeLogin({ data });
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Invalid verification code');
     } finally {
       setLoading(false);
     }
@@ -99,86 +132,147 @@ export default function AdminLogin() {
           className="rounded-3xl border border-white/8 p-8"
           style={{ background: 'rgba(255,255,255,0.04)', backdropFilter: 'blur(24px)', boxShadow: '0 32px 80px -20px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.06)' }}
         >
-          <form onSubmit={handleSubmit} className="space-y-5">
+          {mfaPendingToken ? (
+            <form onSubmit={handleMfaSubmit} className="space-y-5">
+              <p className="text-center text-sm text-white/50">
+                Enter the 6-digit code from your authenticator app{useBackupCode ? ', or a backup code' : ''}.
+              </p>
 
-            {/* Email field */}
-            <div>
-              <label className="mb-2 block text-[0.7rem] font-semibold uppercase tracking-widest text-white/45">
-                Email Address
-              </label>
-              <div className="relative">
-                <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-                <input
-                  type="email"
-                  autoComplete="email"
-                  placeholder="admin@epasaley.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-white/6 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/20 transition-all duration-200 focus:border-[#FF6B35]/50 focus:bg-white/9 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/15"
-                />
+              <div>
+                <label className="mb-2 block text-[0.7rem] font-semibold uppercase tracking-widest text-white/45">
+                  {useBackupCode ? 'Backup Code' : 'Verification Code'}
+                </label>
+                <div className="relative">
+                  <KeyRound className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                  <input
+                    type="text"
+                    inputMode={useBackupCode ? 'text' : 'numeric'}
+                    autoComplete="one-time-code"
+                    autoFocus
+                    placeholder={useBackupCode ? 'XXXXXXXXXX' : '123456'}
+                    value={mfaCode}
+                    onChange={(e) => setMfaCode(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-white/6 py-3 pl-10 pr-4 text-sm tracking-widest text-white placeholder:text-white/20 transition-all duration-200 focus:border-[#FF6B35]/50 focus:bg-white/9 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/15"
+                  />
+                </div>
               </div>
-            </div>
 
-            {/* Password field */}
-            <div>
-              <label className="mb-2 block text-[0.7rem] font-semibold uppercase tracking-widest text-white/45">
-                Password
-              </label>
-              <div className="relative">
-                <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  autoComplete="current-password"
-                  placeholder="••••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-xl border border-white/10 bg-white/6 py-3 pl-10 pr-11 text-sm text-white placeholder:text-white/20 transition-all duration-200 focus:border-[#FF6B35]/50 focus:bg-white/9 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/15"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/25 transition-colors hover:text-white/55"
-                >
-                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              <button
+                type="button"
+                onClick={() => { setUseBackupCode(!useBackupCode); setMfaCode(''); }}
+                className="text-xs text-white/38 transition-colors hover:text-[#FF6B35]"
+              >
+                {useBackupCode ? 'Use authenticator code instead' : 'Use a backup code instead'}
+              </button>
+
+              <button
+                type="submit"
+                disabled={loading || !mfaCode}
+                className="group mt-1 flex w-full items-center justify-center gap-2.5 rounded-xl bg-linear-to-r from-[#1A3C8A] via-[#2550b7] to-[#FF6B35] py-3.5 text-sm font-semibold text-white shadow-[0_8px_28px_-8px_rgba(255,107,53,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_-8px_rgba(255,107,53,0.6)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Verifying…
+                  </>
+                ) : (
+                  <>
+                    Verify & Sign In
+                    <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                  </>
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setMfaPendingToken(null); setMfaCode(''); setUseBackupCode(false); }}
+                className="w-full text-center text-xs text-white/38 transition-colors hover:text-white/60"
+              >
+                Back to login
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5">
+
+              {/* Email field */}
+              <div>
+                <label className="mb-2 block text-[0.7rem] font-semibold uppercase tracking-widest text-white/45">
+                  Email Address
+                </label>
+                <div className="relative">
+                  <Mail className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                  <input
+                    type="email"
+                    autoComplete="email"
+                    placeholder="admin@epasaley.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-white/6 py-3 pl-10 pr-4 text-sm text-white placeholder:text-white/20 transition-all duration-200 focus:border-[#FF6B35]/50 focus:bg-white/9 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/15"
+                  />
+                </div>
+              </div>
+
+              {/* Password field */}
+              <div>
+                <label className="mb-2 block text-[0.7rem] font-semibold uppercase tracking-widest text-white/45">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    autoComplete="current-password"
+                    placeholder="••••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-white/6 py-3 pl-10 pr-11 text-sm text-white placeholder:text-white/20 transition-all duration-200 focus:border-[#FF6B35]/50 focus:bg-white/9 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/15"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/25 transition-colors hover:text-white/55"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Remember / Forgot row */}
+              <div className="flex items-center justify-between pt-0.5">
+                <label className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="h-3.5 w-3.5 cursor-pointer rounded border-white/20 bg-white/10 accent-[#FF6B35]"
+                  />
+                  <span className="text-xs text-white/38">Remember me</span>
+                </label>
+                <button type="button" className="text-xs text-white/38 transition-colors hover:text-[#FF6B35]">
+                  Forgot password?
                 </button>
               </div>
-            </div>
 
-            {/* Remember / Forgot row */}
-            <div className="flex items-center justify-between pt-0.5">
-              <label className="flex cursor-pointer items-center gap-2">
-                <input
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-3.5 w-3.5 cursor-pointer rounded border-white/20 bg-white/10 accent-[#FF6B35]"
-                />
-                <span className="text-xs text-white/38">Remember me</span>
-              </label>
-              <button type="button" className="text-xs text-white/38 transition-colors hover:text-[#FF6B35]">
-                Forgot password?
+              {/* Submit button */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="group mt-1 flex w-full items-center justify-center gap-2.5 rounded-xl bg-linear-to-r from-[#1A3C8A] via-[#2550b7] to-[#FF6B35] py-3.5 text-sm font-semibold text-white shadow-[0_8px_28px_-8px_rgba(255,107,53,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_-8px_rgba(255,107,53,0.6)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Signing in…
+                  </>
+                ) : (
+                  <>
+                    Sign in to Dashboard
+                    <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+                  </>
+                )}
               </button>
-            </div>
-
-            {/* Submit button */}
-            <button
-              type="submit"
-              disabled={loading}
-              className="group mt-1 flex w-full items-center justify-center gap-2.5 rounded-xl bg-linear-to-r from-[#1A3C8A] via-[#2550b7] to-[#FF6B35] py-3.5 text-sm font-semibold text-white shadow-[0_8px_28px_-8px_rgba(255,107,53,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_-8px_rgba(255,107,53,0.6)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Signing in…
-                </>
-              ) : (
-                <>
-                  Sign in to Dashboard
-                  <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-                </>
-              )}
-            </button>
-          </form>
+            </form>
+          )}
 
           {/* Divider */}
           <div className="my-6 flex items-center gap-3">
