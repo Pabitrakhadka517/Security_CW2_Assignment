@@ -146,6 +146,7 @@ export const profileEndpoints = {
   addresses: {
     list: () => userApi.get('/user/addresses'),
     add: (payload) => userApi.post('/user/addresses', payload),
+    update: (index, payload) => userApi.put(`/user/addresses/${index}`, payload),
     remove: (index) => userApi.delete(`/user/addresses/${index}`),
   },
   cart: {

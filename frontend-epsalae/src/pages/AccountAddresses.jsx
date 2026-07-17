@@ -129,13 +129,15 @@ export default function AddressesPage(){
     }
     setEditSaving(true)
     try {
-      // No dedicated update endpoint exists — apply the edit as add-then-remove
-      // against the two address endpoints the backend actually exposes.
-      await profileEndpoints.addresses.add(editForm)
-      await profileEndpoints.addresses.remove(editModal.index)
+      const res = await profileEndpoints.addresses.update(editModal.index, editForm)
+      const next = res.data?.data?.savedAddresses || res.data?.savedAddresses
+      if (Array.isArray(next)) {
+        setAddresses(next)
+      } else {
+        load()
+      }
       toast.success('Address updated')
       setEditModal({ isOpen: false, index: null })
-      load()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to update address')
     } finally {
@@ -148,6 +150,7 @@ export default function AddressesPage(){
     try {
       await profileEndpoints.addresses.remove(index)
       toast.success('Address deleted')
+      setDeleteConfirm({ isOpen: false, index: null })
       load()
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to delete address')

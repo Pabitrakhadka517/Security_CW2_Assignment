@@ -194,6 +194,32 @@ export const addSavedAddress = asyncHandler(async (req: Request, res: Response) 
   sendSuccess(res, 201, 'Address added', { savedAddresses: user.savedAddresses });
 });
 
+export const updateSavedAddress = asyncHandler(async (req: Request, res: Response) => {
+  const userId = requireUserId(req);
+  const index = Number(req.params.index);
+  const { label, addressLine, city, postalCode, country, phone } = req.body || {};
+  if (!addressLine || !city || !postalCode || !country) {
+    throw new BadRequestError('addressLine, city, postalCode and country are required');
+  }
+
+  const user = await User.findById(userId);
+  if (!user) throw new NotFoundError('User not found');
+
+  const addresses = user.savedAddresses || [];
+  if (!Number.isInteger(index) || index < 0 || index >= addresses.length) {
+    throw new BadRequestError('Invalid address index');
+  }
+
+  addresses[index] = { label, addressLine, city, postalCode, country, phone };
+  user.savedAddresses = addresses;
+  user.markModified('savedAddresses');
+  await user.save();
+
+  await auditService.log({ ...createAuditContext(req), userId, userEmail: user.email, userRole: 'user', action: 'ADDRESS_UPDATED', status: 'SUCCESS', riskLevel: 'LOW' });
+
+  sendSuccess(res, 200, 'Address updated', { savedAddresses: user.savedAddresses });
+});
+
 export const removeSavedAddress = asyncHandler(async (req: Request, res: Response) => {
   const userId = requireUserId(req);
   const index = Number(req.params.index);

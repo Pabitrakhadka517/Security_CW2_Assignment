@@ -68,6 +68,10 @@ router.delete('/favorites', requireAuth, requirePermission('wishlist:update:own'
 // looking the array up off req.user.id.
 router.get('/addresses', requireAuth, requirePermission('address:read:own'), checkPasswordExpiry, userProfileController.getSavedAddresses);
 router.post('/addresses', requireAuth, requirePermission('address:create:own'), checkPasswordExpiry, validateRequest({ body: Joi.object({ label: Joi.string().optional(), addressLine: Joi.string().required(), city: Joi.string().required(), postalCode: Joi.string().required(), country: Joi.string().required(), phone: Joi.string().optional() }) }), userProfileController.addSavedAddress);
+router.put('/addresses/:index', requireAuth, requirePermission('address:update:own'), checkPasswordExpiry, validateRequest({
+  params: Joi.object({ index: Joi.number().integer().min(0).required() }),
+  body: Joi.object({ label: Joi.string().optional(), addressLine: Joi.string().required(), city: Joi.string().required(), postalCode: Joi.string().required(), country: Joi.string().required(), phone: Joi.string().optional() }),
+}), userProfileController.updateSavedAddress);
 router.delete('/addresses/:index', requireAuth, requirePermission('address:delete:own'), checkPasswordExpiry, validateRequest({ params: Joi.object({ index: Joi.number().integer().min(0).required() }) }), userProfileController.removeSavedAddress);
 
 // Cart merge
@@ -75,6 +79,6 @@ router.post('/cart/merge', requireAuth, requirePermission('cart:update:own'), ch
 router.get('/cart', requireAuth, requirePermission('cart:read:own'), checkPasswordExpiry, userProfileController.getSavedCart);
 
 // Admin
-router.get('/admin/wishlists', requireAdmin, requirePermission('user:read:any'), userProfileController.adminGetAllWishlists);
+router.get('/admin/wishlists', requireAdmin, checkPasswordExpiry, requirePermission('user:read:any'), userProfileController.adminGetAllWishlists);
 
 export default router;
