@@ -12,7 +12,6 @@ export default function AdminLogin() {
   const [password, setPassword]         = useState('');
   const [loading, setLoading]           = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe]     = useState(false);
   const navigate = useNavigate();
   const { loginAdmin, isAdmin } = useAdminAuth();
 
@@ -275,17 +274,8 @@ export default function AdminLogin() {
                 </div>
               </div>
 
-              {/* Remember / Forgot row */}
-              <div className="flex items-center justify-between pt-0.5">
-                <label className="flex cursor-pointer items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                    className="h-3.5 w-3.5 cursor-pointer rounded border-(--ds-border-strong) accent-[#10B981]"
-                  />
-                  <span className="text-xs text-(--ds-text-muted)">Remember me</span>
-                </label>
+              {/* Forgot row */}
+              <div className="flex items-center justify-end pt-0.5">
                 <button type="button" className="text-xs text-(--ds-text-muted) transition-colors hover:text-[#10B981]">
                   Forgot password?
                 </button>
