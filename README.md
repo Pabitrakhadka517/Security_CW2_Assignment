@@ -3,7 +3,7 @@
 A full-stack e-commerce application built for a security-focused coursework assignment:
 an independent REST API backend and a React single-page-application frontend, covering
 authentication, MFA, session management, RBAC, and the other OWASP-aligned controls
-described in the reports below.
+described in each subproject's README.
 
 The project is two sibling folders with no shared root package or monorepo tooling:
 
@@ -14,8 +14,3 @@ The project is two sibling folders with no shared root package or monorepo tooli
 
 See each folder's own README for setup instructions, environment variables, and
 feature details.
-
-## Reports
-
-- [`PROJECT_REPORT.md`](PROJECT_REPORT.md) — project overview and architecture
-- [`RBAC_IDOR_PENTEST_REPORT.md`](RBAC_IDOR_PENTEST_REPORT.md) — access-control penetration test findings
