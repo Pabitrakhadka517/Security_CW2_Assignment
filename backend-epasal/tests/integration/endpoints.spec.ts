@@ -32,6 +32,11 @@ const adminToken = jwt.sign(
   process.env.JWT_ADMIN_SECRET as string,
   { expiresIn: '15m' }
 )
+const userToken = jwt.sign(
+  { id: new mongoose.Types.ObjectId().toString(), email: 'u@u.com', role: 'user' },
+  process.env.JWT_SECRET as string,
+  { expiresIn: '15m' }
+)
 const auth = { Authorization: `Bearer ${adminToken}` }
 const DBERR = [200, 500, 503] // reached service layer
 
@@ -81,6 +86,30 @@ describe('validation layer', () => {
     expect([400, 422]).toContain((await request(app).put('/api/v1/orders/NP26001/status').set(auth).send({ status: 'banana' })).status))
   it('track without phone -> 4xx', async () =>
     expect([400, 422]).toContain((await request(app).get('/api/v1/orders/track/NP26001')).status))
+
+  // /auth/sessions/:sessionId is the one route in this codebase where a
+  // client-supplied URL param feeds a real Mongoose findById() (RefreshToken._id)
+  // -- every other ":id"-shaped param (products, categories, sale-categories,
+  // orders, banners, coupons) is a custom string identifier field, not a
+  // Mongo ObjectId, so hex validation doesn't apply there by design. This
+  // confirms the one place it DOES apply rejects a malformed id with a clean
+  // validation error rather than a 500 from a bad ObjectId cast.
+  it('DELETE /api/v1/auth/sessions/:sessionId with a non-hex id -> 4xx, not 500', async () =>
+    expect([400, 422]).toContain((await request(app).delete('/api/v1/auth/sessions/not-a-valid-object-id').set('Authorization', `Bearer ${userToken}`)).status))
+
+  // saleCategory.controller.ts#create/update pass req.body straight to the
+  // service layer -- looks like a mass-assignment risk in isolation, but
+  // Joi's default `unknown: false` on saleCategory.routes.ts's createSchema
+  // already rejects any field the schema doesn't explicitly declare, before
+  // the controller ever sees it. This proves that's actually true rather
+  // than assuming it from reading the schema.
+  it('POST /api/v1/sale-categories rejects an undeclared field (mass-assignment already blocked by Joi)', async () => {
+    const res = await request(app).post('/api/v1/sale-categories').set(auth).send({
+      title: 'Test Sale', isAdmin: true, role: 'super_admin',
+    })
+    expect(res.status).toBe(422)
+    expect(res.body?.message).toMatch(/not allowed/i)
+  })
 })
 
 // ============================================================================
