@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import toast from 'react-hot-toast'
-import { useAdminAuth } from '@/components/store/authstore'
+import { useAdminAuth, useUserAuth } from '@/components/store/authstore'
 
 export const useCart = create(
   persist(
@@ -12,7 +12,11 @@ export const useCart = create(
         // Only customers may add to cart. Admin sessions are blocked here so the
         // rule holds no matter which button triggers it. Returns true on success,
         // false when blocked (callers gate their success toast on this).
-        if (useAdminAuth.getState().isAdmin) {
+        // A logged-in user session always takes precedence over a lingering/stale
+        // admin session in the same browser (matches useAuthStore's own
+        // user-first-admin-fallback precedence), so this only blocks a browser
+        // that's exclusively signed in as admin.
+        if (useAdminAuth.getState().isAdmin && !useUserAuth.getState().isUser) {
           toast.error("Admins can't add items to the cart. Use a customer account to shop.")
           return false
         }

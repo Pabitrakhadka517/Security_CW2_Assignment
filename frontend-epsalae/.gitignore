@@ -30,3 +30,8 @@ dist-ssr
 *.sln
 *.sw?
 dist.zip
+
+# Playwright
+test-results/
+playwright-report/
+e2e/.a11y-reports/
