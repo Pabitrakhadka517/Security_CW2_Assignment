@@ -156,7 +156,34 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
 
   const result = await sessionService.validateSession(token, req);
   if (!result.valid || !result.session) {
-    await auditService.log({ ...ctx, action: 'TOKEN_REFRESH_FAILED', status: 'FAILURE', riskLevel: 'MEDIUM', metadata: { reason: result.reason || 'invalid_or_expired_token' } });
+    if (result.reason === 'revoked' && result.session) {
+      // Reuse of an already-rotated-out refresh token — a strong signal of
+      // token theft (the legitimate rotation already moved past this
+      // token). Revoke the entire rotation family, not just this one,
+      // since we can't tell whether the attacker or the legitimate user
+      // holds the currently-active descendant.
+      const revokedCount = await sessionService.revokeTokenFamily(result.session.familyId, 'reuse_detected');
+      await auditService.log({
+        ...ctx,
+        userId: result.session.userId,
+        userRole: result.session.role,
+        action: 'SUSPICIOUS_ACTIVITY',
+        status: 'BLOCKED',
+        riskLevel: 'CRITICAL',
+        metadata: { type: 'refresh_token_reuse', familyRevoked: revokedCount },
+      });
+      await alertService.triggerAlert({
+        type: 'REFRESH_TOKEN_REUSE',
+        riskLevel: 'CRITICAL',
+        message: 'Refresh token reuse detected — entire session family revoked',
+        ipAddress: ctx.ipAddress,
+        userId: result.session.userId,
+        metadata: { familyRevoked: revokedCount },
+        timestamp: new Date(),
+      });
+    } else {
+      await auditService.log({ ...ctx, action: 'TOKEN_REFRESH_FAILED', status: 'FAILURE', riskLevel: 'MEDIUM', metadata: { reason: result.reason || 'invalid_or_expired_token' } });
+    }
     throw new UnauthorizedError('Invalid or expired refresh token');
   }
   const existing = result.session;
@@ -190,6 +217,8 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
     tokenHash: newHash,
     userId: payload.id,
     role: storedRole,
+    // Legacy rows created before familyId existed start a fresh lineage.
+    familyId: existing.familyId || crypto.randomUUID(),
     expiresAt: newExpiresAt,
     revoked: false,
     deviceId: existing.deviceId,

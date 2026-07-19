@@ -10,6 +10,7 @@ export const REVOKED_REASONS = [
   'suspicious_activity',
   'session_expired',
   'new_login_limit',
+  'reuse_detected',
 ] as const;
 
 export type RevokedReason = (typeof REVOKED_REASONS)[number];
@@ -18,6 +19,10 @@ export interface IRefreshToken extends Document {
   tokenHash: string;
   userId: string;
   role: RefreshTokenRole;
+  // Shared across every token descended from the same login via rotation
+  // (carried forward unchanged on each refresh) -- lets a reuse-detected
+  // token revoke its entire rotation chain in one call, not just itself.
+  familyId: string;
   revoked: boolean;
   replacedBy?: string | null;
   expiresAt?: Date;
@@ -42,6 +47,7 @@ const RefreshTokenSchema = new Schema<IRefreshToken>(
     tokenHash: { type: String, required: true, index: true },
     userId: { type: String, required: true, index: true },
     role: { type: String, enum: ['admin', 'user'], required: true, default: 'user', index: true },
+    familyId: { type: String, required: true, index: true },
     revoked: { type: Boolean, default: false },
     replacedBy: { type: String, default: null },
     expiresAt: { type: Date, required: false },

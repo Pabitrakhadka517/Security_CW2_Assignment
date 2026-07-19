@@ -78,6 +78,7 @@ export const createSession = async (
     tokenHash: hash,
     userId,
     role,
+    familyId: crypto.randomUUID(),
     expiresAt,
     revoked: false,
     deviceId,
@@ -103,7 +104,10 @@ export const validateSession = async (refreshToken: string, req: Request): Promi
   const session = await RefreshToken.findOne({ tokenHash: hash });
 
   if (!session) return { valid: false, reason: 'not_found' };
-  if (session.revoked) return { valid: false, reason: 'revoked' };
+  // A revoked token being presented again means it was already rotated away
+  // (or explicitly revoked) -- returning `session` lets the caller revoke
+  // its whole rotation family when this specifically signals token reuse.
+  if (session.revoked) return { valid: false, reason: 'revoked', session };
 
   const now = new Date();
 
@@ -177,6 +181,21 @@ export const revokeAllUserSessions = async (
   return result.modifiedCount ?? 0;
 };
 
+/**
+ * Revokes every active token descended from the same login as `familyId`,
+ * not just the one presented. Called when a refresh token that was already
+ * rotated away gets presented again -- the standard response to detected
+ * refresh-token reuse, since either the legitimate user's current token or
+ * an attacker's stolen copy could otherwise still be valid.
+ */
+export const revokeTokenFamily = async (familyId: string, reason: RevokedReason | string): Promise<number> => {
+  const result = await RefreshToken.updateMany(
+    { familyId, revoked: false },
+    { $set: { revoked: true, revokedAt: new Date(), revokedReason: reason } }
+  );
+  return result.modifiedCount ?? 0;
+};
+
 export const getUserActiveSessions = async (userId: string, req?: Request): Promise<SessionInfo[]> => {
   const currentDeviceId = req ? generateDeviceId(req) : null;
   const sessions = await RefreshToken.find({
@@ -225,6 +244,7 @@ export default {
   validateSession,
   revokeSession,
   revokeAllUserSessions,
+  revokeTokenFamily,
   getUserActiveSessions,
   resolveCurrentSessionId,
 };
