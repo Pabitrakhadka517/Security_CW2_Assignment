@@ -117,6 +117,9 @@ export interface IUser extends Document {
   mfaEmailOtpSentAt?: Date;
   resetPasswordTokenHash?: string;
   resetPasswordExpiresAt?: Date;
+  emailVerified: boolean;
+  emailVerificationTokenHash?: string;
+  emailVerificationExpiresAt?: Date;
   passwordHistory?: string[];
   passwordChangedAt: Date;
   passwordExpiresAt: Date;
@@ -176,6 +179,9 @@ UserSchema.add({
   mfaEmailOtpSentAt: { type: Date, select: false },
   resetPasswordTokenHash: { type: String, select: false, index: true },
   resetPasswordExpiresAt: { type: Date, select: false },
+  emailVerified: { type: Boolean, default: false },
+  emailVerificationTokenHash: { type: String, select: false, index: true },
+  emailVerificationExpiresAt: { type: Date, select: false },
   // Last 5 password hashes (most recent last), kept to block password reuse.
   passwordHistory: { type: [String], select: false, default: [] },
   passwordChangedAt: { type: Date, default: Date.now },

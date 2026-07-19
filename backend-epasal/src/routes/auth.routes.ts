@@ -4,9 +4,10 @@ import * as authController from '../controllers/auth.controller';
 import * as userController from '../controllers/user.controller';
 import * as sessionController from '../controllers/session.controller';
 import * as passwordResetController from '../controllers/passwordReset.controller';
+import * as emailVerificationController from '../controllers/emailVerification.controller';
 import { validateRequest } from '../middlewares/validateRequest';
 import { requireAdmin, requireAuth } from '../middlewares/authMiddleware';
-import { loginLimiter, registerLimiter, refreshLimiter, accountChangeLimiter, forgotPasswordLimiter, resetPasswordLimiter } from '../middlewares/rateLimiter';
+import { loginLimiter, registerLimiter, refreshLimiter, accountChangeLimiter, forgotPasswordLimiter, resetPasswordLimiter, verifyEmailLimiter } from '../middlewares/rateLimiter';
 import { requireCaptcha } from '../middlewares/captcha';
 import { conditionalCaptcha } from '../middlewares/conditionalCaptcha';
 import { requireCsrfToken } from '../middlewares/csrf.middleware';
@@ -172,6 +173,13 @@ router.post('/reset-password', resetPasswordLimiter, validateRequest({
     newPassword: strongPasswordSchema,
   }),
 }), passwordResetController.resetPassword);
+
+// Email verification — informational only, login is never gated on it.
+router.post('/verify-email', verifyEmailLimiter, validateRequest({
+  body: Joi.object({ token: Joi.string().required() }),
+}), emailVerificationController.verifyEmail);
+
+router.post('/resend-verification', requireAuth, accountChangeLimiter, emailVerificationController.resendVerification);
 
 // Logged-in user's own recent security activity (never another user's).
 router.get('/me/activity', requireAuth, authController.getMyActivity);

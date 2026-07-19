@@ -81,6 +81,13 @@ export const resetPasswordLimiter = rateLimit({
   limit: 8,
 });
 
+/** Email-verification submissions — public, unauthenticated endpoint; cap abuse. */
+export const verifyEmailLimiter = rateLimit({
+  ...baseOptions,
+  windowMs: 15 * 60 * 1000,
+  limit: 8,
+});
+
 /** MFA email-OTP resend (login challenge) — throttle inbox-spamming. */
 export const emailOtpLimiter = rateLimit({
   ...baseOptions,

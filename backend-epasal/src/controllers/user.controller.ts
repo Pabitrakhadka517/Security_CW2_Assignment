@@ -12,6 +12,13 @@ import { createAuditContext } from '../middlewares/auditLogger';
 import { validatePasswordComplexity } from '../services/password.service';
 import * as sessionService from '../services/session.service';
 import { alertService } from '../services/alert.service';
+import { logger } from '../utils/logger';
+import {
+  generateVerificationToken,
+  hashVerificationToken,
+  sendVerificationEmail,
+  VERIFICATION_TOKEN_TTL_MS,
+} from '../services/emailVerification.service';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -69,6 +76,19 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   // so the very first change-password call can already check reuse against it.
   await user.updatePasswordHistory(user.password as string);
   await auditService.log({ ...createAuditContext(req), userId: user._id.toString(), userEmail: user.email, userRole: 'user', action: 'REGISTER', status: 'SUCCESS', riskLevel: 'LOW' });
+
+  // Verification is informational only — the account works immediately
+  // either way (see emailVerification.controller.ts) — so a send failure
+  // here shouldn't fail an otherwise-successful registration.
+  try {
+    const token = generateVerificationToken();
+    user.emailVerificationTokenHash = hashVerificationToken(token);
+    user.emailVerificationExpiresAt = new Date(Date.now() + VERIFICATION_TOKEN_TTL_MS);
+    await user.save();
+    await sendVerificationEmail(user.email, token);
+  } catch (err) {
+    logger.warn('Failed to send verification email during registration', { userId: user._id.toString(), error: err instanceof Error ? err.message : err });
+  }
 
   res.status(201).json({ success: true, message: 'User registered', data: { id: user._id, name: user.name, email: user.email } });
 });
@@ -184,9 +204,11 @@ export const googleLogin = asyncHandler(async (req: Request, res: Response) => {
     user = await User.findOne({ email });
     if (user) {
       user.googleId = googleId;
+      // Google just proved ownership of this email address.
+      user.emailVerified = true;
       await user.save();
     } else {
-      user = await User.create({ name, email, googleId, authProvider: 'google', isActive: true });
+      user = await User.create({ name, email, googleId, authProvider: 'google', isActive: true, emailVerified: true });
       await auditService.log({ ...createAuditContext(req), userId: user._id.toString(), userEmail: user.email, userRole: 'user', action: 'REGISTER', status: 'SUCCESS', riskLevel: 'LOW', metadata: { provider: 'google' } });
     }
   }

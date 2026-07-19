@@ -3,9 +3,9 @@ import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff, Lock, ShieldCheck, ShieldOff, CheckCircle2, AlertCircle, Loader2, Download, Info } from 'lucide-react'
+import { Eye, EyeOff, Lock, ShieldCheck, ShieldOff, CheckCircle2, AlertCircle, Loader2, Download, Info, Mail } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { profileEndpoints, mfaEndpoints } from '@/components/api/userapi'
+import { profileEndpoints, mfaEndpoints, authEndpoints } from '@/components/api/userapi'
 import { useUserAuth } from '@/components/store/authstore'
 import PasswordStrengthMeter from '@/components/ui/PasswordStrengthMeter'
 import PasswordRules from '@/components/ui/PasswordRules'
@@ -236,6 +236,58 @@ function MFASection() {
   )
 }
 
+function EmailVerificationSection() {
+  const [checking, setChecking] = useState(true)
+  const [verified, setVerified] = useState(true)
+  const [sending, setSending] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    profileEndpoints.me()
+      .then((res) => {
+        if (cancelled) return
+        const data = res.data?.data || res.data || {}
+        setVerified(!!data.emailVerified)
+      })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setChecking(false) })
+    return () => { cancelled = true }
+  }, [])
+
+  const handleResend = async () => {
+    setSending(true)
+    try {
+      const res = await authEndpoints.resendVerification()
+      toast.success(res.data?.message || 'Verification email sent')
+    } catch (err) {
+      toast.error(err?.response?.data?.message || 'Failed to send verification email')
+    } finally {
+      setSending(false)
+    }
+  }
+
+  if (checking || verified) return null
+
+  return (
+    <div className="mt-10 max-w-md border-t border-slate-100 pt-8">
+      <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl px-4 py-3 text-sm">
+        <Mail size={16} className="shrink-0" />
+        <div className="flex-1">
+          <p className="font-medium">Please verify your email address</p>
+          <p className="text-xs text-amber-700 mt-0.5">Check your inbox for a verification link, or resend one below.</p>
+        </div>
+      </div>
+      <button
+        onClick={handleResend}
+        disabled={sending}
+        className="mt-3 w-full py-3 border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold rounded-xl text-sm transition disabled:opacity-60"
+      >
+        {sending ? 'Sending…' : 'Resend verification email'}
+      </button>
+    </div>
+  )
+}
+
 function DataExportSection() {
   const [exporting, setExporting] = useState(false)
 
@@ -441,6 +493,7 @@ export default function SecurityPage() {
           </button>
         </form>
 
+        <EmailVerificationSection />
         <MFASection />
         <DataExportSection />
       </div>

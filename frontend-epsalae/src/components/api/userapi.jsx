@@ -143,6 +143,8 @@ export const authEndpoints = {
   google: (credential) => userApi.post('/auth/google', { credential }),
   forgotPassword: (email) => userApi.post('/auth/forgot-password', { email }),
   resetPassword: (payload) => userApi.post('/auth/reset-password', payload),
+  verifyEmail: (token) => userApi.post('/auth/verify-email', { token }),
+  resendVerification: () => userApi.post('/auth/resend-verification'),
 };
 
 export const sessionEndpoints = {
