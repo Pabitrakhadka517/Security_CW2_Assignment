@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { auditApi } from '../api/auditapi';
 import { useAuditStore } from '@/store/auditStore';
+import { ErrorState } from '../ui/States';
 import IPManagement from './IPManagement';
 
 const RISK_BADGE = {
@@ -92,7 +93,7 @@ function EventRow({ event }) {
 }
 
 export default function SecurityDashboard() {
-  const { securitySummary, isLoading, fetchSecuritySummary } = useAuditStore();
+  const { securitySummary, isLoading, error, fetchSecuritySummary } = useAuditStore();
   const [liveEvents, setLiveEvents] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -124,6 +125,20 @@ export default function SecurityDashboard() {
     );
   }
 
+  // Never loaded successfully — show a real error, not a dashboard full of
+  // zeros that reads as "no risk events" on what might just be a bad fetch.
+  if (error && !securitySummary) {
+    return (
+      <div className="ds-page max-w-7xl mx-auto">
+        <ErrorState
+          title="Couldn't load the security dashboard"
+          description="Something went wrong. Check your connection and try again."
+          onRetry={fetchSecuritySummary}
+        />
+      </div>
+    );
+  }
+
   const summary = securitySummary?.summary || {};
   const topRiskEvents = securitySummary?.topRiskEvents || [];
   const topSuspiciousIps = securitySummary?.topSuspiciousIps || [];
@@ -134,6 +149,13 @@ export default function SecurityDashboard() {
         <h1 className="ds-page-title">Security Dashboard</h1>
         <p className="ds-page-sub">Login activity, suspicious behaviour, and audit trail — last 24 hours.</p>
       </div>
+
+      {error && securitySummary && (
+        <div className="flex items-center gap-2 px-4 py-2.5 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl">
+          <ShieldAlert className="w-4 h-4 shrink-0" />
+          Couldn't refresh the latest data — showing the last successful load.
+        </div>
+      )}
 
       {/* Tab switcher */}
       <div className="flex gap-1 border-b border-(--ds-border)">

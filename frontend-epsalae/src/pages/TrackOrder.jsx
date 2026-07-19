@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { Search, Package, Truck, CheckCircle, Clock, AlertCircle, MapPin, Phone, ShoppingBag, ArrowLeft, Printer, Calendar, CreditCard, Hash, User } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { orderApi } from '../components/api/orderapi';
 import { getImageUrl } from '../config';
 
@@ -50,7 +50,10 @@ const BRAND = '#1E293B';
 const ACCENT = '#047857';
 
 export default function TrackOrder() {
-  const [orderId, setOrderId] = useState('');
+  const location = useLocation();
+  // Prefilled when arriving from OrderSuccess's "we can't show the receipt
+  // again here" fallback — the user still needs to enter their phone number.
+  const [orderId, setOrderId] = useState(location.state?.orderId || '');
   const [phone, setPhone] = useState('');
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);

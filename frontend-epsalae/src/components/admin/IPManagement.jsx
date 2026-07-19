@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Ban, ShieldCheck, RefreshCw, Loader2 } from 'lucide-react';
+import { Ban, ShieldCheck, RefreshCw, Loader2, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ipManagementApi } from '../api/ipManagementApi';
 import ConfirmDialog from '../ui/ConfirmDialog';
+import { ErrorState } from '../ui/States';
 
 const STAT_CARDS = [
   { key: 'totalBlocked', label: 'Total Blocked', color: 'text-red-600' },
@@ -26,6 +27,7 @@ export default function IPManagement() {
   const [allowedIPs, setAllowedIPs] = useState([]);
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [view, setView] = useState('blocked'); // 'blocked' | 'allowed' | 'add'
 
   const [blockForm, setBlockForm] = useState({ ip: '', reason: '', permanent: false, expiresInHours: 24 });
@@ -36,6 +38,7 @@ export default function IPManagement() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const [blockedRes, allowedRes, statsRes] = await Promise.all([
         ipManagementApi.getBlocked(),
@@ -46,6 +49,7 @@ export default function IPManagement() {
       setAllowedIPs(allowedRes.data?.data?.ips ?? []);
       setStats(statsRes.data?.data?.stats ?? null);
     } catch {
+      setError('Failed to load IP data');
       toast.error('Failed to load IP data');
     } finally {
       setLoading(false);
@@ -124,6 +128,20 @@ export default function IPManagement() {
     );
   }
 
+  // Never loaded successfully — show a real error instead of an empty
+  // "no IPs blocked" table that's indistinguishable from a genuinely clean state.
+  if (error && !stats) {
+    return (
+      <div className="ds-page max-w-7xl mx-auto">
+        <ErrorState
+          title="Couldn't load IP data"
+          description="Something went wrong. Check your connection and try again."
+          onRetry={fetchData}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="ds-page space-y-5 max-w-7xl mx-auto">
       {/* Header */}
@@ -131,6 +149,13 @@ export default function IPManagement() {
         <h1 className="ds-page-title">IP Management</h1>
         <p className="ds-page-sub">Block or allow-list IP addresses across the platform</p>
       </div>
+
+      {error && stats && (
+        <div className="flex items-center gap-2 px-4 py-2.5 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl">
+          <AlertTriangle className="w-4 h-4 shrink-0" />
+          Couldn't refresh the latest data — showing the last successful load.
+        </div>
+      )}
 
       {/* Stats cards */}
       {stats && (

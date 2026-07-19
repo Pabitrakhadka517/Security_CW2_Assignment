@@ -18,10 +18,40 @@ export default function OrderSuccess() {
   const navigate = useNavigate()
   const [copied, setCopied] = useState(false)
 
-  const order = location.state?.orderData || location.state?.order || {
-    id: orderId, totalAmount: 0, subtotal: 0, shipping: 0, total: 0, items: [],
-    name: '', phone: '', address: '', city: '', district: '', paymentMethod: 'cod',
-    orderDate: new Date().toISOString(),
+  const order = location.state?.orderData || location.state?.order || null
+
+  // This receipt only exists in navigation state right after checkout — a
+  // refresh, direct link, or back/forward navigation loses it. Rather than
+  // fabricate a fake Rs. 0 invoice, send the user somewhere that can
+  // actually look the order up.
+  if (!order) {
+    return (
+      <div className="flex items-center justify-center min-h-screen px-4 bg-linear-to-b from-white to-gray-50">
+        <div className="max-w-md text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-emerald-100">
+            <Check className="w-8 h-8 text-emerald-600" />
+          </div>
+          <h1 className="text-2xl font-extrabold text-gray-900">Order placed</h1>
+          <p className="mt-2 text-sm text-gray-500">
+            Order <span className="font-mono font-semibold text-gray-700">#{orderId}</span> was submitted, but this receipt is only available right after checkout.
+          </p>
+          <div className="grid grid-cols-1 gap-3 mt-6 sm:grid-cols-2">
+            <button
+              onClick={() => navigate('/track-order', { state: { orderId } })}
+              className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white transition bg-[#1E293B] rounded-xl hover:bg-[#0B1220]"
+            >
+              <Package className="w-4 h-4" /> Track this order
+            </button>
+            <button
+              onClick={() => navigate('/products')}
+              className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white transition bg-[#047857] rounded-xl hover:bg-[#065f46]"
+            >
+              <Home className="w-4 h-4" /> Shop More
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   const subtotal = order.subtotal || order.items?.reduce((s, i) => s + ((i.price || 0) * (i.quantity || 0)), 0) || 0

@@ -8,19 +8,27 @@ import { Flame, Tag, PackageX } from 'lucide-react'
 import api from '../components/api/base'
 import SaleSection from '../components/homepage/salesection'
 import { getImageUrl } from '@/config'
+import { ErrorState } from '@/components/ui/States'
 
 export default function SalesHub() {
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [hasSales, setHasSales] = useState(false)
   const [promoBanners, setPromoBanners] = useState([])
 
-  useEffect(() => {
-    Promise.all([
-      api.get('/sale-categories/active').catch(() => ({ data: { data: [] } })),
-      api.get('/banners/active').catch(() => ({ data: { data: [] } })),
-    ])
-      .then(([sc, bn]) => {
-        setHasSales(Array.isArray(sc.data?.data) && sc.data.data.length > 0)
+  const load = () => {
+    setLoading(true)
+    setLoadError(false)
+    // Sale-categories decides whether "no sales running" is genuinely true,
+    // so a failure there is a real error, not an empty state. Promo banners
+    // are decorative — a failure there just means no banners show.
+    api.get('/sale-categories/active')
+      .then((sc) => setHasSales(Array.isArray(sc.data?.data) && sc.data.data.length > 0))
+      .catch(() => setLoadError(true))
+      .finally(() => setLoading(false))
+
+    api.get('/banners/active')
+      .then((bn) => {
         const banners = Array.isArray(bn.data?.data) ? bn.data.data : []
         setPromoBanners(
           banners
@@ -28,8 +36,10 @@ export default function SalesHub() {
             .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
         )
       })
-      .finally(() => setLoading(false))
-  }, [])
+      .catch(() => setPromoBanners([]))
+  }
+
+  useEffect(() => { load() }, [])
 
   return (
     <div className="min-h-screen page-enter">
@@ -65,11 +75,33 @@ export default function SalesHub() {
         </div>
       )}
 
+      {/* Loading state — shown until we know whether any sales exist */}
+      {loading && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="h-48 rounded-2xl bg-gray-100 animate-pulse" />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Error state — a failed fetch is not the same as "no sales" */}
+      {!loading && loadError && (
+        <div className="max-w-md mx-auto py-16 px-4">
+          <ErrorState
+            title="Couldn't load sales"
+            description="Something went wrong. Check your connection and try again."
+            onRetry={load}
+          />
+        </div>
+      )}
+
       {/* All active seasonal / sale-category sections (array, self-fetching) */}
-      <SaleSection />
+      {!loading && !loadError && <SaleSection />}
 
       {/* Empty state */}
-      {!loading && !hasSales && (
+      {!loading && !loadError && !hasSales && (
         <div className="max-w-md mx-auto text-center py-20 px-4">
           <div className="w-20 h-20 mx-auto mb-5 rounded-full bg-gray-100 flex items-center justify-center">
             <PackageX className="w-9 h-9 text-gray-400" />

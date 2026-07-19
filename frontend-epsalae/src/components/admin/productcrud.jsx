@@ -12,10 +12,11 @@ import { getImageUrl } from '@/config';
 import { TableSkeleton } from '../ui/Skeleton';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import Modal from '../ui/Modal';
+import FetchState from '../ui/FetchState';
 import StatusPill from '../ui/StatusPill';
 
 export default function ProductCrud() {
-  const { products, loading, fetchProducts, fetchAllProducts, addProduct, updateProduct, deleteProduct } = useProductStore();
+  const { products, loading, error, fetchProducts, fetchAllProducts, addProduct, updateProduct, deleteProduct } = useProductStore();
   const { categories, fetchCategories } = useCategoryStore();
 
   const [search, setSearch] = useState('');
@@ -244,15 +245,23 @@ export default function ProductCrud() {
           </div>
         </div>
 
-        {loading ? (
-          <TableSkeleton rows={8} cols={6} />
-        ) : filtered.length === 0 ? (
-          <div className="py-16 text-center">
-            <Package className="w-12 h-12 text-(--ds-text-faint) mx-auto mb-3" />
-            <p className="font-semibold text-(--ds-text-muted)">No products found</p>
-            <p className="text-sm text-(--ds-text-faint) mt-1">Add your first product to get started!</p>
-          </div>
-        ) : (
+        <FetchState
+          isLoading={loading}
+          isError={!!error && products.length === 0}
+          isEmpty={!loading && !error && filtered.length === 0}
+          loading={<TableSkeleton rows={8} cols={6} />}
+          errorTitle="Couldn't load products"
+          errorDescription="Something went wrong. Check your connection and try again."
+          onRetry={fetchAllProducts}
+          emptyIcon={Package}
+          emptyTitle="No products found"
+          emptyDescription="Add your first product to get started!"
+          emptyAction={
+            <button onClick={() => setShowModal(true)} className="ds-btn ds-btn-primary">
+              <Plus className="w-4 h-4" /> Add New Product
+            </button>
+          }
+        >
           <div className="overflow-x-auto">
             <table className="ds-table">
               <thead>
@@ -348,7 +357,7 @@ export default function ProductCrud() {
               </tbody>
             </table>
           </div>
-        )}
+        </FetchState>
       </div>
 
       {/* Modal */}

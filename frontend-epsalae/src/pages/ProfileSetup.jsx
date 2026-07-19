@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Camera, CheckCircle2, Loader2, Upload, User, Phone, Mail, MapPin } from 'lucide-react'
 import { profileEndpoints } from '@/components/api/userapi'
+import { ErrorState } from '@/components/ui/States'
 
 // ── Nepal Districts (same data as Checkout) ─────────────────────────────────
 const NEPAL_DISTRICTS = {
@@ -119,6 +120,8 @@ export default function ProfileSetup() {
   const [avatarUrl, setAvatarUrl] = useState('')
   const [avatarPreview, setAvatarPreview] = useState('')
   const [uploadError, setUploadError] = useState('')
+  const [profileLoading, setProfileLoading] = useState(true)
+  const [profileLoadError, setProfileLoadError] = useState(false)
 
   const {
     register,
@@ -132,27 +135,36 @@ export default function ProfileSetup() {
     defaultValues: emptyFormValues,
   })
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const res = await profileEndpoints.me()
-        const user = res.data?.data || res.data
-        if (user) {
-          reset({
-            name:        user.name || '',
-            phone:       user.phone || '',
-            email:       user.email || '',
-            addressLine: user.address?.addressLine || '',
-            district:    user.address?.district || user.address?.state || '',
-            city:        user.address?.city || '',
-            postalCode:  user.address?.postalCode || '',
-          })
-          setAvatarUrl(user.avatarUrl || '')
-          setAvatarPreview(user.avatarUrl || '')
-        }
-      } catch { /* ignore */ }
+  const fetchProfile = async () => {
+    setProfileLoading(true)
+    setProfileLoadError(false)
+    try {
+      const res = await profileEndpoints.me()
+      const user = res.data?.data || res.data
+      if (user) {
+        reset({
+          name:        user.name || '',
+          phone:       user.phone || '',
+          email:       user.email || '',
+          addressLine: user.address?.addressLine || '',
+          district:    user.address?.district || user.address?.state || '',
+          city:        user.address?.city || '',
+          postalCode:  user.address?.postalCode || '',
+        })
+        setAvatarUrl(user.avatarUrl || '')
+        setAvatarPreview(user.avatarUrl || '')
+      }
+    } catch (err) {
+      setProfileLoadError(true)
+      toast.error(err.response?.data?.message || 'Failed to load your profile')
+    } finally {
+      setProfileLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchProfile()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reset])
 
   const onSubmit = async (values) => {
@@ -210,6 +222,27 @@ export default function ProfileSetup() {
   }, [name])
 
   const cities = district ? (NEPAL_DISTRICTS[district] || []) : []
+
+  if (profileLoading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="h-6 w-6 animate-spin text-slate-400" />
+      </div>
+    )
+  }
+
+  // Block editing until the real profile loads — letting the user save a
+  // still-blank form here would overwrite their actual name/address with
+  // empty values.
+  if (profileLoadError) {
+    return (
+      <ErrorState
+        title="Couldn't load your profile"
+        description="Something went wrong. Check your connection and try again."
+        onRetry={fetchProfile}
+      />
+    )
+  }
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit(onSubmit)} noValidate>

@@ -7,6 +7,7 @@ import api from '@/components/api/base'
 import { useCart } from '@/store/cartstore'
 import { getImageUrl } from '@/config'
 import toast from 'react-hot-toast'
+import { ErrorState } from '@/components/ui/States'
 
 const SORT_OPTS = [
   { value: 'discount_desc', label: 'Highest Discount' },
@@ -21,16 +22,28 @@ export default function SalePage() {
   const { addToCart } = useCart()
   const [sale, setSale] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('discount_desc')
   const [minDiscount, setMinDiscount] = useState(0)
 
-  useEffect(() => {
+  const load = () => {
     setLoading(true)
+    setLoadError(false)
     api.get(`/sale-categories/slug/${slug}`)
       .then(res => setSale(res.data?.data || null))
-      .catch(() => setSale(null))
+      .catch(err => {
+        setSale(null)
+        // A 404 genuinely means no such sale; anything else (network/5xx) is
+        // a real failure and shouldn't be shown as "sale not found".
+        if (err.response?.status !== 404) setLoadError(true)
+      })
       .finally(() => setLoading(false))
+  }
+
+  useEffect(() => {
+    load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug])
 
   const products = useMemo(() => {
@@ -51,6 +64,15 @@ export default function SalePage() {
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
       <Loader2 className="w-8 h-8 animate-spin text-[#047857]" />
+    </div>
+  )
+  if (loadError) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <ErrorState
+        title="Couldn't load this sale"
+        description="Something went wrong. Check your connection and try again."
+        onRetry={load}
+      />
     </div>
   )
   if (!sale) return (

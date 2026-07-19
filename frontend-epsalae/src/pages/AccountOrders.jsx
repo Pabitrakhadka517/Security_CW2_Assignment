@@ -5,6 +5,7 @@ import toast from 'react-hot-toast'
 import { profileEndpoints } from '@/components/api/userapi'
 import { useCart } from '@/store/cartstore'
 import { getImageUrl } from '@/config'
+import { ErrorState } from '@/components/ui/States'
 
 // ── Status helpers ──────────────────────────────────────────────────────────
 
@@ -216,22 +217,28 @@ export default function OrdersPage() {
   const { addToCart } = useCart()
   const [orders, setOrders] = useState([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
   const [filter, setFilter] = useState('all')
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const res = await profileEndpoints.orders({ page: 1, limit: 100 })
-        const data = res.data?.data || res.data || {}
-        const list = Array.isArray(data.orders) ? data.orders : Array.isArray(data) ? data : []
-        setOrders(list)
-      } catch {
-        setOrders([])
-      } finally {
-        setLoading(false)
-      }
+  const load = async () => {
+    setLoading(true)
+    setLoadError(false)
+    try {
+      const res = await profileEndpoints.orders({ page: 1, limit: 100 })
+      const data = res.data?.data || res.data || {}
+      const list = Array.isArray(data.orders) ? data.orders : Array.isArray(data) ? data : []
+      setOrders(list)
+    } catch {
+      setOrders([])
+      setLoadError(true)
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     load()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const reorder = (order) => {
@@ -270,6 +277,18 @@ export default function OrdersPage() {
             <div key={i} className="h-32 animate-pulse rounded-[1.75rem] bg-slate-100" />
           ))}
         </div>
+      </div>
+    )
+  }
+
+  if (loadError) {
+    return (
+      <div className="rounded-4xl bg-white p-5 shadow-[0_18px_70px_-50px_rgba(15,23,42,0.55)] sm:p-8">
+        <ErrorState
+          title="Couldn't load your orders"
+          description="Something went wrong. Check your connection and try again."
+          onRetry={load}
+        />
       </div>
     )
   }

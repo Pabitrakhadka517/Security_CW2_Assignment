@@ -258,7 +258,7 @@ export default function BulkUpload() {
                   <Download className="w-3.5 h-3.5" /> Error CSV
                 </button>
               </div>
-              <div className="max-h-80 overflow-y-auto">
+              <div className="max-h-80 overflow-y-auto overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50 sticky top-0">
                     <tr className="text-left text-xs uppercase text-gray-500">

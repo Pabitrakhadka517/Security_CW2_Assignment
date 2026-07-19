@@ -77,6 +77,7 @@ export default function Checkout() {
   const [currentStep,   setCurrentStep]   = useState(1)
   const [isProcessing,  setIsProcessing]  = useState(false)
   const [error,         setError]         = useState('')
+  const [fieldErrors,   setFieldErrors]   = useState({})
 
   const [formData, setFormData] = useState({
     first_name: '', last_name: '', email: user?.email || '', phone: '',
@@ -188,18 +189,26 @@ export default function Checkout() {
         ? `${name === 'first_name' ? value : prev.first_name} ${name === 'last_name' ? value : prev.last_name}`.trim()
         : prev.name
     }))
+    if (fieldErrors[name]) setFieldErrors(prev => ({ ...prev, [name]: undefined }))
   }
 
   const validateStep = () => {
     setError('')
-    if (!formData.first_name || !formData.last_name || !formData.phone || !formData.email) {
-      setError('Please fill all personal details'); return false
-    }
-    if (!formData.address || !formData.district || !formData.city) {
-      setError('Complete shipping address is required'); return false
-    }
-    if (!formData.description) {
-      setError('Add delivery note (e.g. near temple, call before delivery)'); return false
+    const errs = {}
+    if (!formData.first_name) errs.first_name = 'First name is required'
+    if (!formData.last_name) errs.last_name = 'Last name is required'
+    if (!formData.email) errs.email = 'Email is required'
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) errs.email = 'Enter a valid email'
+    if (!formData.phone) errs.phone = 'Phone number is required'
+    if (!formData.address) errs.address = 'Address is required'
+    if (!formData.district) errs.district = 'Select a district'
+    if (!formData.city) errs.city = 'Select a city'
+    if (!formData.description) errs.description = 'Add a delivery note'
+
+    setFieldErrors(errs)
+    if (Object.keys(errs).length > 0) {
+      setError('Please fix the highlighted fields below')
+      return false
     }
     return true
   }
@@ -322,6 +331,9 @@ export default function Checkout() {
   }
 
   const field = "w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#047857] focus:bg-white transition"
+  const errorField = "w-full px-4 py-3 text-sm bg-red-50/40 border border-red-300 rounded-xl focus:outline-none focus:border-red-400 transition"
+  const fieldCls = (name) => fieldErrors[name] ? errorField : field
+  const FieldError = ({ name }) => fieldErrors[name] ? <p className="mt-1 text-xs text-red-500">{fieldErrors[name]}</p> : null
 
   return (
     <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
@@ -360,31 +372,51 @@ export default function Checkout() {
                   <MapPin className="w-5 h-5 text-[#047857]" /> Shipping Address
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                  <input type="text" name="first_name" placeholder="First Name" value={formData.first_name} onChange={handleInputChange} className={field} />
-                  <input type="text" name="last_name" placeholder="Last Name" value={formData.last_name} onChange={handleInputChange} className={field} />
+                  <div>
+                    <input type="text" name="first_name" placeholder="First Name" value={formData.first_name} onChange={handleInputChange} aria-invalid={!!fieldErrors.first_name} className={fieldCls('first_name')} />
+                    <FieldError name="first_name" />
+                  </div>
+                  <div>
+                    <input type="text" name="last_name" placeholder="Last Name" value={formData.last_name} onChange={handleInputChange} aria-invalid={!!fieldErrors.last_name} className={fieldCls('last_name')} />
+                    <FieldError name="last_name" />
+                  </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
-                  <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleInputChange} className={field} />
-                  <input type="tel" name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleInputChange} className={field} />
+                  <div>
+                    <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleInputChange} aria-invalid={!!fieldErrors.email} className={fieldCls('email')} />
+                    <FieldError name="email" />
+                  </div>
+                  <div>
+                    <input type="tel" name="phone" placeholder="Phone Number" value={formData.phone} onChange={handleInputChange} aria-invalid={!!fieldErrors.phone} className={fieldCls('phone')} />
+                    <FieldError name="phone" />
+                  </div>
                 </div>
-                <input type="text" name="address" placeholder="Full Address (House no, Tole, Ward)" value={formData.address} onChange={handleInputChange} className={`${field} mb-4`} />
+                <div className="mb-4">
+                  <input type="text" name="address" placeholder="Full Address (House no, Tole, Ward)" value={formData.address} onChange={handleInputChange} aria-invalid={!!fieldErrors.address} className={fieldCls('address')} />
+                  <FieldError name="address" />
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                   <div>
                     <label className="block mb-1.5 text-xs font-semibold text-gray-600" htmlFor="checkout-district">District</label>
-                    <select id="checkout-district" name="district" value={formData.district} onChange={handleInputChange} className={field}>
+                    <select id="checkout-district" name="district" value={formData.district} onChange={handleInputChange} aria-invalid={!!fieldErrors.district} className={fieldCls('district')}>
                       <option value="">Select District</option>
                       {Object.keys(NEPAL_DISTRICTS).sort().map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
+                    <FieldError name="district" />
                   </div>
                   <div>
                     <label className="block mb-1.5 text-xs font-semibold text-gray-600" htmlFor="checkout-city">City / Municipality</label>
-                    <select id="checkout-city" name="city" value={formData.city} onChange={handleInputChange} disabled={!formData.district} className={`${field} disabled:opacity-60`}>
+                    <select id="checkout-city" name="city" value={formData.city} onChange={handleInputChange} disabled={!formData.district} aria-invalid={!!fieldErrors.city} className={`${fieldCls('city')} disabled:opacity-60`}>
                       <option>{formData.district ? 'Select City' : 'First select district'}</option>
                       {formData.district && NEPAL_DISTRICTS[formData.district].map(c => <option key={c}>{c}</option>)}
                     </select>
+                    <FieldError name="city" />
                   </div>
                 </div>
-                <textarea name="description" placeholder="Delivery notes (e.g. call before delivery, near school, red gate)" value={formData.description} onChange={handleInputChange} rows={3} className={`${field} resize-none`} />
+                <div>
+                  <textarea name="description" placeholder="Delivery notes (e.g. call before delivery, near school, red gate)" value={formData.description} onChange={handleInputChange} rows={3} aria-invalid={!!fieldErrors.description} className={`${fieldCls('description')} resize-none`} />
+                  <FieldError name="description" />
+                </div>
                 <button onClick={() => validateStep() && setCurrentStep(2)}
                   className="flex items-center justify-center w-full gap-2 py-4 mt-6 text-base font-bold text-white transition bg-[#1E293B] shadow-sm hover:bg-[#047857] rounded-xl">
                   Continue to Payment <ArrowRight className="w-5 h-5" />
