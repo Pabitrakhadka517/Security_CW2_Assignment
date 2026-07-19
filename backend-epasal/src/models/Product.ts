@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { IProduct } from '../types';
+import { stripHtml } from '../utils/sanitizeHtml';
 
 /**
  * Product model — production-grade catalogue document.
@@ -81,10 +82,12 @@ const ProductSchema = new Schema<IProductDocument>(
       required: true,
       trim: true,
       index: true,
+      set: stripHtml,
     },
     description: {
       type: String,
       default: null,
+      set: stripHtml,
     },
 
     // ---- Legacy single-SKU pricing (kept for back-compat) -----------------

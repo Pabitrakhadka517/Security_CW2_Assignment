@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { stripHtml } from '../utils/sanitizeHtml';
 
 export interface ICouponDocument extends Document {
   _id: mongoose.Types.ObjectId;
@@ -23,7 +24,7 @@ export interface ICouponDocument extends Document {
 const CouponSchema = new Schema<ICouponDocument>(
   {
     code: { type: String, required: true, unique: true, uppercase: true, trim: true, index: true },
-    description: { type: String, default: null },
+    description: { type: String, default: null, set: stripHtml },
     discount_type: { type: String, enum: ['percentage', 'fixed'], default: 'fixed' },
     discount_value: { type: Number, required: true, min: 0 },
     apply_on: { type: String, enum: ['cart', 'product', 'category'], default: 'cart' },

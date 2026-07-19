@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { ICategory } from '../types';
+import { stripHtml } from '../utils/sanitizeHtml';
 
 export interface ICategoryDocument extends Omit<ICategory, 'id'>, Document {
   _id: mongoose.Types.ObjectId;
@@ -18,6 +19,7 @@ const CategorySchema = new Schema<ICategoryDocument>(
       required: true,
       trim: true,
       index: true,
+      set: stripHtml,
     },
     slug: {
       type: String,
@@ -30,6 +32,7 @@ const CategorySchema = new Schema<ICategoryDocument>(
     description: {
       type: String,
       default: null,
+      set: stripHtml,
     },
     imageUrl: {
       type: String,

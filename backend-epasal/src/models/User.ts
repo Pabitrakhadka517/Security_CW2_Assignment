@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
 import { encryptionService } from '../services/encryption.service';
 import * as auditService from '../services/audit.service';
+import { stripHtml } from '../utils/sanitizeHtml';
 
 // Fields encrypted at rest (AES-256-GCM) — PII beyond what's needed for
 // login/search. email and name stay plaintext: email is the login lookup
@@ -141,7 +142,7 @@ const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 const UserSchema = new Schema<IUser>(
   {
-    name: { type: String, required: true, trim: true },
+    name: { type: String, required: true, trim: true, set: stripHtml },
     email: { type: String, required: true, unique: true, lowercase: true, match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/ },
     // Google-only accounts have no password — Google already verified identity.
     password: {
@@ -226,8 +227,11 @@ UserSchema.pre('save', function (next) {
   if (user.isModified('address') && user.address) {
     const address = { ...user.address };
     for (const field of ADDRESS_ENCRYPTED_FIELDS) {
-      const value = (address as any)[field];
-      if (value) (address as any)[field] = encryptionService.encryptIfNotEncrypted(value);
+      let value = (address as any)[field];
+      if (value) {
+        value = stripHtml(value);
+        (address as any)[field] = encryptionService.encryptIfNotEncrypted(value as string);
+      }
     }
     user.address = address;
   }
@@ -236,8 +240,11 @@ UserSchema.pre('save', function (next) {
     user.savedAddresses = user.savedAddresses.map((addr) => {
       const encrypted = { ...addr };
       for (const field of SAVED_ADDRESS_ENCRYPTED_FIELDS) {
-        const value = (encrypted as any)[field];
-        if (value) (encrypted as any)[field] = encryptionService.encryptIfNotEncrypted(value);
+        let value = (encrypted as any)[field];
+        if (value) {
+          value = stripHtml(value);
+          (encrypted as any)[field] = encryptionService.encryptIfNotEncrypted(value as string);
+        }
       }
       return encrypted;
     });

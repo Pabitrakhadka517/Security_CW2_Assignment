@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 import { IOrder, IOrderItem } from '../types';
 import { encryptionService } from '../services/encryption.service';
 import * as auditService from '../services/audit.service';
+import { stripHtml } from '../utils/sanitizeHtml';
 
 function reportDecryptionFailure(orderId: unknown, field: string): void {
   void auditService.log({
@@ -87,14 +88,17 @@ const OrderSchema = new Schema<IOrderDocument>(
     first_name: {
       type: String,
       default: null,
+      set: stripHtml,
     },
     last_name: {
       type: String,
       default: null,
+      set: stripHtml,
     },
     name: {
       type: String,
       required: true,
+      set: stripHtml,
     },
     email: {
       type: String,
@@ -117,19 +121,23 @@ const OrderSchema = new Schema<IOrderDocument>(
     district: {
       type: String,
       required: true,
+      set: stripHtml,
     },
     city: {
       type: String,
       required: true,
       index: true,
+      set: stripHtml,
     },
     address: {
       type: String,
       required: true,
+      set: stripHtml,
     },
     description: {
       type: String,
       required: true,
+      set: stripHtml,
     },
     items: {
       type: [OrderItemSchema],
@@ -168,8 +176,8 @@ const OrderSchema = new Schema<IOrderDocument>(
       type: [
         {
           status: { type: String, required: true },
-          note: { type: String, default: null },
-          location: { type: String, default: null },
+          note: { type: String, default: null, set: stripHtml },
+          location: { type: String, default: null, set: stripHtml },
           timestamp: { type: String, required: true },
         },
       ],

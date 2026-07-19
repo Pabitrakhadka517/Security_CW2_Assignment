@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { IBanner } from '../types';
+import { stripHtml } from '../utils/sanitizeHtml';
 
 export interface IBannerDocument extends Omit<IBanner, 'id'>, Document {
   _id: mongoose.Types.ObjectId;
@@ -17,10 +18,12 @@ const BannerSchema = new Schema<IBannerDocument>(
       type: String,
       required: true,
       trim: true,
+      set: stripHtml,
     },
     subtitle: {
       type: String,
       default: null,
+      set: stripHtml,
     },
     imageUrl: {
       type: String,

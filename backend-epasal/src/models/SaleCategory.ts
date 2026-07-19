@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { stripHtml } from '../utils/sanitizeHtml';
 
 export type SaleSeason = 'dashain' | 'tihar' | 'new_year' | 'summer' | 'winter';
 
@@ -52,15 +53,15 @@ export interface ISaleCategoryDocument extends Document {
 const SaleCategorySchema = new Schema<ISaleCategoryDocument>(
   {
     id: { type: String, required: true, unique: true, index: true },
-    title: { type: String, required: true, trim: true },
+    title: { type: String, required: true, trim: true, set: stripHtml },
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true, index: true },
     banner: { type: String, default: null },
-    description: { type: String, default: null },
+    description: { type: String, default: null, set: stripHtml },
     is_active: { type: Boolean, default: true, index: true },
     start_date: { type: String, default: null },
     end_date: { type: String, default: null },
     priority: { type: Number, default: 0, index: true },
-    cta_label: { type: String, default: null },
+    cta_label: { type: String, default: null, set: stripHtml },
     cta_url: { type: String, default: null },
     products: {
       type: [
@@ -69,7 +70,7 @@ const SaleCategorySchema = new Schema<ISaleCategoryDocument>(
           discount_percentage: { type: Number, required: true, min: 0, max: 100 },
           display_order: { type: Number, default: 0 },
           stock_limit: { type: Number, default: null },
-          badge_label: { type: String, default: null },
+          badge_label: { type: String, default: null, set: stripHtml },
         },
       ],
       default: [],
@@ -80,7 +81,7 @@ const SaleCategorySchema = new Schema<ISaleCategoryDocument>(
       default: null,
       index: true,
     },
-    badge_label: { type: String, default: null },
+    badge_label: { type: String, default: null, set: stripHtml },
     badge_color: { type: String, default: null },
     created_at: { type: String, required: true },
   },
