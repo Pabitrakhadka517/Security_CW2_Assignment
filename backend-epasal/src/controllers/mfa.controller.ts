@@ -255,7 +255,7 @@ export const getMFAStatus = asyncHandler(async (req: Request, res: Response) => 
  * Both /challenge and /challenge/resend authenticate via the mfa-pending
  * token rather than requireAuth (a full session doesn't exist yet).
  */
-const decodePendingToken = (req: Request): { userId: string; role: MFARole } => {
+const decodePendingToken = (req: Request): { userId: string; role: MFARole; rememberMe: boolean } => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     throw new UnauthorizedError('MFA session token required');
@@ -264,7 +264,11 @@ const decodePendingToken = (req: Request): { userId: string; role: MFARole } => 
 
   try {
     const decoded = verifyMFAPendingToken(pendingToken);
-    return { userId: decoded.userId, role: decoded.role === 'admin' ? 'admin' : 'user' };
+    return {
+      userId: decoded.userId,
+      role: decoded.role === 'admin' ? 'admin' : 'user',
+      rememberMe: decoded.rememberMe === true,
+    };
   } catch {
     throw new UnauthorizedError('Invalid or expired MFA session');
   }
@@ -311,7 +315,7 @@ export const resendChallengeCode = asyncHandler(async (req: Request, res: Respon
  * Admin) and the right session/token issuance path get used below.
  */
 export const mfaChallenge = asyncHandler(async (req: Request, res: Response) => {
-  const { userId, role } = decodePendingToken(req);
+  const { userId, role, rememberMe } = decodePendingToken(req);
   const { token, useBackupCode } = req.body || {};
   if (!token) throw new BadRequestError('Verification code is required');
 
@@ -365,6 +369,6 @@ export const mfaChallenge = asyncHandler(async (req: Request, res: Response) => 
   if (role === 'admin') {
     await issueAdminSession(req, res, account as IAdmin);
   } else {
-    await issueUserSession(req, res, account as IUser);
+    await issueUserSession(req, res, account as IUser, rememberMe);
   }
 });

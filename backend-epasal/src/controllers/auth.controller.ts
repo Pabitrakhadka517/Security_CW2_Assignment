@@ -200,12 +200,24 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
   const effectiveRole: 'admin' | 'user' = (payload.role as any) || storedRole;
 
   // Rotate: create new refresh token and revoke old one. The new row carries
-  // forward the session's device identity and absolute expiry unchanged —
-  // rotation refreshes activity, it must never extend the 7-day hard ceiling.
-  const newRefreshToken = generateRefreshToken({ id: payload.id, email: payload.email, role: effectiveRole });
+  // forward the session's device identity, absolute expiry, and rememberMe
+  // choice unchanged — rotation refreshes activity, it must never extend the
+  // hard ceiling set at login. Without re-applying rememberMe here, a
+  // 30-day "remembered" session would silently drop to a 7-day JWT on the
+  // very first refresh (access tokens only live 15m, so this happens almost
+  // immediately) even though absoluteExpiry still says 30 days.
+  const rememberMe = existing.rememberMe === true;
+  const newRefreshToken = generateRefreshToken(
+    { id: payload.id, email: payload.email, role: effectiveRole },
+    rememberMe ? '30d' : undefined
+  );
   const newHash = crypto.createHash('sha256').update(newRefreshToken).digest('hex');
   const newDecoded: any = decodeToken(newRefreshToken) || {};
-  const newExpiresAt = newDecoded.exp ? new Date(newDecoded.exp * 1000) : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+  const rollingWindowMs = rememberMe ? 30 * 24 * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000;
+  const uncappedExpiresAt = newDecoded.exp ? new Date(newDecoded.exp * 1000) : new Date(Date.now() + rollingWindowMs);
+  // Never let the rotated token's exp run past the session's absolute
+  // ceiling, even though the rolling window itself would allow it.
+  const newExpiresAt = new Date(Math.min(uncappedExpiresAt.getTime(), existing.absoluteExpiry.getTime()));
 
   existing.revoked = true;
   existing.replacedBy = newHash;
@@ -227,6 +239,7 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
     userAgent: ctx.userAgent,
     lastUsedAt: new Date(),
     absoluteExpiry: existing.absoluteExpiry,
+    rememberMe,
   });
 
   // Issue new access token

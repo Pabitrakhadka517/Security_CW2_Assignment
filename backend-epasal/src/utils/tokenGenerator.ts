@@ -61,6 +61,7 @@ interface MFAPendingPayload {
   userId: string;
   role: 'user' | 'admin';
   purpose: 'mfa-pending';
+  rememberMe?: boolean;
 }
 
 /**
@@ -70,11 +71,17 @@ interface MFAPendingPayload {
  * it can't be confused with — or replayed as — a normal access token.
  *
  * Carries `role` so /auth/mfa/challenge knows whether to look up the pending
- * account in the User or Admin collection.
+ * account in the User or Admin collection, and `rememberMe` so the user's
+ * choice on the login form survives the extra MFA round-trip and still
+ * reaches session issuance after the challenge succeeds.
  */
-export const generateMFAPendingToken = (userId: string, role: 'user' | 'admin' = 'user'): string => {
+export const generateMFAPendingToken = (
+  userId: string,
+  role: 'user' | 'admin' = 'user',
+  rememberMe: boolean = false
+): string => {
   const secret = ensureSecret(process.env.MFA_PENDING_SECRET, 'MFA pending secret');
-  const payload: MFAPendingPayload = { userId, role, purpose: 'mfa-pending' };
+  const payload: MFAPendingPayload = { userId, role, purpose: 'mfa-pending', rememberMe };
   return jwt.sign(payload, secret, { expiresIn: '5m' });
 };
 

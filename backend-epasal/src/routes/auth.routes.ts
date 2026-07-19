@@ -145,6 +145,7 @@ router.post('/user/login', loginLimiter, validateRequest({
     password: Joi.string().min(6).required(),
     captchaToken: Joi.string().optional(),
     forceCaptcha: Joi.boolean().optional(),
+    rememberMe: Joi.boolean().optional(),
   }),
 }), conditionalCaptcha, userController.login);
 

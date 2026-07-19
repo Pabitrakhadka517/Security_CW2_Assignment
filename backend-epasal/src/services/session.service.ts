@@ -11,6 +11,8 @@ const MAX_SESSIONS_PER_USER = Number(process.env.MAX_SESSIONS_PER_USER) || 3;
 const ENABLE_DEVICE_BINDING = process.env.ENABLE_DEVICE_BINDING === 'true';
 // Hard ceiling on a session's total lifetime, independent of activity/rotation.
 const ABSOLUTE_SESSION_MS = 7 * 24 * 60 * 60 * 1000;
+// Longer ceiling granted only when the user opted into "remember me" at login.
+const REMEMBER_ME_SESSION_MS = 30 * 24 * 60 * 60 * 1000;
 
 const hashToken = (token: string): string => crypto.createHash('sha256').update(token).digest('hex');
 
@@ -36,12 +38,17 @@ export interface SessionInfo {
  * (by last activity) once the cap is reached, so login doesn't sit in a
  * blocked/queued state — it just quietly retires the least-recently-used
  * device.
+ *
+ * `rememberMe` extends the absolute session ceiling from 7 to 30 days; it
+ * only affects how long this session is allowed to live, never bypasses any
+ * other check (lockout, revocation, reuse detection all still apply).
  */
 export const createSession = async (
   userId: string,
   role: RefreshTokenRole,
   req: Request,
-  refreshToken: string
+  refreshToken: string,
+  rememberMe: boolean = false
 ): Promise<IRefreshToken> => {
   const ctx = createAuditContext(req);
   const deviceId = generateDeviceId(req);
@@ -70,9 +77,11 @@ export const createSession = async (
     }
   }
 
+  const sessionMs = rememberMe ? REMEMBER_ME_SESSION_MS : ABSOLUTE_SESSION_MS;
+
   const hash = hashToken(refreshToken);
   const decoded: any = decodeToken(refreshToken) || {};
-  const expiresAt = decoded.exp ? new Date(decoded.exp * 1000) : new Date(Date.now() + ABSOLUTE_SESSION_MS);
+  const expiresAt = decoded.exp ? new Date(decoded.exp * 1000) : new Date(Date.now() + sessionMs);
 
   const session = await RefreshToken.create({
     tokenHash: hash,
@@ -86,7 +95,8 @@ export const createSession = async (
     ipAddress: ctx.ipAddress,
     userAgent: ctx.userAgent,
     lastUsedAt: new Date(),
-    absoluteExpiry: new Date(Date.now() + ABSOLUTE_SESSION_MS),
+    absoluteExpiry: new Date(Date.now() + sessionMs),
+    rememberMe,
   });
 
   return session;

@@ -24,6 +24,7 @@ const LoginPage: React.FC = () => {
 
   const [email, setEmail]               = useState('');
   const [password, setPassword]         = useState('');
+  const [rememberMe, setRememberMe]     = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState('');
@@ -125,7 +126,9 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      const payload = requiresCaptcha ? { email, password, captchaToken } : { email, password };
+      const payload = requiresCaptcha
+        ? { email, password, captchaToken, rememberMe }
+        : { email, password, rememberMe };
       const res  = await authEndpoints.login(payload);
       const data = res.data?.data || res.data || {};
 
@@ -432,6 +435,15 @@ const LoginPage: React.FC = () => {
                     <p id="password-capslock" className="mt-1.5 text-xs text-amber-600 animate-fade-in">Caps Lock is on</p>
                   )}
                 </div>
+
+                <label className="flex items-center gap-2 select-none cursor-pointer w-fit">
+                  <input
+                    type="checkbox" checked={rememberMe} disabled={loading}
+                    onChange={e => setRememberMe(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300 text-[#1E293B] focus:ring-[#1E293B]/30"
+                  />
+                  <span className="text-sm text-gray-600">Remember me for 30 days</span>
+                </label>
 
                 {loginAttempts > 0 && loginAttempts < MAX_LOGIN_ATTEMPTS && (
                   <p className="text-xs text-amber-600">

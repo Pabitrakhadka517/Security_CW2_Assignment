@@ -29,13 +29,21 @@ const GOOGLE_VERIFY_TIMEOUT_MS = 8000;
  * whose credentials (and MFA, if enabled) have already been verified.
  * Shared by the normal login path and the post-MFA-challenge path so token
  * issuance logic lives in exactly one place.
+ *
+ * `rememberMe` extends the refresh token / session from the 7-day default to
+ * 30 days; it never weakens any other check (lockout, MFA, CSRF, etc still apply).
  */
-export const issueUserSession = async (req: Request, res: Response, user: IUser): Promise<void> => {
+export const issueUserSession = async (
+  req: Request,
+  res: Response,
+  user: IUser,
+  rememberMe: boolean = false
+): Promise<void> => {
   const payload = { id: user._id.toString(), email: user.email, role: 'user' as const };
   const accessToken = generateAccessToken(payload);
-  const refreshToken = generateRefreshToken(payload);
+  const refreshToken = generateRefreshToken(payload, rememberMe ? '30d' : undefined);
 
-  const session = await sessionService.createSession(user._id.toString(), 'user', req, refreshToken);
+  const session = await sessionService.createSession(user._id.toString(), 'user', req, refreshToken, rememberMe);
 
   const maxAge = (session.expiresAt as Date).getTime() - Date.now();
   res.cookie('refreshToken', refreshToken, refreshCookieOptions(maxAge));
@@ -97,6 +105,9 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
   const { email, password } = req.body;
+  // Strict boolean coercion — req.body is already Joi-validated as a
+  // boolean, but this guards against any caller that bypasses that.
+  const rememberMe = req.body.rememberMe === true;
   if (!email || !password) throw new BadRequestError('Email and password are required');
   const ctx = createAuditContext(req);
 
@@ -152,7 +163,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
       await sendMFAEmailOtp(user.email, code, 'login');
     }
 
-    const mfaPendingToken = generateMFAPendingToken(user._id.toString());
+    const mfaPendingToken = generateMFAPendingToken(user._id.toString(), 'user', rememberMe);
     res.status(200).json({
       success: true,
       message: 'MFA verification required',
@@ -165,7 +176,7 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   await auditService.log({ ...ctx, userId: user._id.toString(), userEmail: user.email, userRole: 'user', action: 'LOGIN_SUCCESS', status: 'SUCCESS', riskLevel: 'LOW', metadata: { loginMethod: 'email_password' } });
   await auditService.detectSuspiciousActivity(ctx.ipAddress, user._id.toString());
 
-  await issueUserSession(req, res, user);
+  await issueUserSession(req, res, user, rememberMe);
 });
 
 /**

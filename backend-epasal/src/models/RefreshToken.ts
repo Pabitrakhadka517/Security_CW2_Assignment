@@ -40,6 +40,11 @@ export interface IRefreshToken extends Document {
   // refresh-token rotation, unlike `expiresAt` (which resets every rotation).
   // A session can never outlive this regardless of how often it's refreshed.
   absoluteExpiry: Date;
+  // Whether the user checked "remember me" at login. Carried forward
+  // unchanged across rotation so every reissued refresh token in this
+  // session's lineage keeps using the longer (30-day) window instead of
+  // silently falling back to the 7-day default on the first refresh.
+  rememberMe: boolean;
 }
 
 const RefreshTokenSchema = new Schema<IRefreshToken>(
@@ -60,6 +65,7 @@ const RefreshTokenSchema = new Schema<IRefreshToken>(
     revokedAt: { type: Date, default: null },
     revokedReason: { type: String, enum: REVOKED_REASONS, default: null },
     absoluteExpiry: { type: Date, default: () => new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) },
+    rememberMe: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
