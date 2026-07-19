@@ -5,6 +5,9 @@ import { Readable } from 'stream';
 import { BadRequestError } from '../utils/errors';
 import { logger } from '../utils/logger';
 import { validateImageContent } from './validateImageContent';
+import { withTimeout, withRetry } from '../utils/asyncResilience';
+
+const CLOUDINARY_TIMEOUT_MS = 15000;
 
 // ===========================================
 // CLOUDINARY-ONLY IMAGE UPLOAD
@@ -87,37 +90,51 @@ export const uploadImage = async (
     return 'https://res.cloudinary.com/demo/image/upload/sample.jpg';
   }
 
-  return new Promise((resolve, reject) => {
-    // Create upload stream to Cloudinary
-    const uploadStream = cloudinary.uploader.upload_stream(
-      {
-        folder,
-        resource_type: 'image',
-        transformation: [
-          { width: 1200, height: 1200, crop: 'limit' },
-          { quality: 'auto:good' },
-          { fetch_format: 'auto' },
-        ],
-      },
-      (error, result) => {
-        if (error) {
-          logger.error('Cloudinary upload error', error);
-          reject(new BadRequestError('Failed to upload image to Cloudinary'));
-        } else if (result) {
-          logger.info('Image uploaded to Cloudinary', { secureUrl: result.secure_url });
-          resolve(result.secure_url);
-        } else {
-          reject(new BadRequestError('No result from Cloudinary'));
+  const attemptUpload = (): Promise<string> =>
+    new Promise((resolve, reject) => {
+      // Create upload stream to Cloudinary
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder,
+          resource_type: 'image',
+          timeout: CLOUDINARY_TIMEOUT_MS,
+          transformation: [
+            { width: 1200, height: 1200, crop: 'limit' },
+            { quality: 'auto:good' },
+            { fetch_format: 'auto' },
+          ],
+        },
+        (error, result) => {
+          if (error) {
+            reject(error);
+          } else if (result) {
+            resolve(result.secure_url);
+          } else {
+            reject(new Error('No result from Cloudinary'));
+          }
         }
-      }
-    );
+      );
 
-    // Stream file buffer to Cloudinary
-    const bufferStream = new Readable();
-    bufferStream.push(file.buffer);
-    bufferStream.push(null);
-    bufferStream.pipe(uploadStream);
-  });
+      // Stream file buffer to Cloudinary. `file.buffer` is a plain Buffer
+      // (not a consumed network stream), so it's safe to re-wrap into a
+      // fresh Readable on every retry attempt.
+      const bufferStream = new Readable();
+      bufferStream.push(file.buffer);
+      bufferStream.push(null);
+      bufferStream.pipe(uploadStream);
+    });
+
+  try {
+    const secureUrl = await withRetry(
+      () => withTimeout(attemptUpload(), CLOUDINARY_TIMEOUT_MS, 'Cloudinary upload'),
+      { attempts: 2, delayMs: 500, label: 'Cloudinary upload' }
+    );
+    logger.info('Image uploaded to Cloudinary', { secureUrl });
+    return secureUrl;
+  } catch (error) {
+    logger.error('Cloudinary upload error', error instanceof Error ? error : { error });
+    throw new BadRequestError('Failed to upload image to Cloudinary');
+  }
 };
 
 // ===========================================
@@ -150,7 +167,7 @@ export const deleteImage = async (imageUrl: string): Promise<void> => {
     const publicId = pathAfterUpload.replace(/\.[^/.]+$/, '');
 
     if (publicId) {
-      await cloudinary.uploader.destroy(publicId);
+      await withTimeout(cloudinary.uploader.destroy(publicId), CLOUDINARY_TIMEOUT_MS, 'Cloudinary delete');
       logger.info('Deleted image from Cloudinary', { publicId });
     }
   } catch (error) {

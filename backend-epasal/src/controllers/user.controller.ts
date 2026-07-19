@@ -19,8 +19,10 @@ import {
   sendVerificationEmail,
   VERIFICATION_TOKEN_TTL_MS,
 } from '../services/emailVerification.service';
+import { withTimeout, withRetry } from '../utils/asyncResilience';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const GOOGLE_VERIFY_TIMEOUT_MS = 8000;
 
 /**
  * Issue access/refresh tokens and the standard login response for a user
@@ -182,7 +184,14 @@ export const googleLogin = asyncHandler(async (req: Request, res: Response) => {
 
   let payload;
   try {
-    const ticket = await googleClient.verifyIdToken({ idToken: credential, audience: process.env.GOOGLE_CLIENT_ID });
+    const ticket = await withRetry(
+      () => withTimeout(
+        googleClient.verifyIdToken({ idToken: credential, audience: process.env.GOOGLE_CLIENT_ID }),
+        GOOGLE_VERIFY_TIMEOUT_MS,
+        'Google token verification'
+      ),
+      { attempts: 2, delayMs: 300, label: 'Google token verification' }
+    );
     payload = ticket.getPayload();
   } catch {
     throw new UnauthorizedError('Invalid Google credential');

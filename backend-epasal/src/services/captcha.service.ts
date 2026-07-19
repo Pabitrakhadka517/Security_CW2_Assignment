@@ -1,5 +1,8 @@
 import axios from 'axios';
 import { Request } from 'express';
+import { withRetry } from '../utils/asyncResilience';
+
+const CAPTCHA_TIMEOUT_MS = 5000;
 
 export interface CaptchaVerificationResult {
   success: boolean;
@@ -31,9 +34,13 @@ export async function verifyCaptcha(token: string, remoteIp?: string): Promise<C
     if (remoteIp) params.append('remoteip', remoteIp);
 
     const verifyUrl = process.env.HCAPTCHA_VERIFY_URL || 'https://hcaptcha.com/siteverify';
-    const { data } = await axios.post(verifyUrl, params, {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    });
+    const { data } = await withRetry(
+      () => axios.post(verifyUrl, params, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        timeout: CAPTCHA_TIMEOUT_MS,
+      }),
+      { attempts: 2, delayMs: 300, label: 'hCaptcha verify' }
+    );
 
     if (data.success) return { success: true };
 
