@@ -4,6 +4,7 @@ import { cloudinary } from '../config/cloudinary';
 import { Readable } from 'stream';
 import { BadRequestError } from '../utils/errors';
 import { logger } from '../utils/logger';
+import { validateImageContent } from './validateImageContent';
 
 // ===========================================
 // CLOUDINARY-ONLY IMAGE UPLOAD
@@ -49,12 +50,20 @@ const upload = multer({
 // ===========================================
 // 2. EXPORT MULTER MIDDLEWARES
 // ===========================================
-export const uploadSingle = upload.single('image');
-export const uploadMultiple = upload.array('images', 10);
-export const uploadFields = upload.fields([
-  { name: 'image', maxCount: 1 },
-  { name: 'images', maxCount: 10 },
-]);
+// Each export is multer's parser followed by a magic-byte/extension check on
+// the now-populated file buffer(s) -- multer's own fileFilter runs before the
+// body is read, so it can only see the client-declared mimetype/filename,
+// not the real content. Route files reference these exports unchanged;
+// Express flattens array-valued middleware automatically.
+export const uploadSingle = [upload.single('image'), validateImageContent];
+export const uploadMultiple = [upload.array('images', 10), validateImageContent];
+export const uploadFields = [
+  upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'images', maxCount: 10 },
+  ]),
+  validateImageContent,
+];
 
 // ===========================================
 // 3. CLOUDINARY UPLOAD FUNCTION
