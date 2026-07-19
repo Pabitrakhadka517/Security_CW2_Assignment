@@ -4,7 +4,8 @@ import { User, IUser } from '../models/User';
 import { generateAccessToken, generateRefreshToken, generateMFAPendingToken } from '../utils/tokenGenerator';
 import { BadRequestError, UnauthorizedError, LockedError } from '../utils/errors';
 import { asyncHandler } from '../middlewares/asyncHandler';
-import { refreshCookieOptions } from '../utils/cookieOptions';
+import { refreshCookieOptions, csrfCookieOptions } from '../utils/cookieOptions';
+import { generateCsrfToken } from '../utils/csrf';
 import * as auditService from '../services/audit.service';
 import { createAuditContext } from '../middlewares/auditLogger';
 import { validatePasswordComplexity } from '../services/password.service';
@@ -26,7 +27,9 @@ export const issueUserSession = async (req: Request, res: Response, user: IUser)
 
   const session = await sessionService.createSession(user._id.toString(), 'user', req, refreshToken);
 
-  res.cookie('refreshToken', refreshToken, refreshCookieOptions((session.expiresAt as Date).getTime() - Date.now()));
+  const maxAge = (session.expiresAt as Date).getTime() - Date.now();
+  res.cookie('refreshToken', refreshToken, refreshCookieOptions(maxAge));
+  res.cookie('csrfToken', generateCsrfToken(), csrfCookieOptions(maxAge));
 
   const needsOnboarding = !!(user.isFirstLogin || !user.name || !user.email || !user.address || !user.phone);
 
