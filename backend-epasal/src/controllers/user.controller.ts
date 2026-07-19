@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import { User, IUser } from '../models/User';
 import { generateAccessToken, generateRefreshToken, generateMFAPendingToken } from '../utils/tokenGenerator';
+import { generateEmailOtp, hashEmailOtp, sendMFAEmailOtp, EMAIL_OTP_TTL_MS } from '../services/mfa.service';
 import { BadRequestError, UnauthorizedError, LockedError } from '../utils/errors';
 import { asyncHandler } from '../middlewares/asyncHandler';
 import { refreshCookieOptions, csrfCookieOptions } from '../utils/cookieOptions';
@@ -119,12 +120,22 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   // MFA-enabled accounts don't get an access token yet — only a short-lived
   // pending token that's only good for the /auth/mfa/challenge step.
   if (user.mfaEnabled) {
+    if (user.mfaMethod === 'email') {
+      const code = generateEmailOtp();
+      user.mfaEmailOtpHash = hashEmailOtp(code);
+      user.mfaEmailOtpExpiresAt = new Date(Date.now() + EMAIL_OTP_TTL_MS);
+      user.mfaEmailOtpAttempts = 0;
+      user.mfaEmailOtpSentAt = new Date();
+      await user.save();
+      await sendMFAEmailOtp(user.email, code, 'login');
+    }
+
     const mfaPendingToken = generateMFAPendingToken(user._id.toString());
     res.status(200).json({
       success: true,
       message: 'MFA verification required',
       requiresMFA: true,
-      data: { requiresMFA: true, mfaPendingToken },
+      data: { requiresMFA: true, mfaPendingToken, mfaMethod: user.mfaMethod },
     });
     return;
   }
