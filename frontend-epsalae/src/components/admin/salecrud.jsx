@@ -29,7 +29,7 @@ const emptyForm = {
   title: '', slug: '', description: '', banner: '',
   is_active: true, start_date: '', end_date: '',
   priority: 0, cta_label: '', cta_url: '',
-  season: '', badge_label: '', badge_color: '#10B981',
+  season: '', badge_label: '', badge_color: '#047857',
   products: [],
 };
 
@@ -98,7 +98,7 @@ export default function SaleCrud() {
       start_date: s.start_date ? s.start_date.slice(0, 16) : '',
       end_date: s.end_date ? s.end_date.slice(0, 16) : '',
       priority: s.priority ?? 0, cta_label: s.cta_label || '', cta_url: s.cta_url || '',
-      season: s.season || '', badge_label: s.badge_label || '', badge_color: s.badge_color || '#10B981',
+      season: s.season || '', badge_label: s.badge_label || '', badge_color: s.badge_color || '#047857',
       products: Array.isArray(s.products) ? s.products.map(p => ({ product_id: p.product_id || p.id, discount_percentage: p.discount_percentage || 0 })) : [],
     });
     setErrors({}); setShowModal(true);
@@ -269,7 +269,7 @@ export default function SaleCrud() {
                     )}
                     {s.badge_label && (
                       <span className="inline-flex text-[9px] font-bold px-2 py-0.5 rounded-full text-white uppercase"
-                        style={{ background: s.badge_color || '#10B981' }}>
+                        style={{ background: s.badge_color || '#047857' }}>
                         {s.badge_label}
                       </span>
                     )}
@@ -281,7 +281,7 @@ export default function SaleCrud() {
                     {expandedSale === s.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                   </button>
                   <button onClick={() => toggleActive(s)} title={s.is_active ? 'Deactivate' : 'Activate'}
-                    className="p-2 text-gray-400 hover:text-[#10B981] hover:bg-emerald-50 rounded-lg transition">
+                    className="p-2 text-gray-400 hover:text-[#047857] hover:bg-emerald-50 rounded-lg transition">
                     {s.is_active ? <ToggleRight className="w-5 h-5 text-emerald-500" /> : <ToggleLeft className="w-5 h-5" />}
                   </button>
                   <button onClick={() => openEdit(s)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition">
@@ -361,7 +361,7 @@ export default function SaleCrud() {
               <div>
                 <label className="ds-label">Banner Image</label>
                 {!form.banner ? (
-                  <label className="flex flex-col items-center justify-center gap-1.5 w-full py-6 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-[#10B981] hover:bg-emerald-50/40 transition text-gray-500">
+                  <label className="flex flex-col items-center justify-center gap-1.5 w-full py-6 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-[#047857] hover:bg-emerald-50/40 transition text-gray-500">
                     {uploading ? (
                       <><Loader2 className="w-5 h-5 animate-spin" /> Uploading…</>
                     ) : (
@@ -423,7 +423,7 @@ export default function SaleCrud() {
                         className="w-10 h-10 rounded-xl border border-gray-200 cursor-pointer p-0.5" />
                       <input type="text" value={form.badge_color}
                         onChange={e => set('badge_color', e.target.value)}
-                        placeholder="#10B981"
+                        placeholder="#047857"
                         className="ds-input flex-1 font-mono" />
                     </div>
                   </div>
@@ -432,7 +432,7 @@ export default function SaleCrud() {
                   <div className="flex items-center gap-2 text-sm text-gray-500">
                     Preview:
                     <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full text-white uppercase"
-                      style={{ background: form.badge_color || '#10B981' }}>
+                      style={{ background: form.badge_color || '#047857' }}>
                       {form.badge_label}
                     </span>
                   </div>
@@ -495,7 +495,7 @@ export default function SaleCrud() {
                             <Percent className="w-3.5 h-3.5 text-gray-400" />
                             <input type="number" min="0" max="100" value={fp.discount_percentage}
                               onChange={e => setDiscount(fp.product_id, e.target.value)}
-                              className="w-16 text-sm text-center border border-gray-200 rounded-lg py-1 focus:outline-none focus:border-[#10B981]" />
+                              className="w-16 text-sm text-center border border-gray-200 rounded-lg py-1 focus:outline-none focus:border-[#047857]" />
                             <button onClick={() => removeProduct(fp.product_id)} className="p-1 text-gray-400 hover:text-red-500 transition">
                               <X className="w-4 h-4" />
                             </button>

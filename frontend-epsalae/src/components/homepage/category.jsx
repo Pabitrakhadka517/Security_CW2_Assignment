@@ -61,7 +61,7 @@ export default function TopCategories() {
     <section className="relative py-8 overflow-hidden sm:py-14 lg:py-20">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute left-0 top-0 h-56 w-56 rounded-full bg-[#1E293B]/6 blur-3xl" />
-        <div className="absolute right-0 bottom-0 h-72 w-72 rounded-full bg-[#10B981]/6 blur-3xl" />
+        <div className="absolute right-0 bottom-0 h-72 w-72 rounded-full bg-[#047857]/6 blur-3xl" />
         <div className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full left-1/2 top-1/2 h-80 w-80 bg-slate-200/40 blur-3xl" />
       </div>
 
@@ -144,10 +144,10 @@ function CategoryCard({ cat, index, navigate }) {
 
       {/* Content */}
       <div className="p-5 text-center border-t border-slate-100 bg-white/95 backdrop-blur-sm sm:p-6">
-        <h3 className="text-lg font-semibold tracking-tight text-slate-900 transition-colors line-clamp-1 group-hover:text-[#10B981]">
+        <h3 className="text-lg font-semibold tracking-tight text-slate-900 transition-colors line-clamp-1 group-hover:text-[#047857]">
           {cat.name}
         </h3>
-        <p className="mt-2.5 inline-flex items-center justify-center gap-1.5 text-xs font-semibold tracking-wide text-[#1E293B] transition-all duration-300 group-hover:text-[#10B981]">
+        <p className="mt-2.5 inline-flex items-center justify-center gap-1.5 text-xs font-semibold tracking-wide text-[#1E293B] transition-all duration-300 group-hover:text-[#047857]">
           Explore Collection
           <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
         </p>

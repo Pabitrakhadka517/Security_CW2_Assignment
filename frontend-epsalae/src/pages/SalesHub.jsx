@@ -34,7 +34,7 @@ export default function SalesHub() {
   return (
     <div className="min-h-screen page-enter">
       {/* Page header */}
-      <div className="bg-[linear-gradient(135deg,#0A1E46_0%,#1E293B_55%,#10B981_130%)]">
+      <div className="bg-[linear-gradient(135deg,#0A1E46_0%,#1E293B_55%,#047857_130%)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-14 text-center">
           <div className="inline-flex items-center gap-2 bg-white/10 text-emerald-200 text-xs font-bold uppercase tracking-widest px-4 py-1.5 rounded-full mb-4">
             <Flame className="w-4 h-4" /> Live now

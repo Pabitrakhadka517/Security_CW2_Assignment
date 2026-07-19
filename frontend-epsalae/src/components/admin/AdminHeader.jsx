@@ -181,7 +181,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#10B981] to-amber-400 flex items-center justify-center text-white font-bold text-base shadow shadow-emerald-200">
+            <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#047857] to-amber-400 flex items-center justify-center text-white font-bold text-base shadow shadow-emerald-200">
               {(admin?.name || 'A').charAt(0).toUpperCase()}
             </div>
             <div className="min-w-0">
@@ -204,7 +204,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
             <button key={id} onClick={() => { setTab(id); setError(''); }}
               className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
                 tab === id
-                  ? 'bg-emerald-50 text-[#10B981]'
+                  ? 'bg-emerald-50 text-[#047857]'
                   : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
               }`}>
               <Icon className="w-3.5 h-3.5" /> {label}
@@ -347,7 +347,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
                     <button
                       onClick={startMfaSetup}
                       disabled={mfaBusy}
-                      className="w-full py-2.5 bg-[#10B981] hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm transition disabled:opacity-60"
+                      className="w-full py-2.5 bg-[#047857] hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm transition disabled:opacity-60"
                     >
                       {mfaBusy ? 'Starting setup…' : 'Enable MFA'}
                     </button>
@@ -390,7 +390,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
                     <button
                       type="submit"
                       disabled={mfaBusy || !mfaVerifyCode}
-                      className="w-full py-2.5 bg-[#10B981] hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm transition disabled:opacity-60"
+                      className="w-full py-2.5 bg-[#047857] hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm transition disabled:opacity-60"
                     >
                       {mfaBusy ? 'Verifying…' : 'Verify & Enable'}
                     </button>
@@ -454,7 +454,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
                   <button
                     disabled={!mfaBackupConfirmed}
                     onClick={() => { setMfaStep('status'); setMfaBackupConfirmed(false); setMfaBackupCodes([]); }}
-                    className="w-full py-2.5 bg-[#10B981] hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full py-2.5 bg-[#047857] hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Finish setup
                   </button>
@@ -474,7 +474,7 @@ function ProfilePanel({ open, onClose, admin, loginAdmin }) {
             <button
               onClick={tab === 'profile' ? saveProfile : savePassword}
               disabled={saving || pwdSaving}
-              className="flex-1 py-2.5 bg-[#10B981] hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm transition shadow-md shadow-emerald-200 disabled:opacity-60 flex items-center justify-center gap-2">
+              className="flex-1 py-2.5 bg-[#047857] hover:bg-emerald-500 text-white font-semibold rounded-xl text-sm transition shadow-md shadow-emerald-200 disabled:opacity-60 flex items-center justify-center gap-2">
               {(saving || pwdSaving)
                 ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving…</>
                 : <><Check className="w-4 h-4" /> Save Changes</>
@@ -534,7 +534,7 @@ export default function AdminHeader({ onToggleSidebar, sidebarOpen }) {
 
         {/* Mobile toggle */}
         <button onClick={onToggleSidebar}
-          className="p-2 rounded-xl text-gray-500 hover:bg-emerald-50 hover:text-[#10B981] transition-colors lg:hidden shrink-0">
+          className="p-2 rounded-xl text-gray-500 hover:bg-emerald-50 hover:text-[#047857] transition-colors lg:hidden shrink-0">
           {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
 
@@ -546,10 +546,10 @@ export default function AdminHeader({ onToggleSidebar, sidebarOpen }) {
 
         {/* Mobile logo */}
         <Link to="/admin" className="lg:hidden flex items-center gap-2 shrink-0">
-          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#1E293B] to-[#10B981] flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-linear-to-br from-[#1E293B] to-[#047857] flex items-center justify-center">
             <LogoMark className="w-4 h-4 text-white" />
           </div>
-          <span className="text-base font-bold text-gray-900">ePasal<span className="text-[#10B981]">ey</span></span>
+          <span className="text-base font-bold text-gray-900">ePasal<span className="text-[#047857]">ey</span></span>
         </Link>
 
         {/* Search */}
@@ -569,7 +569,7 @@ export default function AdminHeader({ onToggleSidebar, sidebarOpen }) {
         <div className="ml-auto shrink-0 relative" ref={userMenuRef}>
           <button onClick={() => setUserMenuOpen(v => !v)}
             className="flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl hover:bg-emerald-50 transition-colors">
-            <div className="w-8 h-8 bg-linear-to-br from-[#10B981] to-amber-400 rounded-full flex items-center justify-center text-white font-bold text-sm shadow shadow-emerald-200">
+            <div className="w-8 h-8 bg-linear-to-br from-[#047857] to-amber-400 rounded-full flex items-center justify-center text-white font-bold text-sm shadow shadow-emerald-200">
               {adminInitial}
             </div>
             <div className="hidden md:block text-left leading-none">
@@ -584,7 +584,7 @@ export default function AdminHeader({ onToggleSidebar, sidebarOpen }) {
               {/* Info */}
               <div className="px-4 py-3 border-b border-gray-50 mb-1">
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-linear-to-br from-[#10B981] to-amber-400 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
+                  <div className="w-9 h-9 bg-linear-to-br from-[#047857] to-amber-400 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0">
                     {adminInitial}
                   </div>
                   <div className="min-w-0">
@@ -596,13 +596,13 @@ export default function AdminHeader({ onToggleSidebar, sidebarOpen }) {
 
               {/* Edit Profile */}
               <button onClick={openProfile}
-                className="w-[calc(100%-12px)] flex items-center gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-emerald-50 hover:text-[#10B981] rounded-xl transition-colors">
+                className="w-[calc(100%-12px)] flex items-center gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-emerald-50 hover:text-[#047857] rounded-xl transition-colors">
                 <User className="w-4 h-4 shrink-0" /> Edit Profile
               </button>
 
               {/* Change Password */}
               <button onClick={() => { setUserMenuOpen(false); setProfileOpen(true); }}
-                className="w-[calc(100%-12px)] flex items-center gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-emerald-50 hover:text-[#10B981] rounded-xl transition-colors">
+                className="w-[calc(100%-12px)] flex items-center gap-3 mx-1.5 px-3 py-2.5 text-sm text-gray-700 hover:bg-emerald-50 hover:text-[#047857] rounded-xl transition-colors">
                 <Lock className="w-4 h-4 shrink-0" /> Change Password
               </button>
 

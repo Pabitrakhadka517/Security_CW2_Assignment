@@ -66,7 +66,7 @@ function QuickViewModal({ product, onClose, onAddToCart }) {
 
           <div className="w-full md:w-1/2 p-6 sm:p-8 flex flex-col justify-between">
             <div>
-              <span className="text-xs font-bold uppercase tracking-wider text-[#10B981] bg-emerald-50 px-2.5 py-1 rounded-full">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#047857] bg-emerald-50 px-2.5 py-1 rounded-full">
                 {product.category}
               </span>
               <h3 className="mt-3 text-xl font-bold text-gray-900 leading-tight">
@@ -81,7 +81,7 @@ function QuickViewModal({ product, onClose, onAddToCart }) {
                 {product.discountPrice && product.discountPrice < product.price ? (
                   <>
                     <span className="text-2xl font-black text-gray-900">Rs. {product.discountPrice.toLocaleString()}</span>
-                    <span className="text-sm text-gray-400 line-through">Rs. {product.price.toLocaleString()}</span>
+                    <span className="text-sm text-gray-600 line-through">Rs. {product.price.toLocaleString()}</span>
                     <span className="text-xs font-bold text-red-500 bg-red-50 px-2 py-0.5 rounded-full">
                       {Math.round(((product.price - product.discountPrice) / product.price) * 100)}% OFF
                     </span>
@@ -221,7 +221,7 @@ export default function ProductsGrid() {
               initial={{ opacity: 0, x: -16 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              className="inline-flex items-center gap-2 px-4 py-1.5 mb-3 text-xs font-bold text-[#10B981] bg-emerald-50 border border-emerald-100 rounded-full uppercase tracking-wider"
+              className="inline-flex items-center gap-2 px-4 py-1.5 mb-3 text-xs font-bold text-[#047857] bg-emerald-50 border border-emerald-100 rounded-full uppercase tracking-wider"
             >
               <Sparkles className="w-3.5 h-3.5" /> Curated Collection
             </motion.span>
@@ -237,7 +237,7 @@ export default function ProductsGrid() {
           </div>
           <Link
             to="/products"
-            className="inline-flex items-center gap-2 px-6 py-3 font-bold text-sm text-white bg-linear-to-r from-[#1E293B] to-[#10B981] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all btn-press"
+            className="inline-flex items-center gap-2 px-6 py-3 font-bold text-sm text-white bg-linear-to-r from-[#1E293B] to-[#047857] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all btn-press"
           >
             View All {hasMoreProducts ? `${totalProducts}+ ` : ''}Products
             <ArrowRight className="w-4 h-4" />
@@ -279,6 +279,7 @@ export default function ProductsGrid() {
                 {/* Wishlist button */}
                 <button
                   onClick={(e) => { e.stopPropagation(); toggleFavorite(product.id, isUser); }}
+                  aria-label={favorites.includes(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
                   className="absolute p-2.5 bg-white/90 backdrop-blur-sm rounded-full shadow-md top-3 right-3 opacity-0 group-hover:opacity-100 transition-all hover:scale-110 hover:bg-red-50"
                 >
                   <Heart className={`w-4 h-4 ${favorites.includes(product.id) ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
@@ -313,7 +314,7 @@ export default function ProductsGrid() {
 
               {/* Info */}
               <div className="p-4">
-                <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#10B981] mb-1 truncate">
+                <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#047857] mb-1 truncate">
                   {product.category}
                 </p>
                 <h3
@@ -330,7 +331,7 @@ export default function ProductsGrid() {
                       <span className="text-base font-extrabold text-gray-900">
                         Rs. {product.discountPrice.toLocaleString()}
                       </span>
-                      <span className="text-xs text-gray-400 line-through">
+                      <span className="text-xs text-gray-600 line-through">
                         Rs. {product.price.toLocaleString()}
                       </span>
                     </>

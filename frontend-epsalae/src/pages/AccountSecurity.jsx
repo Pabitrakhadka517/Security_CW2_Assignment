@@ -414,6 +414,7 @@ export default function SecurityPage() {
           className={`w-full pl-10 pr-11 py-3 border rounded-xl text-slate-900 text-sm transition focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-400 disabled:opacity-50 ${error ? 'border-red-400 bg-red-50' : 'border-slate-200 bg-white hover:border-slate-300'}`}
           {...fieldProps} />
         <button type="button" onClick={onToggle} disabled={loading}
+          aria-label={visible ? 'Hide password' : 'Show password'}
           className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition">
           {visible ? <EyeOff size={16} /> : <Eye size={16} />}
         </button>

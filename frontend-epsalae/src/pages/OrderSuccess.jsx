@@ -145,7 +145,7 @@ export default function OrderSuccess() {
             <button onClick={() => navigate('/track-order')} className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white transition bg-[#1E293B] rounded-xl hover:bg-[#0B1220]">
               <Package className="w-4 h-4" /> Track Order
             </button>
-            <button onClick={() => navigate('/products')} className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white transition bg-[#10B981] rounded-xl hover:bg-[#059669]">
+            <button onClick={() => navigate('/products')} className="flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold text-white transition bg-[#047857] rounded-xl hover:bg-[#065f46]">
               <Home className="w-4 h-4" /> Shop More
             </button>
           </div>

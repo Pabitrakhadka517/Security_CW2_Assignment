@@ -118,7 +118,7 @@ export default function AdminLogin() {
       {/* Ambient glow orbs */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-32 left-[20%] h-[480px] w-[480px] rounded-full bg-[#1E293B]/10 blur-[130px]" />
-        <div className="absolute -bottom-20 right-[15%] h-[380px] w-[380px] rounded-full bg-[#10B981]/14 blur-[110px]" />
+        <div className="absolute -bottom-20 right-[15%] h-[380px] w-[380px] rounded-full bg-[#047857]/14 blur-[110px]" />
         <div className="absolute top-1/2 left-1/2 h-[260px] w-[520px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#1E293B]/5 blur-[80px]" />
       </div>
 
@@ -132,7 +132,7 @@ export default function AdminLogin() {
       />
 
       {/* Thin top accent line */}
-      <div className="pointer-events-none absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-[#10B981]/40 to-transparent" />
+      <div className="pointer-events-none absolute top-0 inset-x-0 h-px bg-linear-to-r from-transparent via-[#047857]/40 to-transparent" />
 
       <motion.div
         initial={{ opacity: 0, y: 28, scale: 0.97 }}
@@ -143,8 +143,8 @@ export default function AdminLogin() {
         {/* Brand mark */}
         <div className="mb-8 flex flex-col items-center text-center">
           <div className="relative mb-5">
-            <div className="absolute inset-0 rounded-2xl bg-linear-to-br from-[#1E293B] to-[#10B981] blur-[18px] opacity-60" />
-            <div className="relative flex h-[60px] w-[60px] items-center justify-center rounded-2xl bg-linear-to-br from-[#1E293B] to-[#10B981] shadow-[0_20px_40px_-12px_rgba(16,185,129,0.45)]">
+            <div className="absolute inset-0 rounded-2xl bg-linear-to-br from-[#1E293B] to-[#047857] blur-[18px] opacity-60" />
+            <div className="relative flex h-[60px] w-[60px] items-center justify-center rounded-2xl bg-linear-to-br from-[#1E293B] to-[#047857] shadow-[0_20px_40px_-12px_rgba(16,185,129,0.45)]">
               <ShieldCheck className="h-7 w-7 text-white" strokeWidth={1.8} />
             </div>
           </div>
@@ -178,7 +178,7 @@ export default function AdminLogin() {
                     placeholder={useBackupCode ? 'XXXXXXXXXX' : '123456'}
                     value={mfaCode}
                     onChange={(e) => setMfaCode(e.target.value)}
-                    className="w-full rounded-xl border border-(--ds-border-strong) bg-(--ds-card) py-3 pl-10 pr-4 text-sm tracking-widest text-(--ds-text) placeholder:text-(--ds-text-faint) transition-all duration-200 focus:border-[#10B981]/50 focus:outline-none focus:ring-2 focus:ring-[#10B981]/15"
+                    className="w-full rounded-xl border border-(--ds-border-strong) bg-(--ds-card) py-3 pl-10 pr-4 text-sm tracking-widest text-(--ds-text) placeholder:text-(--ds-text-faint) transition-all duration-200 focus:border-[#047857]/50 focus:outline-none focus:ring-2 focus:ring-[#047857]/15"
                   />
                 </div>
               </div>
@@ -188,7 +188,7 @@ export default function AdminLogin() {
                   type="button"
                   onClick={handleResendMfaCode}
                   disabled={mfaResending || mfaResendCooldown > 0}
-                  className="text-xs text-(--ds-text-muted) transition-colors hover:text-[#10B981] disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="text-xs text-(--ds-text-muted) transition-colors hover:text-[#047857] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {mfaResendCooldown > 0 ? `Resend code (${mfaResendCooldown}s)` : 'Resend code'}
                 </button>
@@ -197,7 +197,7 @@ export default function AdminLogin() {
               <button
                 type="button"
                 onClick={() => { setUseBackupCode(!useBackupCode); setMfaCode(''); }}
-                className="text-xs text-(--ds-text-muted) transition-colors hover:text-[#10B981]"
+                className="text-xs text-(--ds-text-muted) transition-colors hover:text-[#047857]"
               >
                 {useBackupCode ? (mfaMethod === 'email' ? 'Use email code instead' : 'Use authenticator code instead') : 'Use a backup code instead'}
               </button>
@@ -205,7 +205,7 @@ export default function AdminLogin() {
               <button
                 type="submit"
                 disabled={loading || !mfaCode}
-                className="group mt-1 flex w-full items-center justify-center gap-2.5 rounded-xl bg-linear-to-r from-[#1E293B] to-[#10B981] py-3.5 text-sm font-semibold text-white shadow-[0_8px_28px_-8px_rgba(16,185,129,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_-8px_rgba(16,185,129,0.6)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+                className="group mt-1 flex w-full items-center justify-center gap-2.5 rounded-xl bg-linear-to-r from-[#1E293B] to-[#047857] py-3.5 text-sm font-semibold text-white shadow-[0_8px_28px_-8px_rgba(16,185,129,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_-8px_rgba(16,185,129,0.6)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
               >
                 {loading ? (
                   <>
@@ -244,7 +244,7 @@ export default function AdminLogin() {
                     placeholder="admin@epasaley.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full rounded-xl border border-(--ds-border-strong) bg-(--ds-card) py-3 pl-10 pr-4 text-sm text-(--ds-text) placeholder:text-(--ds-text-faint) transition-all duration-200 focus:border-[#10B981]/50 focus:outline-none focus:ring-2 focus:ring-[#10B981]/15"
+                    className="w-full rounded-xl border border-(--ds-border-strong) bg-(--ds-card) py-3 pl-10 pr-4 text-sm text-(--ds-text) placeholder:text-(--ds-text-faint) transition-all duration-200 focus:border-[#047857]/50 focus:outline-none focus:ring-2 focus:ring-[#047857]/15"
                   />
                 </div>
               </div>
@@ -262,7 +262,7 @@ export default function AdminLogin() {
                     placeholder="••••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="w-full rounded-xl border border-(--ds-border-strong) bg-(--ds-card) py-3 pl-10 pr-11 text-sm text-(--ds-text) placeholder:text-(--ds-text-faint) transition-all duration-200 focus:border-[#10B981]/50 focus:outline-none focus:ring-2 focus:ring-[#10B981]/15"
+                    className="w-full rounded-xl border border-(--ds-border-strong) bg-(--ds-card) py-3 pl-10 pr-11 text-sm text-(--ds-text) placeholder:text-(--ds-text-faint) transition-all duration-200 focus:border-[#047857]/50 focus:outline-none focus:ring-2 focus:ring-[#047857]/15"
                   />
                   <button
                     type="button"
@@ -276,7 +276,7 @@ export default function AdminLogin() {
 
               {/* Forgot row */}
               <div className="flex items-center justify-end pt-0.5">
-                <button type="button" className="text-xs text-(--ds-text-muted) transition-colors hover:text-[#10B981]">
+                <button type="button" className="text-xs text-(--ds-text-muted) transition-colors hover:text-[#047857]">
                   Forgot password?
                 </button>
               </div>
@@ -285,7 +285,7 @@ export default function AdminLogin() {
               <button
                 type="submit"
                 disabled={loading}
-                className="group mt-1 flex w-full items-center justify-center gap-2.5 rounded-xl bg-linear-to-r from-[#1E293B] to-[#10B981] py-3.5 text-sm font-semibold text-white shadow-[0_8px_28px_-8px_rgba(16,185,129,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_-8px_rgba(16,185,129,0.6)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
+                className="group mt-1 flex w-full items-center justify-center gap-2.5 rounded-xl bg-linear-to-r from-[#1E293B] to-[#047857] py-3.5 text-sm font-semibold text-white shadow-[0_8px_28px_-8px_rgba(16,185,129,0.45)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_-8px_rgba(16,185,129,0.6)] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0"
               >
                 {loading ? (
                   <>

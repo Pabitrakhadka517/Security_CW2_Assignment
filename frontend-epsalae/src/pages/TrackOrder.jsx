@@ -47,7 +47,7 @@ const normalizeOrder = (rawOrder) => {
 };
 
 const BRAND = '#1E293B';
-const ACCENT = '#10B981';
+const ACCENT = '#047857';
 
 export default function TrackOrder() {
   const [orderId, setOrderId] = useState('');
@@ -140,12 +140,12 @@ export default function TrackOrder() {
   };
 
   const cfg = order ? (statusConfig[order.status] || statusConfig.pending) : null;
-  const inputCls = 'w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#10B981] focus:bg-white transition';
+  const inputCls = 'w-full px-4 py-3 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-[#047857] focus:bg-white transition';
 
   return (
     <div className="min-h-screen bg-linear-to-b from-white to-gray-50">
       {/* Hero */}
-      <div className="bg-[linear-gradient(135deg,#0A1E46_0%,#1E293B_55%,#10B981_130%)]">
+      <div className="bg-[linear-gradient(135deg,#0A1E46_0%,#1E293B_55%,#047857_130%)]">
         <div className="max-w-3xl px-4 py-3 mx-auto">
           <Link to="/" className="inline-flex items-center gap-2 text-sm font-medium text-white/80 hover:text-white transition">
             <ArrowLeft className="w-4 h-4" /> Back to Shop
@@ -174,7 +174,7 @@ export default function TrackOrder() {
             </div>
           </div>
           <button type="submit" disabled={loading}
-            className="flex items-center justify-center w-full gap-2 py-3.5 mt-4 font-bold text-white transition bg-[#1E293B] hover:bg-[#10B981] disabled:opacity-60 rounded-xl">
+            className="flex items-center justify-center w-full gap-2 py-3.5 mt-4 font-bold text-white transition bg-[#1E293B] hover:bg-[#047857] disabled:opacity-60 rounded-xl">
             {loading ? (<><div className="w-5 h-5 border-2 border-white rounded-full border-t-transparent animate-spin" /> Searching…</>)
               : (<><Search className="w-5 h-5" /> Track Order</>)}
           </button>
@@ -206,7 +206,7 @@ export default function TrackOrder() {
               {order.status !== 'cancelled' && (
                 <div className="relative mt-8 mb-2">
                   <div className="absolute h-1 bg-gray-200 rounded-full top-5 left-6 right-6">
-                    <div className="h-full transition-all duration-700 rounded-full bg-[#10B981]"
+                    <div className="h-full transition-all duration-700 rounded-full bg-[#047857]"
                       style={{ width: `${(getStatusIndex(order.status) / (statusFlow.length - 1)) * 100}%` }} />
                   </div>
                   <div className="relative flex justify-between">

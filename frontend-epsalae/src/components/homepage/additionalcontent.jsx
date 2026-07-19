@@ -46,7 +46,7 @@ export default function AdditionalContent() {
 		<section className="relative py-10 sm:py-16 lg:py-20">
 			<div className="absolute inset-0 pointer-events-none overflow-hidden">
 				<div className="absolute -left-24 top-12 h-56 w-56 rounded-full bg-[#1E293B]/8 blur-3xl" />
-				<div className="absolute right-0 bottom-0 h-72 w-72 rounded-full bg-[#10B981]/8 blur-3xl" />
+				<div className="absolute right-0 bottom-0 h-72 w-72 rounded-full bg-[#047857]/8 blur-3xl" />
 			</div>
 
 			<div className="relative px-3 sm:px-6 lg:px-8 mx-auto max-w-7xl">
@@ -143,14 +143,14 @@ export default function AdditionalContent() {
 										<p className="mt-1 text-xs text-slate-500">Premium presentation and smooth product discovery</p>
 									</div>
 									<div className="text-right">
-										<p className="text-sm font-semibold text-[#10B981]">{product.price}</p>
+										<p className="text-sm font-semibold text-[#047857]">{product.price}</p>
 										<p className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Trending</p>
 									</div>
 								</motion.div>
 							))}
 						</div>
 
-						<div className="mt-5 rounded-3xl bg-[linear-gradient(135deg,#0f172a_0%,#1E293B_60%,#10B981_100%)] p-5 text-white shadow-[0_20px_50px_-32px_rgba(15,23,42,0.45)]">
+						<div className="mt-5 rounded-3xl bg-[linear-gradient(135deg,#0f172a_0%,#1E293B_60%,#047857_100%)] p-5 text-white shadow-[0_20px_50px_-32px_rgba(15,23,42,0.45)]">
 							<div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.28em] text-white/80">
 								<ShieldCheck className="h-4 w-4 text-emerald-200" />
 								Trusted checkout experience

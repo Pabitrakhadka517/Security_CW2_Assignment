@@ -170,7 +170,7 @@ export default function Cart() {
           <p className="text-gray-500 mb-8">Looks like you haven't added anything yet.</p>
           <Link
             to="/products"
-            className="inline-flex items-center gap-2 px-8 py-4 font-bold text-white bg-linear-to-r from-[#1E293B] to-[#10B981] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all btn-press"
+            className="inline-flex items-center gap-2 px-8 py-4 font-bold text-white bg-linear-to-r from-[#1E293B] to-[#047857] rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all btn-press"
           >
             <ShoppingCart className="w-5 h-5" /> Start Shopping
           </Link>
@@ -422,7 +422,7 @@ export default function Cart() {
                     sessionStorage.setItem('epasaley_discount', JSON.stringify({ discount, appliedCoupon }))
                     navigate('/checkout', { state: { discount, appliedCoupon } })
                   }}
-                  className="w-full py-4 font-extrabold text-sm text-white bg-linear-to-r from-[#1E293B] to-[#10B981] rounded-xl shadow-lg hover:shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-2"
+                  className="w-full py-4 font-extrabold text-sm text-white bg-linear-to-r from-[#1E293B] to-[#047857] rounded-xl shadow-lg hover:shadow-xl hover:opacity-95 transition-all flex items-center justify-center gap-2"
                 >
                   Proceed to Checkout
                   <ChevronRight className="w-4 h-4" />

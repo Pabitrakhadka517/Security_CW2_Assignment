@@ -119,7 +119,7 @@ export default function SecurityDashboard() {
   if (isLoading && !securitySummary) {
     return (
       <div className="flex items-center justify-center h-[60vh]">
-        <Loader2 className="w-8 h-8 animate-spin text-[#10B981]" />
+        <Loader2 className="w-8 h-8 animate-spin text-[#047857]" />
       </div>
     );
   }
@@ -145,7 +145,7 @@ export default function SecurityDashboard() {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              activeTab === tab.id ? 'border-[#10B981] text-[#10B981]' : 'border-transparent text-(--ds-text-muted) hover:text-(--ds-text)'
+              activeTab === tab.id ? 'border-[#047857] text-[#047857]' : 'border-transparent text-(--ds-text-muted) hover:text-(--ds-text)'
             }`}
           >
             <tab.icon className="w-4 h-4" /> {tab.label}
@@ -175,7 +175,7 @@ export default function SecurityDashboard() {
           label="Blocked Accounts (24h)"
           value={summary.blockedAccounts?.count}
           previousCount={summary.blockedAccounts?.previousCount}
-          icon={Lock} iconBg="bg-emerald-100" iconColor="text-[#10B981]"
+          icon={Lock} iconBg="bg-emerald-100" iconColor="text-[#047857]"
         />
         <SummaryCard
           label="Suspicious IPs (24h)"

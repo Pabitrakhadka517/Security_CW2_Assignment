@@ -218,7 +218,7 @@ export default function ProductCrud() {
         <div className="ds-card ds-card-pad">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-emerald-50 rounded-lg flex items-center justify-center">
-              <CheckCircle className="w-4 h-4 text-[#10B981]" />
+              <CheckCircle className="w-4 h-4 text-[#047857]" />
             </div>
             <div>
               <p className="text-xs text-(--ds-text-muted)">Categories</p>
@@ -420,7 +420,7 @@ export default function ProductCrud() {
 
               <div className="flex flex-wrap gap-6 py-2">
                 <label className="flex items-center gap-2 cursor-pointer text-sm">
-                  <input type="checkbox" name="hasOffer" checked={form.hasOffer} onChange={handleChange} className="w-4 h-4 text-[#10B981] rounded" />
+                  <input type="checkbox" name="hasOffer" checked={form.hasOffer} onChange={handleChange} className="w-4 h-4 text-[#047857] rounded" />
                   <span className="font-medium text-(--ds-text)">Has Special Offer</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer text-sm">

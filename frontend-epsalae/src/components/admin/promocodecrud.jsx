@@ -335,7 +335,7 @@ export default function PromoCodeCRUD() {
                         placeholder="Search products…"
                         value={productSelectorSearch}
                         onChange={e => setProductSelectorSearch(e.target.value)}
-                        className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#10B981]/20 focus:border-[#10B981]/50"
+                        className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#047857]/20 focus:border-[#047857]/50"
                       />
                     </div>
                     {/* Selected chips */}
@@ -369,7 +369,7 @@ export default function PromoCodeCRUD() {
                           const checked = form.applicable_products.includes(id);
                           return (
                             <label key={id} className={`flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors ${checked ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
-                              <div className={`shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${checked ? 'bg-[#10B981] border-[#10B981]' : 'border-gray-300'}`}
+                              <div className={`shrink-0 w-4 h-4 rounded border-2 flex items-center justify-center transition-colors ${checked ? 'bg-[#047857] border-[#047857]' : 'border-gray-300'}`}
                                 onClick={() => toggleProduct(id)}>
                                 {checked && <Check className="w-2.5 h-2.5 text-white" strokeWidth={3} />}
                               </div>
@@ -399,7 +399,7 @@ export default function PromoCodeCRUD() {
                       const checked = form.applicable_categories.includes(id);
                       return (
                         <label key={id} className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition ${checked ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
-                          <input type="checkbox" checked={checked} onChange={() => toggleCategory(id)} className="text-[#10B981]" />
+                          <input type="checkbox" checked={checked} onChange={() => toggleCategory(id)} className="text-[#047857]" />
                           <span className="text-sm text-gray-700">{cat.name}</span>
                         </label>
                       );
@@ -428,7 +428,7 @@ export default function PromoCodeCRUD() {
 
               {/* Per-user usage controls */}
               <div className="rounded-xl border border-gray-200 p-3.5 bg-gray-50/60">
-                <p className="text-sm font-semibold text-gray-700 mb-2.5 flex items-center gap-1.5"><Users className="w-4 h-4 text-[#10B981]" /> Per-User Usage</p>
+                <p className="text-sm font-semibold text-gray-700 mb-2.5 flex items-center gap-1.5"><Users className="w-4 h-4 text-[#047857]" /> Per-User Usage</p>
                 <div className="grid grid-cols-3 gap-2">
                   {[
                     { v: 'single', label: 'Single use', desc: '1 per user', Icon: Check },
@@ -438,7 +438,7 @@ export default function PromoCodeCRUD() {
                     const active = form.usageType === v;
                     return (
                       <button type="button" key={v} onClick={() => set('usageType', v)}
-                        className={`flex flex-col items-center text-center gap-1 px-2 py-2.5 rounded-lg border text-xs transition ${active ? 'border-[#10B981] bg-emerald-50 text-[#10B981] ring-1 ring-[#10B981]' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}>
+                        className={`flex flex-col items-center text-center gap-1 px-2 py-2.5 rounded-lg border text-xs transition ${active ? 'border-[#047857] bg-emerald-50 text-[#047857] ring-1 ring-[#047857]' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}>
                         <Icon className="w-4 h-4" />
                         <span className="font-semibold">{label}</span>
                         <span className="text-[10px] opacity-70">{desc}</span>

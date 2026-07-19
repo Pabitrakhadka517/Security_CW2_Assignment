@@ -70,7 +70,7 @@ function SaleProductCard({ product, sale }) {
 
         {/* Discount badge — top left */}
         {discount > 0 && (
-          <div className="absolute top-2 left-2 bg-[#10B981] text-white text-xs font-bold px-2 py-1 rounded-full">
+          <div className="absolute top-2 left-2 bg-[#047857] text-white text-xs font-bold px-2 py-1 rounded-full">
             -{discount}%
           </div>
         )}
@@ -106,14 +106,14 @@ function SaleProductCard({ product, sale }) {
               ? <span className="text-base font-bold text-gray-900">Rs. {price.toLocaleString()}</span>
               : <span className="text-sm text-gray-400">—</span>}
             {discount > 0 && original > 0 && (
-              <span className="ml-1.5 text-xs text-gray-400 line-through">Rs. {original.toLocaleString()}</span>
+              <span className="ml-1.5 text-xs text-gray-600 line-through">Rs. {original.toLocaleString()}</span>
             )}
             {original > price && price > 0 && (
-              <p className="text-[11px] font-semibold text-emerald-600 mt-0.5">Save Rs. {(original - price).toLocaleString()}</p>
+              <p className="text-[11px] font-semibold text-emerald-800 mt-0.5">Save Rs. {(original - price).toLocaleString()}</p>
             )}
           </div>
-          <button onClick={handleAdd}
-            className="p-2 bg-[#10B981] hover:bg-emerald-500 text-white rounded-xl transition shrink-0 shadow-sm shadow-emerald-200">
+          <button onClick={handleAdd} aria-label="Add to cart"
+            className="p-2 bg-[#047857] hover:bg-emerald-500 text-white rounded-xl transition shrink-0 shadow-sm shadow-emerald-200">
             <ShoppingCart className="w-4 h-4" />
           </button>
         </div>
@@ -133,7 +133,7 @@ function SaleCategoryStrip({ sales, activeSaleId, onSelect }) {
 
   return (
     <div className="relative flex items-center gap-2 mb-8">
-      <button onClick={() => scrollBy(-1)}
+      <button onClick={() => scrollBy(-1)} aria-label="Scroll sale categories left"
         className="shrink-0 p-1.5 bg-white border border-gray-200 rounded-full text-gray-500 hover:text-gray-800 hover:border-gray-300 shadow-sm transition z-10">
         <ChevronLeft className="w-4 h-4" />
       </button>
@@ -145,12 +145,12 @@ function SaleCategoryStrip({ sales, activeSaleId, onSelect }) {
             <button key={sale.id || sale.slug} onClick={() => onSelect(sale.id || sale.slug)}
               className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-semibold whitespace-nowrap transition-all shrink-0 ${
                 isActive
-                  ? 'bg-[#10B981] border-[#10B981] text-white shadow-md shadow-emerald-200'
-                  : 'bg-white border-gray-200 text-gray-700 hover:border-[#10B981] hover:text-[#10B981]'
+                  ? 'bg-[#047857] border-[#047857] text-white shadow-md shadow-emerald-200'
+                  : 'bg-white border-gray-200 text-gray-700 hover:border-[#047857] hover:text-[#047857]'
               }`}>
               {sale.badge_label ? (
                 <span className="text-[9px] font-bold px-1.5 py-0.5 rounded text-white"
-                  style={{ background: isActive ? 'rgba(255,255,255,0.25)' : (sale.badge_color || '#10B981') }}>
+                  style={{ background: isActive ? 'rgba(255,255,255,0.25)' : (sale.badge_color || '#047857') }}>
                   {sale.badge_label}
                 </span>
               ) : (
@@ -165,7 +165,7 @@ function SaleCategoryStrip({ sales, activeSaleId, onSelect }) {
         })}
       </div>
 
-      <button onClick={() => scrollBy(1)}
+      <button onClick={() => scrollBy(1)} aria-label="Scroll sale categories right"
         className="shrink-0 p-1.5 bg-white border border-gray-200 rounded-full text-gray-500 hover:text-gray-800 hover:border-gray-300 shadow-sm transition z-10">
         <ChevronRightIcon className="w-4 h-4" />
       </button>
@@ -215,7 +215,7 @@ export default function SaleSection() {
       <div className="max-w-7xl mx-auto">
         {/* Section heading */}
         <div className="flex items-center gap-3 mb-6">
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-[#10B981]"><Tag className="w-5 h-5" /></span>
+          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-100 text-[#047857]"><Tag className="w-5 h-5" /></span>
           <div>
             <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900">Live Sales &amp; Offers</h2>
             <p className="text-xs text-gray-500">{sales.length} sale{sales.length !== 1 ? 's' : ''} running right now</p>
@@ -239,7 +239,7 @@ export default function SaleSection() {
               <div key={sale.id || sale.slug} className="rounded-3xl border border-gray-100 bg-white shadow-sm overflow-hidden">
 
                 {/* Banner header */}
-                <div className={`relative ${sale.banner ? '' : 'bg-linear-to-r from-[#0A1E46] via-[#1E293B] to-[#10B981]'}`}
+                <div className={`relative ${sale.banner ? '' : 'bg-linear-to-r from-[#0A1E46] via-[#1E293B] to-[#047857]'}`}
                   style={sale.banner ? { background: `url(${sale.banner}) center/cover no-repeat` } : {}}>
                   <div className={`px-5 sm:px-7 py-6 sm:py-7 ${sale.banner ? 'bg-black/55' : ''}`}>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -286,7 +286,7 @@ export default function SaleSection() {
                       {products.length > 6 && (
                         <div className="text-center mt-6">
                           <button onClick={() => navigate(`/sale/${sale.slug}`)}
-                            className="inline-flex items-center gap-2 px-6 py-2.5 border-2 border-[#10B981] text-[#10B981] hover:bg-[#10B981] hover:text-white font-semibold rounded-xl text-sm transition">
+                            className="inline-flex items-center gap-2 px-6 py-2.5 border-2 border-[#047857] text-[#047857] hover:bg-[#047857] hover:text-white font-semibold rounded-xl text-sm transition">
                             View all {products.length} products <ArrowRight className="w-4 h-4" />
                           </button>
                         </div>

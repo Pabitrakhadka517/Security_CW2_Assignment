@@ -304,13 +304,13 @@ export default function SaleProductsCrud() {
                   onClick={() => setActiveTab(cat.id)}
                   className={`flex items-center gap-2 px-5 py-3.5 text-sm font-medium whitespace-nowrap border-b-2 transition-colors shrink-0 ${
                     isActive
-                      ? 'border-[#10B981] text-[#10B981] bg-emerald-50/50'
+                      ? 'border-[#047857] text-[#047857] bg-emerald-50/50'
                       : 'border-transparent text-gray-500 hover:text-gray-800 hover:bg-gray-50'
                   }`}
                 >
                   <span>{cat.title}</span>
                   <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${
-                    isActive ? 'bg-[#10B981] text-white' : 'bg-gray-100 text-gray-500'
+                    isActive ? 'bg-[#047857] text-white' : 'bg-gray-100 text-gray-500'
                   }`}>
                     {count}
                   </span>
@@ -333,7 +333,7 @@ export default function SaleProductsCrud() {
                     <span className="font-semibold text-(--ds-text)">{activeCategory.title}</span>
                     {activeCategory.badge_label && (
                       <span className="text-[10px] font-bold px-2 py-0.5 rounded-full text-white"
-                        style={{ background: activeCategory.badge_color || '#10B981' }}>
+                        style={{ background: activeCategory.badge_color || '#047857' }}>
                         {activeCategory.badge_label}
                       </span>
                     )}
@@ -344,7 +344,7 @@ export default function SaleProductsCrud() {
                 </div>
                 <button
                   onClick={openModal}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#10B981] border border-[#10B981]/30 rounded-lg hover:bg-emerald-50 transition"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#047857] border border-[#047857]/30 rounded-lg hover:bg-emerald-50 transition"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add Products
                 </button>
@@ -402,7 +402,7 @@ export default function SaleProductsCrud() {
                             {p?.name ?? <span className="text-gray-400 text-xs font-mono">{sp.product_id}</span>}
                           </p>
                           {sp.badge_label && (
-                            <span className="inline-block mt-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded text-white bg-[#10B981]">
+                            <span className="inline-block mt-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded text-white bg-[#047857]">
                               {sp.badge_label}
                             </span>
                           )}
@@ -410,8 +410,8 @@ export default function SaleProductsCrud() {
 
                         {/* Prices */}
                         <div className="text-right shrink-0">
-                          <p className="font-bold text-[#10B981] text-sm">Rs. {salePrice.toLocaleString()}</p>
-                          <p className="text-xs text-gray-400 line-through">Rs. {originalPrice.toLocaleString()}</p>
+                          <p className="font-bold text-[#047857] text-sm">Rs. {salePrice.toLocaleString()}</p>
+                          <p className="text-xs text-gray-600 line-through">Rs. {originalPrice.toLocaleString()}</p>
                         </div>
 
                         {/* Discount — inline editable */}
@@ -422,7 +422,7 @@ export default function SaleProductsCrud() {
                                 type="number" min="0" max="100"
                                 value={editing.discount}
                                 onChange={(e) => setEditing((ed) => ({ ...ed, discount: e.target.value }))}
-                                className="w-16 text-center border border-[#10B981] rounded-lg py-1 text-sm focus:outline-none"
+                                className="w-16 text-center border border-[#047857] rounded-lg py-1 text-sm focus:outline-none"
                                 autoFocus
                                 onKeyDown={(e) => {
                                   if (e.key === 'Enter')  saveDiscount();
@@ -481,7 +481,7 @@ export default function SaleProductsCrud() {
       <Modal
         isOpen={showModal}
         onClose={closeModal}
-        title={<span className="flex items-center gap-2"><ShoppingBag className="w-5 h-5 text-[#10B981]" /> Add to Sale</span>}
+        title={<span className="flex items-center gap-2"><ShoppingBag className="w-5 h-5 text-[#047857]" /> Add to Sale</span>}
       >
             <div className="space-y-5">
 
@@ -512,7 +512,7 @@ export default function SaleProductsCrud() {
                         onClick={() => setAddForm((f) => ({ ...f, saleType: value }))}
                         className={`flex flex-col items-center gap-1.5 px-2 py-3 rounded-xl border text-xs font-semibold transition ${
                           active
-                            ? 'border-[#10B981] bg-emerald-50 text-[#10B981] ring-1 ring-[#10B981]'
+                            ? 'border-[#047857] bg-emerald-50 text-[#047857] ring-1 ring-[#047857]'
                             : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
                         }`}
                       >
@@ -554,7 +554,7 @@ export default function SaleProductsCrud() {
                   <label className="ds-label">
                     Products *
                     {addForm.productIds.length > 0 && (
-                      <span className="ml-2 text-xs font-normal text-[#10B981]">{addForm.productIds.length} selected</span>
+                      <span className="ml-2 text-xs font-normal text-[#047857]">{addForm.productIds.length} selected</span>
                     )}
                   </label>
                   <div className="relative" data-dd="prod">
@@ -575,7 +575,7 @@ export default function SaleProductsCrud() {
                             return (
                               <button key={id} type="button" onClick={() => toggleProductId(id)}
                                 className={`w-full text-left px-4 py-2.5 flex items-center gap-3 text-sm transition ${checked ? 'bg-emerald-50' : 'hover:bg-gray-50'}`}>
-                                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition ${checked ? 'bg-[#10B981] border-[#10B981]' : 'border-gray-300'}`}>
+                                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition ${checked ? 'bg-[#047857] border-[#047857]' : 'border-gray-300'}`}>
                                   {checked && <Check className="w-2.5 h-2.5 text-white" />}
                                 </div>
                                 <div className="w-8 h-8 rounded-lg overflow-hidden bg-gray-100 shrink-0">
@@ -599,7 +599,7 @@ export default function SaleProductsCrud() {
                                 </p>
                                 <button type="button"
                                   onClick={() => navigate('/admin/productcrud', { state: { createName: addForm.productSearch || '' } })}
-                                  className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 text-xs font-semibold text-white bg-[#10B981] rounded-lg hover:bg-[#059669] transition">
+                                  className="inline-flex items-center gap-1.5 mt-2 px-3 py-1.5 text-xs font-semibold text-white bg-[#047857] rounded-lg hover:bg-[#065f46] transition">
                                   <Plus className="w-3.5 h-3.5" /> Create a new product
                                 </button>
                               </>
@@ -708,7 +708,7 @@ export default function SaleProductsCrud() {
                     {pricePreview.map(({ id, name, original, sale }) => (
                       <div key={id} className="flex items-center justify-between text-xs gap-2">
                         <span className="text-gray-600 truncate flex-1">{name}</span>
-                        <span className="text-gray-400 line-through whitespace-nowrap">Rs. {original.toLocaleString()}</span>
+                        <span className="text-gray-600 line-through whitespace-nowrap">Rs. {original.toLocaleString()}</span>
                         <span className="font-bold text-emerald-600 whitespace-nowrap">Rs. {sale.toLocaleString()}</span>
                         <span className="text-emerald-600 font-semibold">{addForm.discount_percentage}% OFF</span>
                       </div>

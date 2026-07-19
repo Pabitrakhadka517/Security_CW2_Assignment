@@ -31,11 +31,11 @@ export function LogoMark({ className = 'w-5 h-5', strokeWidth = 1.8 }) {
 export default function Logo({ badgeClassName = 'w-9 h-9', markClassName = 'w-4.5 h-4.5', textClassName = 'text-xl' }) {
   return (
     <span className="flex items-center gap-2.5">
-      <span className={`flex items-center justify-center rounded-xl bg-linear-to-br from-[#1E293B] to-[#10B981] shrink-0 ${badgeClassName}`}>
+      <span className={`flex items-center justify-center rounded-xl bg-linear-to-br from-[#1E293B] to-[#047857] shrink-0 ${badgeClassName}`}>
         <LogoMark className={`${markClassName} text-white`} />
       </span>
       <span className={`font-bold tracking-tight ${textClassName}`}>
-        epasal<span className="text-[#10B981]">ey</span>
+        epasal<span className="text-[#047857]">ey</span>
       </span>
     </span>
   );

@@ -35,11 +35,11 @@ export default function Footer() {
             <div className="lg:col-span-2">
               {/* Logo */}
               <Link to="/" className="flex items-center gap-3 mb-8 group">
-                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-linear-to-br from-[#1E293B] to-[#10B981]">
+                <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-linear-to-br from-[#1E293B] to-[#047857]">
                   <LogoMark className="w-6 h-6 text-white" />
                 </div>
                 <span className="text-2xl font-bold text-gray-900">
-                  epasal<span className="text-[#10B981]">ey</span>
+                  epasal<span className="text-[#047857]">ey</span>
                 </span>
               </Link>
 
@@ -65,10 +65,10 @@ export default function Footer() {
 
               {/* Social Icons - Enhanced */}
               <div className="flex gap-3">
-                <a href="https://www.instagram.com/selection.clo?igsh=MW1oNGMwdWc0OHp4ag==" target="_blank" rel="noopener noreferrer" className="p-3 transition-all bg-gray-100 rounded-xl hover:bg-linear-to-tr hover:from-[#833AB4] hover:via-[#FD1D1D] hover:to-[#F77737] hover:text-white group">
+                <a href="https://www.instagram.com/selection.clo?igsh=MW1oNGMwdWc0OHp4ag==" target="_blank" rel="noopener noreferrer" aria-label="Follow us on Instagram" className="p-3 transition-all bg-gray-100 rounded-xl hover:bg-linear-to-tr hover:from-[#833AB4] hover:via-[#FD1D1D] hover:to-[#F77737] hover:text-white group">
                   <Instagram className="w-5 h-5" />
                 </a>
-                <a href="https://www.tiktok.com/@selection.clo?_r=1&_t=ZS-921wQD0ntWS" target="_blank" rel="noopener noreferrer" className="p-3 transition-all bg-gray-100 rounded-xl hover:bg-black hover:text-white group">
+                <a href="https://www.tiktok.com/@selection.clo?_r=1&_t=ZS-921wQD0ntWS" target="_blank" rel="noopener noreferrer" aria-label="Follow us on TikTok" className="p-3 transition-all bg-gray-100 rounded-xl hover:bg-black hover:text-white group">
                   <TikTokIcon className="w-5 h-5" />
                 </a>
               </div>
@@ -133,7 +133,7 @@ export default function Footer() {
         <div className="px-6 py-8 mx-auto max-w-7xl">
           <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
             <div className="flex items-center gap-3">
-              <MapPin className="w-5 h-5 text-[#10B981]" />
+              <MapPin className="w-5 h-5 text-[#047857]" />
               <p className="text-sm text-gray-400">
                 © {currentYear} <span className="font-semibold text-white">Epasaley</span>. All rights reserved. Made with ❤️ in Nepal
               </p>
@@ -142,7 +142,7 @@ export default function Footer() {
               <a href="#" onClick={comingSoon} className="text-gray-400 transition hover:text-white">Privacy Policy</a>
               <a href="#" onClick={comingSoon} className="text-gray-400 transition hover:text-white">Terms of Service</a>
               <a href="#" onClick={comingSoon} className="text-gray-400 transition hover:text-white">Cookie Policy</a>
-              <Link to="/admin/login" className="text-gray-600 transition hover:text-gray-300 text-xs">Admin</Link>
+              <Link to="/admin/login" className="text-gray-400 transition hover:text-gray-300 text-xs">Admin</Link>
             </div>
           </div>
         </div>

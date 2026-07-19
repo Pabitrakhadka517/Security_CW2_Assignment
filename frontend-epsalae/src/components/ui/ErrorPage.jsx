@@ -38,8 +38,8 @@ export default function ErrorPage({
   return (
     <div className="flex min-h-screen items-center justify-center bg-(--page-bg) px-4">
       <div className="w-full max-w-lg text-center animate-fade-in">
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-[#1E293B]/8 ring-4 ring-[#10B981]/10 shadow-inner">
-          <Icon className="h-9 w-9 text-[#10B981]" aria-hidden="true" />
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-[#1E293B]/8 ring-4 ring-[#047857]/10 shadow-inner">
+          <Icon className="h-9 w-9 text-[#047857]" aria-hidden="true" />
         </div>
 
         <p className="text-7xl font-black leading-none text-[#1E293B]">

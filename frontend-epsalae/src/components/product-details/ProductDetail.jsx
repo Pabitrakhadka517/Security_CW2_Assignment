@@ -296,7 +296,7 @@ export default function ProductDetail() {
                   Rs. {(product.discountPrice > 0 ? product.discountPrice : product.price).toLocaleString()}
                 </span>
                 {product.discountPrice > 0 && (
-                  <span className="text-lg text-gray-400 line-through font-medium">
+                  <span className="text-lg text-gray-600 line-through font-medium">
                     Rs. {product.price.toLocaleString()}
                   </span>
                 )}
@@ -366,7 +366,7 @@ export default function ProductDetail() {
                 whileTap={{ scale: 0.97 }}
                 onClick={handleBuyNow}
                 disabled={(product.stock || 0) === 0}
-                className="flex items-center justify-center gap-2 py-4 rounded-2xl font-extrabold text-sm bg-linear-to-r from-[#1E293B] to-[#10B981] text-white shadow-lg hover:shadow-xl hover:opacity-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                className="flex items-center justify-center gap-2 py-4 rounded-2xl font-extrabold text-sm bg-linear-to-r from-[#1E293B] to-[#047857] text-white shadow-lg hover:shadow-xl hover:opacity-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <Zap className="w-5 h-5" /> Buy Now
               </motion.button>

@@ -162,7 +162,7 @@ export default function BulkUpload() {
         onDrop={(e) => { e.preventDefault(); setDragOver(false); acceptDataFile(e.dataTransfer.files?.[0]); }}
         onClick={() => dataInputRef.current?.click()}
         className={`cursor-pointer border-2 border-dashed rounded-2xl p-10 text-center transition ${
-          dragOver ? 'border-[#10B981] bg-emerald-50' : 'border-gray-300 bg-white hover:border-gray-400'
+          dragOver ? 'border-[#047857] bg-emerald-50' : 'border-gray-300 bg-white hover:border-gray-400'
         }`}
       >
         <input ref={dataInputRef} type="file" accept=".csv,.xlsx,.xls,.json" className="hidden"

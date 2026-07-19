@@ -124,7 +124,7 @@ export default function Navbar() {
 
             {/* Logo with scale on scroll */}
             <Link to="/" className="flex items-center gap-2.5 group shrink-0">
-              <div className={`flex items-center justify-center rounded-xl bg-linear-to-br from-[#1E293B] to-[#10B981] transition-all duration-300 ${
+              <div className={`flex items-center justify-center rounded-xl bg-linear-to-br from-[#1E293B] to-[#047857] transition-all duration-300 ${
                 scrolled ? 'w-9 h-9' : 'w-10 h-10'
               }`}>
                 <LogoMark className="w-1/2 h-1/2 text-white" />
@@ -132,7 +132,7 @@ export default function Navbar() {
               <span className={`font-bold text-gray-900 transition-all duration-300 ${
                 scrolled ? 'text-lg' : 'text-xl'
               }`}>
-                epasal<span className="text-[#10B981]">ey</span>
+                epasal<span className="text-[#047857]">ey</span>
               </span>
             </Link>
             {/* Desktop Navigation & Actions */}
@@ -191,7 +191,7 @@ export default function Navbar() {
                                 to={`/products?category=${cat._id || cat.id}`}
                                 role="menuitem"
                                 onClick={() => setCategoriesOpen(false)}
-                                className="block px-4 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-slate-50 hover:text-[#10B981]"
+                                className="block px-4 py-3 text-sm font-semibold text-gray-700 transition-colors hover:bg-slate-50 hover:text-[#047857]"
                               >
                                 {cat.name}
                               </Link>
@@ -207,14 +207,14 @@ export default function Navbar() {
                 <Link
                   to="/sales"
                   aria-current={isActive('/sales') ? 'page' : undefined}
-                  className={`relative flex items-center gap-2 rounded-full px-5 py-3 font-semibold text-[#10B981] transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-50 ${
-                    isActive('/sales') ? 'bg-emerald-50 ring-1 ring-[#10B981]/30' : ''
+                  className={`relative flex items-center gap-2 rounded-full px-5 py-3 font-semibold text-[#047857] transition-all duration-300 hover:-translate-y-0.5 hover:bg-emerald-50 ${
+                    isActive('/sales') ? 'bg-emerald-50 ring-1 ring-[#047857]/30' : ''
                   }`}
                 >
                   <Flame className="w-4 h-4" />
                   Sales
                   {liveSaleCount > 0 && (
-                    <span className="absolute -top-0.5 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#10B981] px-1 text-[10px] font-bold text-white animate-pulse">
+                    <span className="absolute -top-0.5 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#047857] px-1 text-[10px] font-bold text-white animate-pulse">
                       {liveSaleCount}
                     </span>
                   )}

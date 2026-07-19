@@ -70,11 +70,11 @@ export default function CategoryCrud() {
           palette: {
             window: "#ffffff",
             sourceBg: "#f8f8f8",
-            windowBorder: "#10B981",
-            tabIcon: "#10B981",
+            windowBorder: "#047857",
+            tabIcon: "#047857",
             inactiveTabIcon: "#555",
-            link: "#10B981",
-            action: "#10B981"
+            link: "#047857",
+            action: "#047857"
           }
         }
       },
@@ -386,7 +386,7 @@ export default function CategoryCrud() {
               <div className="flex items-center gap-3 py-1">
                 <input type="checkbox" id="active" checked={form.isActive}
                   onChange={(e) => setForm(prev => ({ ...prev, isActive: e.target.checked }))}
-                  className="w-4 h-4 text-[#10B981] rounded" />
+                  className="w-4 h-4 text-[#047857] rounded" />
                 <label htmlFor="active" className="text-sm font-medium text-(--ds-text) cursor-pointer">
                   Category is Active (Visible on site)
                 </label>

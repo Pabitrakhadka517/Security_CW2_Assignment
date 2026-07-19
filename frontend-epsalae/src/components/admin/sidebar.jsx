@@ -89,12 +89,12 @@ export default function Sidebar({ open, onClose }) {
         {/* ── Logo ─────────────────────────────────────────────── */}
         <div className="h-[70px] flex items-center justify-between px-5 border-b border-(--ds-border) shrink-0">
           <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-linear-to-br from-[#1E293B] to-[#10B981] shrink-0">
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-linear-to-br from-[#1E293B] to-[#047857] shrink-0">
               <LogoMark className="w-4.5 h-4.5 text-white" />
             </div>
             <div>
               <p className="text-sm font-bold text-(--ds-text) leading-none">
-                epasal<span className="text-[#10B981]">ey</span>
+                epasal<span className="text-[#047857]">ey</span>
               </p>
               <p className="mt-1 text-[10px] text-(--ds-text-faint) font-semibold tracking-wider uppercase">Admin Panel</p>
             </div>
@@ -124,7 +124,7 @@ export default function Sidebar({ open, onClose }) {
                     className={({ isActive }) =>
                       `group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                         isActive
-                          ? 'bg-emerald-50 text-[#10B981] border-l-[3px] border-[#10B981] pl-[calc(0.75rem-3px)]'
+                          ? 'bg-emerald-50 text-[#047857] border-l-[3px] border-[#047857] pl-[calc(0.75rem-3px)]'
                           : 'text-(--ds-text-muted) hover:bg-(--ds-card-muted) hover:text-(--ds-text) border-l-[3px] border-transparent pl-[calc(0.75rem-3px)]'
                       }`
                     }
@@ -134,10 +134,10 @@ export default function Sidebar({ open, onClose }) {
                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
                           isActive ? 'bg-emerald-100' : 'bg-(--ds-card-muted) group-hover:bg-(--ds-border)'
                         }`}>
-                          <Icon size={15} className={isActive ? 'text-[#10B981]' : 'text-(--ds-text-muted)'} />
+                          <Icon size={15} className={isActive ? 'text-[#047857]' : 'text-(--ds-text-muted)'} />
                         </div>
                         <span className="flex-1">{label}</span>
-                        {isActive && <ChevronRight size={13} className="shrink-0 text-[#10B981]/60" />}
+                        {isActive && <ChevronRight size={13} className="shrink-0 text-[#047857]/60" />}
                       </>
                     )}
                   </NavLink>
@@ -149,7 +149,7 @@ export default function Sidebar({ open, onClose }) {
 
         {/* ── Admin chip ──────────────────────────────────────── */}
         <div className="mx-3 mb-3 p-3 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center gap-3 shrink-0">
-          <div className="w-9 h-9 rounded-full bg-linear-to-br from-[#10B981] to-amber-400 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow shadow-emerald-200">
+          <div className="w-9 h-9 rounded-full bg-linear-to-br from-[#047857] to-amber-400 flex items-center justify-center text-white font-bold text-sm shrink-0 shadow shadow-emerald-200">
             {adminInitial}
           </div>
           <div className="min-w-0 flex-1">

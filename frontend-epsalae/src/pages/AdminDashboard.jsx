@@ -18,14 +18,14 @@ import {
 } from 'lucide-react';
 
 /* ── colour tokens ───────────────────────────────────────────── */
-const ORANGE = '#10B981';
+const ORANGE = '#047857';
 const BLUE   = '#1E293B';
 const STATUS_COLORS = {
   pending:    '#F59E0B', confirmed: '#3B82F6', processing: '#8B5CF6',
-  shipped: '#06B6D4', on_the_way: '#14B8A6', delivered: '#10B981',
+  shipped: '#06B6D4', on_the_way: '#14B8A6', delivered: '#047857',
   cancelled: '#EF4444', received: '#22C55E',
 };
-const CAT_PAL = [ORANGE,'#1E293B','#10B981','#8B5CF6','#F59E0B','#06B6D4','#EF4444','#EC4899'];
+const CAT_PAL = [ORANGE,'#1E293B','#047857','#8B5CF6','#F59E0B','#06B6D4','#EF4444','#EC4899'];
 
 const fmt   = (n) => new Intl.NumberFormat('en-NP').format(n ?? 0);
 const fmtRs = (n) => `Rs. ${fmt(n)}`;
@@ -112,7 +112,7 @@ function StatTile({ label, value, icon: Icon, iconBg, iconColor, path }) {
       </div>
       <p className="text-2xl font-bold text-gray-800">{fmt(value)}</p>
       <p className="text-xs text-gray-500 mt-0.5 font-medium">{label}</p>
-      <p className="mt-2 text-[11px] text-[#10B981] font-semibold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <p className="mt-2 text-[11px] text-[#047857] font-semibold flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         Manage <ArrowUpRight className="w-3 h-3" />
       </p>
     </Link>
@@ -128,10 +128,10 @@ function QuickAction({ label, desc, icon: Icon, iconBg, iconColor, path }) {
         <Icon className={`w-5 h-5 ${iconColor}`} />
       </div>
       <div className="min-w-0">
-        <p className="text-sm font-semibold text-gray-800 group-hover:text-[#10B981] transition-colors">{label}</p>
+        <p className="text-sm font-semibold text-gray-800 group-hover:text-[#047857] transition-colors">{label}</p>
         <p className="text-xs text-gray-400 truncate">{desc}</p>
       </div>
-      <ArrowUpRight className="w-4 h-4 text-gray-300 group-hover:text-[#10B981] shrink-0 ml-auto transition-colors" />
+      <ArrowUpRight className="w-4 h-4 text-gray-300 group-hover:text-[#047857] shrink-0 ml-auto transition-colors" />
     </Link>
   );
 }
@@ -259,7 +259,7 @@ export default function AdminDashboard() {
   }, [orders]);
 
   const stockHealth = useMemo(() => ([
-    { name: 'In Stock',    value: products.filter(p => p.stock >= 10).length,              fill: '#10B981' },
+    { name: 'In Stock',    value: products.filter(p => p.stock >= 10).length,              fill: '#047857' },
     { name: 'Low Stock',   value: products.filter(p => p.stock > 0 && p.stock < 10).length, fill: '#F59E0B' },
     { name: 'Out of Stock',value: products.filter(p => p.stock === 0).length,              fill: '#EF4444' },
   ]), [products]);
@@ -301,7 +301,7 @@ export default function AdminDashboard() {
     return (
       <div className="flex items-center justify-center h-[60vh]">
         <div className="text-center">
-          <Loader2 className="w-10 h-10 animate-spin text-[#10B981] mx-auto mb-3" />
+          <Loader2 className="w-10 h-10 animate-spin text-[#047857] mx-auto mb-3" />
           <p className="text-gray-500 text-sm font-medium">Loading dashboard…</p>
         </div>
       </div>
@@ -341,7 +341,7 @@ export default function AdminDashboard() {
           pct={kpiTrends.revenue}
           icon={Banknote}
           iconBg="bg-emerald-100"
-          iconColor="text-[#10B981]"
+          iconColor="text-[#047857]"
           link="/admin/ordercrud"
         />
         <MetricCard
@@ -423,7 +423,7 @@ export default function AdminDashboard() {
               </div>
               <div className="text-center">
                 <p className="text-xs text-gray-500 mb-1">Due Amount</p>
-                <p className="text-xl font-bold text-[#10B981]">Rs. {fmt(dueAmt)}</p>
+                <p className="text-xl font-bold text-[#047857]">Rs. {fmt(dueAmt)}</p>
               </div>
             </div>
           </ChartCard>
@@ -463,7 +463,7 @@ export default function AdminDashboard() {
         {/* Order Status donut — 2/3 */}
         <div className="xl:col-span-2">
           <ChartCard title="Order Status Distribution" action={
-            <Link to="/admin/ordercrud" className="text-xs font-semibold text-[#10B981] hover:text-emerald-600 flex items-center gap-1">
+            <Link to="/admin/ordercrud" className="text-xs font-semibold text-[#047857] hover:text-emerald-600 flex items-center gap-1">
               All Orders <ArrowUpRight className="w-3 h-3" />
             </Link>
           }>
@@ -545,7 +545,7 @@ export default function AdminDashboard() {
         {/* Top Selling Products — 2/3 */}
         <div className="xl:col-span-2">
           <ChartCard title="Top Selling Products" action={
-            <Link to="/admin/productcrud" className="text-xs font-semibold text-[#10B981] hover:text-emerald-600 flex items-center gap-1">
+            <Link to="/admin/productcrud" className="text-xs font-semibold text-[#047857] hover:text-emerald-600 flex items-center gap-1">
               All Products <ArrowUpRight className="w-3 h-3" />
             </Link>
           }>
@@ -607,7 +607,7 @@ export default function AdminDashboard() {
             <span className="text-xs text-gray-400">Click any tile to manage</span>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            <StatTile label="Products"      value={products.length}                                         icon={Package}       iconBg="bg-emerald-50"  iconColor="text-[#10B981]"   path="/admin/productcrud"   />
+            <StatTile label="Products"      value={products.length}                                         icon={Package}       iconBg="bg-emerald-50"  iconColor="text-[#047857]"   path="/admin/productcrud"   />
             <StatTile label="Categories"    value={categoryStore.categories?.length}                        icon={Tag}           iconBg="bg-purple-50"  iconColor="text-purple-600"  path="/admin/categorycrud"  />
             <StatTile label="Total Orders"  value={orders.length}                                           icon={ShoppingCart}  iconBg="bg-emerald-50" iconColor="text-emerald-600" path="/admin/ordercrud"     />
             <StatTile label="Active Coupons" value={activeCoupons}                                          icon={TicketPercent} iconBg="bg-pink-50"    iconColor="text-pink-600"    path="/admin/promocodecrud" />
@@ -617,8 +617,8 @@ export default function AdminDashboard() {
         <div>
           <h2 className="text-sm font-bold text-gray-800 mb-4">Quick Actions</h2>
           <div className="space-y-2">
-            <QuickAction label="Add Product"    desc="Create a new product listing"   icon={Package}       iconBg="bg-emerald-50"  iconColor="text-[#10B981]"   path="/admin/productcrud"   />
-            <QuickAction label="Create Sale"    desc="Set up a sale category"          icon={BadgePercent}  iconBg="bg-emerald-50"  iconColor="text-[#10B981]"   path="/admin/salecrud"      />
+            <QuickAction label="Add Product"    desc="Create a new product listing"   icon={Package}       iconBg="bg-emerald-50"  iconColor="text-[#047857]"   path="/admin/productcrud"   />
+            <QuickAction label="Create Sale"    desc="Set up a sale category"          icon={BadgePercent}  iconBg="bg-emerald-50"  iconColor="text-[#047857]"   path="/admin/salecrud"      />
             <QuickAction label="Manage Orders"  desc="View & update order statuses"   icon={ShoppingCart}  iconBg="bg-emerald-50" iconColor="text-emerald-600" path="/admin/ordercrud"     />
             <QuickAction label="Add Promo Code" desc="Create discounts for customers" icon={TicketPercent} iconBg="bg-pink-50"    iconColor="text-pink-600"    path="/admin/promocodecrud" />
           </div>
@@ -629,9 +629,9 @@ export default function AdminDashboard() {
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-50">
           <h2 className="text-sm font-bold text-gray-800 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-[#10B981]" /> Recent Orders
+            <Activity className="w-4 h-4 text-[#047857]" /> Recent Orders
           </h2>
-          <Link to="/admin/ordercrud" className="text-xs font-semibold text-[#10B981] hover:text-emerald-600 flex items-center gap-1 transition-colors">
+          <Link to="/admin/ordercrud" className="text-xs font-semibold text-[#047857] hover:text-emerald-600 flex items-center gap-1 transition-colors">
             View all <ArrowUpRight className="w-3 h-3" />
           </Link>
         </div>
@@ -668,7 +668,7 @@ export default function AdminDashboard() {
                     <tr key={order._id || order.id || i} className="hover:bg-emerald-50/30 transition-colors">
                       <td className="px-6 py-3.5">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-linear-to-br from-[#10B981] to-amber-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                          <div className="w-8 h-8 rounded-full bg-linear-to-br from-[#047857] to-amber-400 flex items-center justify-center text-white text-xs font-bold shrink-0">
                             {(order.name || order.first_name || 'G').charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0">

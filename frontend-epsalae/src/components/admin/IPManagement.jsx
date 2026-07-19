@@ -156,7 +156,7 @@ export default function IPManagement() {
               key={tab.id}
               onClick={() => setView(tab.id)}
               className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                view === tab.id ? 'border-[#10B981] text-[#10B981]' : 'border-transparent text-(--ds-text-muted) hover:text-(--ds-text)'
+                view === tab.id ? 'border-[#047857] text-[#047857]' : 'border-transparent text-(--ds-text-muted) hover:text-(--ds-text)'
               }`}
             >
               {tab.label}

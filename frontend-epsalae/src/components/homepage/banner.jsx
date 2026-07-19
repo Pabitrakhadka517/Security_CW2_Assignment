@@ -130,7 +130,7 @@ export default function Banner() {
                   className="flex items-center gap-2 mb-2"
                 >
                   <span
-                    className="w-1.5 h-1.5 rounded-full bg-[#10B981]"
+                    className="w-1.5 h-1.5 rounded-full bg-[#047857]"
                     style={{ boxShadow: '0 0 8px rgba(16,185,129,0.8)' }}
                   />
                   <span className="text-[10px] sm:text-xs font-medium tracking-[0.16em] uppercase text-[#FF9A72]">
@@ -171,7 +171,7 @@ export default function Banner() {
                 >
                   <button
                     onClick={() => (window.location.href = slides[current].link)}
-                    className="inline-flex items-center gap-2 px-5 py-2 sm:px-7 sm:py-3 text-xs sm:text-sm font-medium text-white bg-[#10B981] hover:bg-[#059669] rounded-full transition-all duration-250 hover:-translate-y-0.5"
+                    className="inline-flex items-center gap-2 px-5 py-2 sm:px-7 sm:py-3 text-xs sm:text-sm font-medium text-white bg-[#047857] hover:bg-[#065f46] rounded-full transition-all duration-250 hover:-translate-y-0.5"
                     style={{ boxShadow: '0 8px 24px rgba(16,185,129,0.45)' }}
                   >
                     {slides[current].ctaLabel}
@@ -261,7 +261,7 @@ export default function Banner() {
               key={progressKey}
               className="absolute bottom-0 left-0 h-[2.5px] rounded-r-full z-20"
               style={{
-                background: 'linear-gradient(90deg, #10B981, #FF9A72)',
+                background: 'linear-gradient(90deg, #047857, #FF9A72)',
                 boxShadow: '0 0 8px rgba(16,185,129,0.6)',
                 animation: `bannerProgress ${INTERVAL}ms linear forwards`,
               }}

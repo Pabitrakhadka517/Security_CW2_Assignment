@@ -239,14 +239,14 @@ const LoginPage: React.FC = () => {
       <div className="hidden lg:flex lg:w-1/2 bg-linear-to-br from-[#0B1220] via-[#1E293B] to-[#334155] flex-col justify-between p-12 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-72 h-72 bg-[#10B981]/15 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-72 h-72 bg-[#047857]/15 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
         </div>
         <Link to="/" className="relative flex items-center gap-3">
           <div className="w-10 h-10 bg-white/15 rounded-xl flex items-center justify-center backdrop-blur">
             <LogoMark className="w-5 h-5 text-white" />
           </div>
           <span className="text-2xl font-bold text-white tracking-tight">
-            epasal<span className="text-[#10B981]">ey</span>
+            epasal<span className="text-[#047857]">ey</span>
           </span>
         </Link>
         <div className="relative">
@@ -273,10 +273,10 @@ const LoginPage: React.FC = () => {
 
           {/* Mobile logo */}
           <Link to="/" className="lg:hidden flex items-center gap-2.5 mb-8">
-            <div className="w-9 h-9 bg-linear-to-br from-[#1E293B] to-[#10B981] rounded-xl flex items-center justify-center">
+            <div className="w-9 h-9 bg-linear-to-br from-[#1E293B] to-[#047857] rounded-xl flex items-center justify-center">
               <LogoMark className="w-4.5 h-4.5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">epasal<span className="text-[#10B981]">ey</span></span>
+            <span className="text-xl font-bold text-gray-900">epasal<span className="text-[#047857]">ey</span></span>
           </Link>
 
           {mfaPendingToken ? (
@@ -331,7 +331,7 @@ const LoginPage: React.FC = () => {
                     type="button"
                     onClick={handleResendMfaCode}
                     disabled={mfaResending || mfaResendCooldown > 0}
-                    className="w-full text-sm text-[#1E293B] hover:text-[#10B981] transition font-medium text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full text-sm text-[#1E293B] hover:text-[#047857] transition font-medium text-center disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {mfaResendCooldown > 0 ? `Resend code (${mfaResendCooldown}s)` : 'Resend code'}
                   </button>
@@ -340,7 +340,7 @@ const LoginPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => { setUseBackupCode(v => !v); setMfaCode(''); setMfaError(''); }}
-                  className="w-full text-sm text-[#1E293B] hover:text-[#10B981] transition font-medium text-center"
+                  className="w-full text-sm text-[#1E293B] hover:text-[#047857] transition font-medium text-center"
                 >
                   {useBackupCode ? (mfaMethod === 'email' ? 'Use email code instead' : 'Use authenticator code instead') : 'Use a backup code instead'}
                 </button>
@@ -402,7 +402,7 @@ const LoginPage: React.FC = () => {
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
                     <label htmlFor="password" className="text-sm font-medium text-gray-700">Password</label>
-                    <Link to="/forgot-password" className="text-xs text-[#1E293B] hover:text-[#10B981] transition font-medium">
+                    <Link to="/forgot-password" className="text-xs text-[#1E293B] hover:text-[#047857] transition font-medium">
                       Forgot password?
                     </Link>
                   </div>
@@ -464,7 +464,7 @@ const LoginPage: React.FC = () => {
 
               <div className="mt-5 flex items-center gap-3">
                 <div className="h-px flex-1 bg-gray-200" />
-                <span className="text-xs text-gray-400">OR</span>
+                <span className="text-xs text-gray-600">OR</span>
                 <div className="h-px flex-1 bg-gray-200" />
               </div>
 
@@ -483,14 +483,14 @@ const LoginPage: React.FC = () => {
               <div className="mt-6 pt-6 border-t border-gray-100 text-center">
                 <p className="text-sm text-gray-500">
                   Don't have an account?{' '}
-                  <Link to="/register" state={{ returnTo }} className="text-[#10B981] hover:text-emerald-600 font-semibold transition">
+                  <Link to="/register" state={{ returnTo }} className="text-[#047857] hover:text-emerald-600 font-semibold transition">
                     Create one free
                   </Link>
                 </p>
               </div>
 
               <p className="text-center mt-4">
-                <Link to="/products" className="text-xs text-gray-400 hover:text-gray-600 transition">
+                <Link to="/products" className="text-xs text-gray-600 hover:text-gray-800 transition">
                   ← Continue shopping without signing in
                 </Link>
               </p>

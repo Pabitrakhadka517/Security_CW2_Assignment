@@ -52,7 +52,7 @@ function FilterPanel({ categories, selectedCategory, setSelectedCategory, priceR
     <div className="space-y-8">
       {/* Categories */}
       <div>
-        <h3 className="mb-4 text-xs font-extrabold uppercase tracking-widest text-gray-400">Categories</h3>
+        <h3 className="mb-4 text-xs font-extrabold uppercase tracking-widest text-gray-600">Categories</h3>
         <div className="space-y-1">
           <button
             onClick={() => { setSelectedCategory('all'); onClose?.(); }}
@@ -87,9 +87,10 @@ function FilterPanel({ categories, selectedCategory, setSelectedCategory, priceR
 
       {/* Price Range */}
       <div>
-        <h3 className="mb-4 text-xs font-extrabold uppercase tracking-widest text-gray-400">Max Price</h3>
+        <h3 className="mb-4 text-xs font-extrabold uppercase tracking-widest text-gray-600">Max Price</h3>
         <input
           type="range" min="0" max="100000" step="500"
+          aria-label="Maximum price"
           value={priceRange[1]}
           onChange={(e) => setPriceRange([0, Number(e.target.value)])}
           className="w-full h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer accent-[#1E293B]"
@@ -270,7 +271,7 @@ export default function Products() {
                 >
                   <Filter className="w-4 h-4" /> Filters
                   {activeFilterCount > 0 && (
-                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#10B981] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                    <span className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-[#047857] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                       {activeFilterCount}
                     </span>
                   )}
@@ -280,12 +281,16 @@ export default function Products() {
                 <div className="flex gap-1 p-1 bg-white border border-gray-200 rounded-xl">
                   <button
                     onClick={() => setViewMode('grid')}
+                    aria-label="Grid view"
+                    aria-pressed={viewMode === 'grid'}
                     className={`p-2 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-[#1E293B] text-white shadow' : 'text-gray-400 hover:text-gray-700'}`}
                   >
                     <Grid3x3 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
+                    aria-label="List view"
+                    aria-pressed={viewMode === 'list'}
                     className={`p-2 rounded-lg transition-all ${viewMode === 'list' ? 'bg-[#1E293B] text-white shadow' : 'text-gray-400 hover:text-gray-700'}`}
                   >
                     <List className="w-4 h-4" />
@@ -296,6 +301,7 @@ export default function Products() {
               <div className="flex items-center gap-2">
                 <ArrowUpDown className="w-4 h-4 text-gray-400 hidden sm:block" />
                 <select
+                  aria-label="Sort products"
                   value={sortBy}
                   onChange={e => setSortBy(e.target.value)}
                   className="px-4 py-2 text-sm font-semibold bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#1E293B] text-gray-700 cursor-pointer transition-all"
@@ -370,7 +376,7 @@ export default function Products() {
                         </div>
                         <div className="flex-1 flex flex-col justify-between py-1">
                           <div>
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#10B981] mb-1">{getCategoryName(product)}</p>
+                            <p className="text-[10px] font-bold uppercase tracking-wider text-[#047857] mb-1">{getCategoryName(product)}</p>
                             <h3 className="font-bold text-gray-900 group-hover:text-[#1E293B] transition-colors line-clamp-2 text-sm sm:text-base">{formatProductName(product.name)}</h3>
                           </div>
                           <div className="flex items-center justify-between mt-2">
@@ -378,7 +384,7 @@ export default function Products() {
                               {product.discountPrice && product.discountPrice < product.price ? (
                                 <div className="flex items-baseline gap-1.5">
                                   <span className="font-extrabold text-gray-900">Rs. {product.discountPrice.toLocaleString()}</span>
-                                  <span className="text-xs text-gray-400 line-through">Rs. {product.price.toLocaleString()}</span>
+                                  <span className="text-xs text-gray-600 line-through">Rs. {product.price.toLocaleString()}</span>
                                   {discountPct > 0 && <span className="text-xs font-bold text-red-500">-{discountPct}%</span>}
                                 </div>
                               ) : (
@@ -427,6 +433,7 @@ export default function Products() {
                         {/* Wishlist */}
                         <button
                           onClick={(e) => { e.stopPropagation(); toggleFavorite(pid, isUser); }}
+                          aria-label={isFav ? 'Remove from wishlist' : 'Add to wishlist'}
                           className={`absolute bottom-2.5 right-2.5 p-2 rounded-full shadow-md transition-all opacity-0 group-hover:opacity-100 hover:scale-110 ${isFav ? 'bg-red-500 text-white' : 'bg-white text-gray-400 hover:bg-red-50 hover:text-red-500'}`}
                         >
                           <Heart className={`w-3.5 h-3.5 ${isFav ? 'fill-current' : ''}`} />
@@ -452,7 +459,7 @@ export default function Products() {
                       </div>
 
                       <div className="p-3.5">
-                        <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#10B981] mb-0.5 truncate">{getCategoryName(product)}</p>
+                        <p className="text-[10px] font-extrabold uppercase tracking-widest text-[#047857] mb-0.5 truncate">{getCategoryName(product)}</p>
                         <h3 className="text-sm font-bold text-gray-900 line-clamp-2 group-hover:text-[#1E293B] transition-colors mb-2">
                           {formatProductName(product.name)}
                         </h3>
@@ -460,7 +467,7 @@ export default function Products() {
                           {product.discountPrice && product.discountPrice < product.price ? (
                             <>
                               <span className="text-sm font-extrabold text-gray-900">Rs. {product.discountPrice.toLocaleString()}</span>
-                              <span className="text-xs text-gray-400 line-through">Rs. {product.price.toLocaleString()}</span>
+                              <span className="text-xs text-gray-600 line-through">Rs. {product.price.toLocaleString()}</span>
                             </>
                           ) : (
                             <span className="text-sm font-extrabold text-gray-900">Rs. {product.price?.toLocaleString()}</span>

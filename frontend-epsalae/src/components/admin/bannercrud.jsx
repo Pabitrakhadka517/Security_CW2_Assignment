@@ -251,7 +251,7 @@ export default function BannerCRUD() {
               <div>
                 <label className="ds-label">Banner Image * <span className="font-normal text-gray-400">(Recommended: 1920×600)</span></label>
                 <div className={`relative border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition
-                  ${errors.imageUrl ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:border-[#10B981] bg-gray-50'}`}>
+                  ${errors.imageUrl ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:border-[#047857] bg-gray-50'}`}>
                   <input type="file" accept="image/*" onChange={handleImageUpload} disabled={uploading}
                     className="absolute inset-0 opacity-0 cursor-pointer" />
                   <Upload className={`w-8 h-8 mx-auto mb-2 text-gray-400 ${uploading ? 'animate-bounce' : ''}`} />
@@ -276,7 +276,7 @@ export default function BannerCRUD() {
               <div className="flex items-center gap-3 py-1">
                 <input type="checkbox" id="active" checked={form.isActive}
                   onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                  className="w-4 h-4 text-[#10B981] rounded" />
+                  className="w-4 h-4 text-[#047857] rounded" />
                 <label htmlFor="active" className="text-sm font-medium text-(--ds-text) cursor-pointer">Banner is Active</label>
               </div>
 

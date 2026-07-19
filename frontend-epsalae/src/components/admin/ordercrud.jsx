@@ -153,7 +153,7 @@ export default function OrderCRUD() {
         <div className="ds-card ds-card-pad">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-emerald-50 rounded-lg flex items-center justify-center">
-              <DollarSign className="w-4 h-4 text-[#10B981]" />
+              <DollarSign className="w-4 h-4 text-[#047857]" />
             </div>
             <div>
               <p className="text-xs text-(--ds-text-muted)">Pending Value</p>
@@ -193,7 +193,7 @@ export default function OrderCRUD() {
             onClick={() => setStatusFilter(status)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all border ${
               statusFilter === status
-                ? 'border-[#10B981] ring-2 ring-[#10B981]/20 ' + statusTabColors[status]
+                ? 'border-[#047857] ring-2 ring-[#047857]/20 ' + statusTabColors[status]
                 : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
             }`}
           >
@@ -234,7 +234,7 @@ export default function OrderCRUD() {
             <p className="font-semibold text-(--ds-text-muted)">No orders found</p>
             <p className="text-sm text-gray-400 mt-1">{searchQuery ? 'Try a different search term' : 'Waiting for your first sale!'}</p>
             {searchQuery && (
-              <button onClick={() => setSearchQuery('')} className="mt-3 text-sm text-[#10B981] hover:underline">
+              <button onClick={() => setSearchQuery('')} className="mt-3 text-sm text-[#047857] hover:underline">
                 Clear search
               </button>
             )}
@@ -277,7 +277,7 @@ export default function OrderCRUD() {
                           </span>
                           <button
                             onClick={copyOrderId}
-                            className="p-1 text-gray-400 hover:text-[#10B981] rounded transition"
+                            className="p-1 text-gray-400 hover:text-[#047857] rounded transition"
                             title="Copy full Order ID"
                             aria-label={`Copy order ID for order ${shortOrderId}`}
                           >
@@ -385,7 +385,7 @@ export default function OrderCRUD() {
                 Order Details
                 <span className="inline-flex items-center gap-1 font-mono text-xs font-normal text-(--ds-text-muted) bg-(--ds-card-muted) px-2 py-0.5 rounded">
                   {modalFullOrderId}
-                  <button onClick={copyModalOrderId} className="text-(--ds-text-faint) hover:text-[#10B981] transition" title="Copy Order ID">
+                  <button onClick={copyModalOrderId} className="text-(--ds-text-faint) hover:text-[#047857] transition" title="Copy Order ID">
                     <Copy className="w-3.5 h-3.5" />
                   </button>
                 </span>

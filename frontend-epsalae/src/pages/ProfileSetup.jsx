@@ -90,7 +90,7 @@ const NEPAL_DISTRICTS = {
 const inputCls = 'w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 px-4 text-sm text-slate-900 outline-none transition focus:border-[#1E293B] focus:bg-white focus:ring-4 focus:ring-[#1E293B]/10'
 const errorInputCls = inputCls + ' border-red-300 bg-red-50 focus:border-red-400 focus:ring-red-100'
 const selectCls = inputCls + ' cursor-pointer'
-const labelCls = 'block mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400'
+const labelCls = 'block mb-1.5 text-xs font-semibold uppercase tracking-wider text-slate-600'
 const errorTextCls = 'mt-1.5 text-xs text-red-600'
 
 const profileSchema = z.object({
@@ -225,7 +225,7 @@ export default function ProfileSetup() {
           {/* Avatar */}
           <div className="flex flex-col items-center border-b border-slate-100 p-6 text-center lg:border-b-0 lg:border-r">
             <div className="relative">
-              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl bg-[linear-gradient(135deg,#1E293B,#10B981)] text-2xl font-semibold text-white shadow-lg">
+              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-3xl bg-[linear-gradient(135deg,#1E293B,#047857)] text-2xl font-semibold text-white shadow-lg">
                 {avatarPreview
                   ? <img src={avatarPreview} alt="Avatar" className="h-full w-full object-cover" />
                   : initials || 'U'}
@@ -236,7 +236,7 @@ export default function ProfileSetup() {
               </label>
             </div>
             <p className="mt-3 text-sm font-medium text-slate-700">Profile photo</p>
-            <p className="mt-0.5 text-xs text-slate-400">JPG, PNG or WebP</p>
+            <p className="mt-0.5 text-xs text-slate-600">JPG, PNG or WebP</p>
             {uploadError && <p className="mt-2 text-xs text-red-600">{uploadError}</p>}
             {avatarUrl && !uploadError && (
               <p className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
@@ -288,8 +288,9 @@ export default function ProfileSetup() {
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             {/* District */}
             <div>
-              <label className={labelCls}>District</label>
+              <label className={labelCls} htmlFor="district">District</label>
               <select
+                id="district"
                 {...districtField}
                 onChange={(e) => { districtField.onChange(e); setValue('city', '', { shouldDirty: true }) }}
                 className={selectCls}
@@ -303,8 +304,9 @@ export default function ProfileSetup() {
 
             {/* City / Municipality */}
             <div>
-              <label className={labelCls}>City / Municipality</label>
+              <label className={labelCls} htmlFor="city">City / Municipality</label>
               <select
+                id="city"
                 {...register('city')}
                 disabled={!district}
                 className={selectCls + (!district ? ' opacity-50 cursor-not-allowed' : '')}
@@ -326,8 +328,8 @@ export default function ProfileSetup() {
 
             {/* Country (fixed) */}
             <div>
-              <label className={labelCls}>Country</label>
-              <input value="Nepal" readOnly className={inputCls + ' cursor-not-allowed opacity-60'} />
+              <label className={labelCls} htmlFor="country">Country</label>
+              <input id="country" value="Nepal" readOnly className={inputCls + ' cursor-not-allowed opacity-60'} />
             </div>
           </div>
         </div>

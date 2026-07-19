@@ -39,7 +39,7 @@ export default function FeaturedCarousel() {
       <div className="px-3 sm:px-6 mx-auto max-w-7xl">
         <div className="flex items-center justify-between mb-5 sm:mb-6">
           <h3 className="flex items-center gap-2 text-lg sm:text-xl font-bold text-gray-900">
-            <span className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-50 text-[#10B981]">
+            <span className="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-50 text-[#047857]">
               <Flame className="w-4 h-4" />
             </span>
             Hot Deals
@@ -88,7 +88,7 @@ export default function FeaturedCarousel() {
                           <div className="min-w-0">
                             <div className="text-sm font-bold text-gray-900">Rs. {price?.toLocaleString()}</div>
                             {hasOffer && (
-                              <div className="text-xs text-gray-400 line-through">Rs. {p.price?.toLocaleString()}</div>
+                              <div className="text-xs text-gray-600 line-through">Rs. {p.price?.toLocaleString()}</div>
                             )}
                           </div>
                           <button
@@ -98,7 +98,7 @@ export default function FeaturedCarousel() {
                               if (!addToCart({ id, name: p.name, price: p.discountPrice || p.price, image: getImageUrl(p.imageUrl), quantity: 1 })) return
                               toast.success('Added to cart!')
                             }}
-                            className="shrink-0 p-2 text-white bg-[#1E293B] rounded-full hover:bg-[#10B981] active:scale-90 transition-all"
+                            className="shrink-0 p-2 text-white bg-[#1E293B] rounded-full hover:bg-[#047857] active:scale-90 transition-all"
                           >
                             <ShoppingCart className="w-4 h-4" />
                           </button>
