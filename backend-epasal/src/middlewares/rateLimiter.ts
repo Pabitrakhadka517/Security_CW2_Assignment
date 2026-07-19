@@ -67,6 +67,20 @@ export const accountChangeLimiter = rateLimit({
   limit: 8,
 });
 
+/** Forgot-password requests — per-IP cap to prevent email-bombing a victim's inbox. */
+export const forgotPasswordLimiter = rateLimit({
+  ...baseOptions,
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+});
+
+/** Reset-password submissions — public, unauthenticated endpoint; cap abuse. */
+export const resetPasswordLimiter = rateLimit({
+  ...baseOptions,
+  windowMs: 15 * 60 * 1000,
+  limit: 8,
+});
+
 /** Coupon validation / order-total preview — throttle coupon-code guessing. */
 export const couponLimiter = rateLimit({
   ...baseOptions,

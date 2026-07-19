@@ -99,6 +99,8 @@ export interface IUser extends Document {
   mfaSecret?: string;
   mfaEnabled: boolean;
   mfaBackupCodes?: string[];
+  resetPasswordTokenHash?: string;
+  resetPasswordExpiresAt?: Date;
   passwordHistory?: string[];
   passwordChangedAt: Date;
   passwordExpiresAt: Date;
@@ -151,6 +153,8 @@ UserSchema.add({
   mfaSecret: { type: String, select: false },
   mfaEnabled: { type: Boolean, default: false },
   mfaBackupCodes: { type: [String], select: false },
+  resetPasswordTokenHash: { type: String, select: false, index: true },
+  resetPasswordExpiresAt: { type: Date, select: false },
   // Last 5 password hashes (most recent last), kept to block password reuse.
   passwordHistory: { type: [String], select: false, default: [] },
   passwordChangedAt: { type: Date, default: Date.now },

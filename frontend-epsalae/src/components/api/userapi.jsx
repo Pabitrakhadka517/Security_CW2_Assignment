@@ -135,6 +135,8 @@ export const authEndpoints = {
   // Google Sign-In — `credential` is the ID token from Google Identity
   // Services, verified server-side. Bypasses MFA by design (see backend).
   google: (credential) => userApi.post('/auth/google', { credential }),
+  forgotPassword: (email) => userApi.post('/auth/forgot-password', { email }),
+  resetPassword: (payload) => userApi.post('/auth/reset-password', payload),
 };
 
 export const sessionEndpoints = {

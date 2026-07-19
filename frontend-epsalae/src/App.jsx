@@ -9,6 +9,8 @@ import OrderSuccess from './pages/OrderSuccess'
 import TrackOrder from './pages/TrackOrder'
 import AdminLogin from './pages/AdminLogin'
 import LoginPage from './pages/LoginPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import SalePage from './pages/SalePage'
 import SalesHub from './pages/SalesHub'
 import RegisterPage from './pages/RegisterPage'
@@ -148,6 +150,8 @@ function App() {
           {/* Checkout requires a logged-in customer. */}
           <Route path="checkout" element={<UserProtectedRoute><Checkout /></UserProtectedRoute>} />
           <Route path="login" element={<LoginPage />} />
+          <Route path="forgot-password" element={<ForgotPasswordPage />} />
+          <Route path="reset-password" element={<ResetPasswordPage />} />
           <Route path="sale/:slug" element={<SalePage />} />
           <Route path="sales" element={<SalesHub />} />
           <Route path="register" element={<RegisterPage />} />

@@ -1,5 +1,5 @@
-import nodemailer from 'nodemailer';
 import { logger } from '../utils/logger';
+import { getTransporter } from '../utils/mailer';
 
 /**
  * Real-time delivery for HIGH/CRITICAL security events that
@@ -37,24 +37,6 @@ function shouldAlert(type: string, ip: string): boolean {
 
   alertCooldowns.set(key, new Date());
   return true;
-}
-
-let transporter: nodemailer.Transporter | null = null;
-
-function getTransporter(): nodemailer.Transporter | null {
-  if (transporter) return transporter;
-
-  const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
-  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) return null;
-
-  transporter = nodemailer.createTransport({
-    host: SMTP_HOST,
-    port: parseInt(SMTP_PORT || '587', 10),
-    secure: parseInt(SMTP_PORT || '587', 10) === 465,
-    auth: { user: SMTP_USER, pass: SMTP_PASS },
-  });
-
-  return transporter;
 }
 
 function renderEmailHtml(alert: SecurityAlert): string {

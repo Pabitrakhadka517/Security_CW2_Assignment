@@ -3,9 +3,10 @@ import Joi from 'joi';
 import * as authController from '../controllers/auth.controller';
 import * as userController from '../controllers/user.controller';
 import * as sessionController from '../controllers/session.controller';
+import * as passwordResetController from '../controllers/passwordReset.controller';
 import { validateRequest } from '../middlewares/validateRequest';
 import { requireAdmin, requireAuth } from '../middlewares/authMiddleware';
-import { loginLimiter, registerLimiter, refreshLimiter, accountChangeLimiter } from '../middlewares/rateLimiter';
+import { loginLimiter, registerLimiter, refreshLimiter, accountChangeLimiter, forgotPasswordLimiter, resetPasswordLimiter } from '../middlewares/rateLimiter';
 import { requireCaptcha } from '../middlewares/captcha';
 import { conditionalCaptcha } from '../middlewares/conditionalCaptcha';
 import { requireCsrfToken } from '../middlewares/csrf.middleware';
@@ -157,6 +158,20 @@ router.post('/google', loginLimiter, validateRequest({
 
 router.post('/refresh', refreshLimiter, requireCsrfToken, authController.refresh);
 router.post('/logout', requireCsrfToken, authController.logout);
+
+// Password recovery — user accounts only (see passwordReset.controller.ts).
+// Generic responses on both routes: never reveal whether an email is
+// registered, and never distinguish "expired" from "invalid" tokens.
+router.post('/forgot-password', forgotPasswordLimiter, validateRequest({
+  body: Joi.object({ email: Joi.string().email().required() }),
+}), passwordResetController.forgotPassword);
+
+router.post('/reset-password', resetPasswordLimiter, validateRequest({
+  body: Joi.object({
+    token: Joi.string().required(),
+    newPassword: strongPasswordSchema,
+  }),
+}), passwordResetController.resetPassword);
 
 // Logged-in user's own recent security activity (never another user's).
 router.get('/me/activity', requireAuth, authController.getMyActivity);
