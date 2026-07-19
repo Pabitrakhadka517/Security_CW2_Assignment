@@ -1,4 +1,4 @@
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { Request, Response } from 'express';
 import * as auditService from '../services/audit.service';
 import { createAuditContext } from './auditLogger';
@@ -84,7 +84,7 @@ export const exportDataLimiter = rateLimit({
   ...baseOptions,
   windowMs: 24 * 60 * 60 * 1000,
   limit: 3,
-  keyGenerator: (req: Request) => req.user?.id || req.ip || 'unknown',
+  keyGenerator: (req: Request) => req.user?.id || ipKeyGenerator(req.ip || 'unknown'),
   handler: (_req: Request, res: Response) => {
     res.status(429).json({
       success: false,
