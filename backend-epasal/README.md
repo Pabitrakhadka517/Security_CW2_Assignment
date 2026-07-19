@@ -1,128 +1,85 @@
+# Epasaley — E-Commerce Backend
 
-<<<<<<< HEAD
+A Node.js/Express/TypeScript backend for the Epasaley store: product catalogue, orders,
+coupons, and a security-focused authentication system (JWT with refresh rotation, TOTP/email
+MFA, CSRF, rate limiting, encryption at rest, audit logging).
 
-# 🌟 **Epasaley – E-Commerce Backend**
+## What it does
 
-Epasaley is a **complete backend system** built for modern e-commerce platforms.
-It provides everything required to run an online store — products, categories, banners, flash sales, coupons, orders, and more.
+### Catalogue
+* Products, categories, banners, and seasonal sale categories — full CRUD for admins,
+  filtered/paginated/searchable reads for the public storefront.
+* Coupons with validation and per-code usage analytics.
+* Orders: server-side pricing (client-submitted totals are never trusted), atomic stock
+  decrement/rollback, cash-on-delivery only.
 
-This backend is built to be:
+### Authentication & account security
+* JWT access + refresh tokens, with refresh-token rotation and reuse detection (a reused,
+  already-rotated-out token revokes its entire session family).
+* MFA via TOTP (authenticator app + QR code + backup codes) or emailed one-time codes —
+  either method works for both user and admin accounts.
+* Forgot/reset password (hashed, time-limited tokens) and optional email verification on
+  registration.
+* Password complexity rules, reuse prevention, and expiry.
+* CSRF protection (double-submit cookie) on the two cookie-authenticated endpoints
+  (`/auth/refresh`, `/auth/logout`).
+* Session management: list/revoke individual sessions or all sessions, device tracking.
 
-* **Fast**
-* **Secure**
-* **Reliable**
-* **Easy to extend**
-* **Ready for real-world usage**
+### Access control & abuse protection
+* Role-based access control (admin/user) enforced by middleware on every protected route.
+* Rate limiting per sensitive endpoint (login, register, password reset, MFA, exports, …),
+  account lockout after repeated failures, hCaptcha on high-risk attempts, and an IP
+  allow/block list.
 
+### Data protection
+* AES-256-GCM encryption at rest for PII (phone, address) and MFA secrets.
+* Input sanitization (HTML stripping) and Mongoose-level validation on every write path.
+* Image uploads validated by both declared MIME type and actual file signature (magic
+  bytes), then stored on Cloudinary — never on local disk.
 
-## 🚀 **What This Backend Can Do**
+### Observability
+* Structured audit log for auth events, profile changes, and admin actions (never logs
+  passwords, tokens, or OTP codes).
+* Real-time alerts (email/Slack) for high/critical security events, plus an admin security
+  dashboard (suspicious IPs, login activity, audit trail).
 
-### 🛍️ Products
+## Stack
 
-Add, update, delete, and display products with full details, pricing, discounts, and stock.
+* Node.js + Express + TypeScript
+* MongoDB + Mongoose
+* JWT (`jsonwebtoken`), `bcryptjs`, `speakeasy` (TOTP)
+* Cloudinary (image storage)
+* Jest (unit/integration tests)
 
-### 🗂️ Categories
+## Getting started
 
-Organize products into meaningful categories for easier browsing.
+```bash
+npm install
+cp .env.example .env   # fill in the values described below
+npm run dev
+```
 
-### 🎏 Banners
+Run the test suite with `npm test`.
 
-Display promotional banners for offers, sales, and events.
+## CORS configuration
 
-### 💸 Coupons
+Allowed origins are set via the `CORS_ORIGINS` environment variable. This is required
+whenever the frontend sends credentials (cookies) — browsers reject credentialed requests
+if the server responds with `Access-Control-Allow-Origin: *`.
 
-Create discount coupons, validate them, and apply them during checkout.
+- Local dev: `http://localhost:5174`
+- Production: `https://your-frontend-domain.com`
+- Multiple origins: `CORS_ORIGINS="http://localhost:5174,https://frontend.example.com"`
 
-### ⚡ Flash Sales
+The server echoes back the validated `Origin` as `Access-Control-Allow-Origin` and sets
+`Access-Control-Allow-Credentials: true` only when that origin is on the allow list.
 
-Run limited-time flash sales with custom stock and pricing.
+## Encryption keys
 
-### 📦 Orders
-
-Customers can place orders, and admins can manage them easily — update status, view stats, track users, etc.
-
-### 👤 Authentication
-
-Secure login system using tokens for:
-
-* Customers
-* Admins (separate access & control)
-
-### 📸 Image Upload
-
-Upload product and banner images using Cloudinary.
-
-### 🔎 Search, Filter & Pagination
-
-Products can be:
-
-* Searched
-* Sorted
-* Filtered
-* Paginated
-
-Makes browsing fast and smooth.
-
-
-## 🧱 **How It Is Built**
-
-* Backend: **Node.js + Express.js**
-* Database: **MongoDB**
-* Authentication: **JWT (JSON Web Tokens)**
-* Image Storage: **Cloudinary**
-* Language: **TypeScript**
-* Architecture: Clean, modular, service-based
-
-
-
-
-
-
-
-
-## 🚀 **Why This Backend Is Production-Ready**
-
-* Secure authentication
-* Error handling
-* Validations
-* Performance optimizations
-* Scalable architecture
-* Cloud image support
-* Clean folder structure
-
-
-## 📄 **License**
-
-This project is released under the **ISC License**, allowing open usage and modification.
-
-
-## ⚙️ CORS Configuration (for local dev and production)
-
-The server allows configuring allowed origins via the `CORS_ORIGINS` environment variable. This is required when the frontend sends credentials (cookies) — browsers block requests with `credentials` if the server responds with `Access-Control-Allow-Origin: *`.
-
-How to set it on Render (or any host that exposes environment variables):
-
-- Example values:
-	- Local dev: `http://localhost:5174`
-	- Production frontend: `https://your-frontend-domain.com`
-- Combine multiple origins separated by commas:
-	- `CORS_ORIGINS="http://localhost:5174,https://frontend.example.com"`
-
-Steps for Render:
-
-1. Go to your Render service for the backend.
-2. Open the **Environment** tab.
-3. Add a new variable `CORS_ORIGINS` and set its value to the comma-separated origin list.
-4. Redeploy the service.
-
-Notes:
-- In development, the frontend code defaults to a relative API base so the Vite dev proxy can forward `/api/v1` requests to the remote backend (see frontend Vite config).
-- The server will echo back the validated `Origin` as `Access-Control-Allow-Origin` and will set `Access-Control-Allow-Credentials: true` when the origin is allowed.
-
-
-## 🔐 Generating Encryption Keys
-
-Phone numbers and address fields (`User.phone`, `User.address`, `User.savedAddresses`, `Order.phone`, `Order.address`) are encrypted at rest with AES-256-GCM — see `src/services/encryption.service.ts`. Email, name, and order metadata (status, amounts, ids) stay plaintext since they're needed for lookup, search, and queries.
+Phone numbers and address fields (`User.phone`, `User.address`, `User.savedAddresses`,
+`Order.phone`, `Order.address`) and MFA secrets are encrypted at rest with AES-256-GCM —
+see `src/services/encryption.service.ts`. Email, name, and order metadata (status, amounts,
+ids) stay plaintext since they're needed for lookup, search, and queries.
 
 Generate a key:
 
@@ -130,7 +87,9 @@ Generate a key:
 node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```
 
-Set it as `ENCRYPTION_KEY` in your `.env` (64 hex characters). Use a **different** key per environment — never reuse the dev key in production, and never commit a real key to version control.
+Set it as `ENCRYPTION_KEY` in `.env` (64 hex characters). Use a **different** key per
+environment — never reuse the dev key in production, and never commit a real key to
+version control.
 
 ```
 ENCRYPTION_KEY=<64 hex chars>
@@ -138,9 +97,12 @@ ENCRYPTION_KEY_VERSION=1
 ENCRYPTION_KEY_V0=          # only set during a key rotation
 ```
 
-The server validates `ENCRYPTION_KEY` on startup (`src/app.ts`) and refuses to boot if it's missing, the wrong length, or fails a roundtrip encrypt/decrypt test.
+The server validates `ENCRYPTION_KEY` on startup (`src/app.ts`) and refuses to boot if
+it's missing, the wrong length, or fails a roundtrip encrypt/decrypt test.
 
-**Rotating a key** — generate a new key, move the current `ENCRYPTION_KEY` value to `ENCRYPTION_KEY_V0`, set the new value as `ENCRYPTION_KEY`, bump `ENCRYPTION_KEY_VERSION`, then run the migration during a maintenance window:
+**Rotating a key** — generate a new key, move the current `ENCRYPTION_KEY` value to
+`ENCRYPTION_KEY_V0`, set the new value as `ENCRYPTION_KEY`, bump `ENCRYPTION_KEY_VERSION`,
+then run the migration during a maintenance window:
 
 ```bash
 npm run rotate:encryption-key -- --dry-run   # preview
@@ -149,6 +111,6 @@ npm run rotate:encryption-key                # apply
 
 Once every document is confirmed migrated, remove `ENCRYPTION_KEY_V0`.
 
+## License
 
-=======
->>>>>>> 2c2c863173173d7de050db6af1c4df25f5c749fb
+Released under the ISC License.
