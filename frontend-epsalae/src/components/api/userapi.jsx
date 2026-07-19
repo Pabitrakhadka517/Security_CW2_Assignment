@@ -132,6 +132,12 @@ export const authEndpoints = {
     headers: { Authorization: `Bearer ${mfaPendingToken}` },
     skipAuthRetry: true,
   }),
+  // Resend the emailed OTP mid-login (email MFA method only) — same
+  // pending-token auth as mfaChallenge above.
+  mfaResendChallenge: (mfaPendingToken) => userApi.post('/auth/mfa/challenge/resend', {}, {
+    headers: { Authorization: `Bearer ${mfaPendingToken}` },
+    skipAuthRetry: true,
+  }),
   // Google Sign-In — `credential` is the ID token from Google Identity
   // Services, verified server-side. Bypasses MFA by design (see backend).
   google: (credential) => userApi.post('/auth/google', { credential }),
@@ -147,9 +153,10 @@ export const sessionEndpoints = {
 
 export const mfaEndpoints = {
   status: () => userApi.get('/auth/mfa/status'),
-  setup: () => userApi.post('/auth/mfa/setup'),
+  setup: (payload) => userApi.post('/auth/mfa/setup', payload),
   verifySetup: (payload) => userApi.post('/auth/mfa/verify-setup', payload),
   disable: (payload) => userApi.post('/auth/mfa/disable', payload),
+  requestDisableCode: () => userApi.post('/auth/mfa/disable/request-code'),
 };
 
 export const profileEndpoints = {

@@ -34,6 +34,17 @@ function decryptUserFields(doc: any): void {
     }
   }
 
+  // mfaSecret is select: false, so it's only present here when a query
+  // explicitly asked for it (e.g. findAccount(..., '+mfaSecret')).
+  if (doc.mfaSecret && encryptionService.isEncrypted(doc.mfaSecret)) {
+    try {
+      doc.mfaSecret = encryptionService.decrypt(doc.mfaSecret);
+    } catch {
+      doc.mfaSecret = '[DECRYPTION_FAILED]';
+      reportDecryptionFailure(doc._id, 'mfaSecret');
+    }
+  }
+
   if (doc.address) {
     const address = doc.address.toObject ? doc.address.toObject() : { ...doc.address };
     for (const field of ADDRESS_ENCRYPTED_FIELDS) {
@@ -99,6 +110,11 @@ export interface IUser extends Document {
   mfaSecret?: string;
   mfaEnabled: boolean;
   mfaBackupCodes?: string[];
+  mfaMethod: 'totp' | 'email';
+  mfaEmailOtpHash?: string;
+  mfaEmailOtpExpiresAt?: Date;
+  mfaEmailOtpAttempts?: number;
+  mfaEmailOtpSentAt?: Date;
   resetPasswordTokenHash?: string;
   resetPasswordExpiresAt?: Date;
   passwordHistory?: string[];
@@ -153,6 +169,11 @@ UserSchema.add({
   mfaSecret: { type: String, select: false },
   mfaEnabled: { type: Boolean, default: false },
   mfaBackupCodes: { type: [String], select: false },
+  mfaMethod: { type: String, enum: ['totp', 'email'], default: 'totp' },
+  mfaEmailOtpHash: { type: String, select: false },
+  mfaEmailOtpExpiresAt: { type: Date, select: false },
+  mfaEmailOtpAttempts: { type: Number, default: 0, select: false },
+  mfaEmailOtpSentAt: { type: Date, select: false },
   resetPasswordTokenHash: { type: String, select: false, index: true },
   resetPasswordExpiresAt: { type: Date, select: false },
   // Last 5 password hashes (most recent last), kept to block password reuse.
@@ -190,6 +211,10 @@ UserSchema.pre('save', function (next) {
 
   if (user.isModified('phone') && user.phone) {
     user.phone = encryptionService.encryptIfNotEncrypted(user.phone);
+  }
+
+  if (user.isModified('mfaSecret') && user.mfaSecret) {
+    user.mfaSecret = encryptionService.encryptIfNotEncrypted(user.mfaSecret);
   }
 
   if (user.isModified('address') && user.address) {

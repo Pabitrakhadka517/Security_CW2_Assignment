@@ -23,6 +23,7 @@
     "diagnose": "ts-node --transpile-only scripts/diagnose.ts",
     "reset:db": "ts-node --transpile-only scripts/reset-db.ts",
     "rotate:encryption-key": "ts-node --transpile-only scripts/rotate-encryption-key.ts",
+    "migrate:encrypt-mfa-secrets": "ts-node --transpile-only scripts/encrypt-mfa-secrets.ts",
     "diagnose:sale": "ts-node --transpile-only scripts/diagnose-sale.ts",
     "diagnose:coupon": "ts-node --transpile-only scripts/diagnose-coupon.ts"
   },

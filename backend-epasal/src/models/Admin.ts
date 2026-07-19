@@ -1,5 +1,32 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { encryptionService } from '../services/encryption.service';
+import * as auditService from '../services/audit.service';
+
+function reportDecryptionFailure(adminId: unknown, field: string): void {
+  void auditService.log({
+    userId: adminId ? String(adminId) : null,
+    action: 'SUSPICIOUS_ACTIVITY',
+    status: 'FAILURE',
+    ipAddress: 'internal',
+    riskLevel: 'CRITICAL',
+    metadata: { type: 'decryption_failure', field },
+  });
+}
+
+// mfaSecret is select: false, so it's only present here when a query
+// explicitly asked for it. Safe to call on documents that never had it set.
+function decryptAdminFields(doc: any): void {
+  if (!doc) return;
+  if (doc.mfaSecret && encryptionService.isEncrypted(doc.mfaSecret)) {
+    try {
+      doc.mfaSecret = encryptionService.decrypt(doc.mfaSecret);
+    } catch {
+      doc.mfaSecret = '[DECRYPTION_FAILED]';
+      reportDecryptionFailure(doc._id, 'mfaSecret');
+    }
+  }
+}
 
 export interface IAdmin extends Document {
   adminId: string; // Unique admin ID (e.g., "ADMIN001")
@@ -15,6 +42,11 @@ export interface IAdmin extends Document {
   mfaSecret?: string;
   mfaEnabled: boolean;
   mfaBackupCodes?: string[];
+  mfaMethod: 'totp' | 'email';
+  mfaEmailOtpHash?: string;
+  mfaEmailOtpExpiresAt?: Date;
+  mfaEmailOtpAttempts?: number;
+  mfaEmailOtpSentAt?: Date;
   passwordHistory?: string[];
   passwordChangedAt: Date;
   passwordExpiresAt: Date;
@@ -93,6 +125,28 @@ const AdminSchema = new Schema<IAdmin>(
       type: [String],
       select: false,
     },
+    mfaMethod: {
+      type: String,
+      enum: ['totp', 'email'],
+      default: 'totp',
+    },
+    mfaEmailOtpHash: {
+      type: String,
+      select: false,
+    },
+    mfaEmailOtpExpiresAt: {
+      type: Date,
+      select: false,
+    },
+    mfaEmailOtpAttempts: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    mfaEmailOtpSentAt: {
+      type: Date,
+      select: false,
+    },
     // Last 5 password hashes (most recent last), kept to block password reuse.
     passwordHistory: {
       type: [String],
@@ -121,20 +175,33 @@ AdminSchema.virtual('isLocked').get(function (this: IAdmin) {
   return !!(this.lockUntil && this.lockUntil.getTime() > Date.now());
 });
 
-// Hash password before saving
+// Hash password, and encrypt mfaSecret (AES-256-GCM), before saving.
+// encryptIfNotEncrypted is idempotent, so re-saving an already-encrypted
+// value never double-encrypts.
 AdminSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
-    return next();
-  }
-
   try {
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
+    if (this.isModified('password')) {
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password, salt);
+    }
+
+    if (this.isModified('mfaSecret') && this.mfaSecret) {
+      this.mfaSecret = encryptionService.encryptIfNotEncrypted(this.mfaSecret);
+    }
+
     next();
   } catch (error) {
     next(error as Error);
   }
 });
+
+// Decrypt mfaSecret on read/write. Fires for both hydrated documents and
+// .lean() plain objects.
+AdminSchema.post('findOne', decryptAdminFields);
+AdminSchema.post('find', function (docs: any[]) {
+  docs.forEach(decryptAdminFields);
+});
+AdminSchema.post('save', decryptAdminFields);
 
 // Method to compare passwords
 AdminSchema.methods.comparePassword = async function (password: string): Promise<boolean> {

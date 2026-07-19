@@ -4,7 +4,7 @@ import * as mfaController from '../controllers/mfa.controller';
 import { requireAuthAny } from '../middlewares/authMiddleware';
 import { checkPasswordExpiry } from '../middlewares/passwordExpiry';
 import { validateRequest } from '../middlewares/validateRequest';
-import { accountChangeLimiter, loginLimiter } from '../middlewares/rateLimiter';
+import { accountChangeLimiter, loginLimiter, emailOtpLimiter } from '../middlewares/rateLimiter';
 
 const router = Router();
 
@@ -14,7 +14,9 @@ const totpTokenSchema = Joi.string().pattern(/^[0-9]{6,10}$/).required().message
 
 // requireAuthAny (not requireAuth) — both regular users and admins manage
 // their own MFA here, and the two roles verify against different JWT secrets.
-router.post('/setup', requireAuthAny, checkPasswordExpiry, accountChangeLimiter, mfaController.setupMFA);
+router.post('/setup', requireAuthAny, checkPasswordExpiry, accountChangeLimiter, validateRequest({
+  body: Joi.object({ method: Joi.string().valid('totp', 'email').optional() }),
+}), mfaController.setupMFA);
 
 router.post('/verify-setup', requireAuthAny, checkPasswordExpiry, accountChangeLimiter, validateRequest({
   body: Joi.object({ token: totpTokenSchema }),
@@ -27,6 +29,8 @@ router.post('/disable', requireAuthAny, checkPasswordExpiry, accountChangeLimite
   }),
 }), mfaController.disableMFA);
 
+router.post('/disable/request-code', requireAuthAny, checkPasswordExpiry, accountChangeLimiter, mfaController.requestDisableCode);
+
 router.get('/status', requireAuthAny, checkPasswordExpiry, mfaController.getMFAStatus);
 
 // Auth here is the mfa-pending token verified inside the controller, not a
@@ -37,5 +41,7 @@ router.post('/challenge', loginLimiter, validateRequest({
     useBackupCode: Joi.boolean().optional(),
   }),
 }), mfaController.mfaChallenge);
+
+router.post('/challenge/resend', emailOtpLimiter, mfaController.resendChallengeCode);
 
 export default router;

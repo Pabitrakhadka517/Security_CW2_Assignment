@@ -20,12 +20,35 @@ export default function AdminLogin() {
   // localStorage/sessionStorage — since it's a short-lived, single-purpose
   // credential that grants nothing on its own.
   const [mfaPendingToken, setMfaPendingToken] = useState(null);
+  const [mfaMethod, setMfaMethod]             = useState('totp');
   const [mfaCode, setMfaCode]                 = useState('');
   const [useBackupCode, setUseBackupCode]     = useState(false);
+  const [mfaResendCooldown, setMfaResendCooldown] = useState(0);
+  const [mfaResending, setMfaResending]       = useState(false);
 
   useEffect(() => {
     if (isAdmin) navigate('/admin');
   }, [isAdmin, navigate]);
+
+  useEffect(() => {
+    if (mfaResendCooldown <= 0) return;
+    const t = setTimeout(() => setMfaResendCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [mfaResendCooldown]);
+
+  const handleResendMfaCode = async () => {
+    if (!mfaPendingToken) return;
+    setMfaResending(true);
+    try {
+      await authEndpoints.mfaResendChallenge(mfaPendingToken);
+      setMfaResendCooldown(60);
+      toast.success('A new code has been sent to your email');
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to resend code');
+    } finally {
+      setMfaResending(false);
+    }
+  };
 
   const completeLogin = (data) => {
     const token = data.data?.token || data.token || data.accessToken;
@@ -60,7 +83,10 @@ export default function AdminLogin() {
       if (!response.ok) return toast.error(data.message || 'Login failed');
 
       if (data.requiresMFA || data.data?.requiresMFA) {
+        const method = data.data?.mfaMethod || data.mfaMethod;
         setMfaPendingToken(data.data?.mfaPendingToken || data.mfaPendingToken);
+        setMfaMethod(method === 'email' ? 'email' : 'totp');
+        if (method === 'email') setMfaResendCooldown(60);
         return;
       }
 
@@ -132,7 +158,11 @@ export default function AdminLogin() {
           {mfaPendingToken ? (
             <form onSubmit={handleMfaSubmit} className="space-y-5">
               <p className="text-center text-sm text-(--ds-text-muted)">
-                Enter the 6-digit code from your authenticator app{useBackupCode ? ', or a backup code' : ''}.
+                {useBackupCode
+                  ? 'Enter one of your unused backup codes.'
+                  : mfaMethod === 'email'
+                    ? 'We emailed you a 6-digit code. Enter it below.'
+                    : 'Enter the 6-digit code from your authenticator app.'}
               </p>
 
               <div>
@@ -154,12 +184,23 @@ export default function AdminLogin() {
                 </div>
               </div>
 
+              {!useBackupCode && mfaMethod === 'email' && (
+                <button
+                  type="button"
+                  onClick={handleResendMfaCode}
+                  disabled={mfaResending || mfaResendCooldown > 0}
+                  className="text-xs text-(--ds-text-muted) transition-colors hover:text-[#10B981] disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {mfaResendCooldown > 0 ? `Resend code (${mfaResendCooldown}s)` : 'Resend code'}
+                </button>
+              )}
+
               <button
                 type="button"
                 onClick={() => { setUseBackupCode(!useBackupCode); setMfaCode(''); }}
                 className="text-xs text-(--ds-text-muted) transition-colors hover:text-[#10B981]"
               >
-                {useBackupCode ? 'Use authenticator code instead' : 'Use a backup code instead'}
+                {useBackupCode ? (mfaMethod === 'email' ? 'Use email code instead' : 'Use authenticator code instead') : 'Use a backup code instead'}
               </button>
 
               <button
@@ -182,7 +223,7 @@ export default function AdminLogin() {
 
               <button
                 type="button"
-                onClick={() => { setMfaPendingToken(null); setMfaCode(''); setUseBackupCode(false); }}
+                onClick={() => { setMfaPendingToken(null); setMfaCode(''); setUseBackupCode(false); setMfaResendCooldown(0); }}
                 className="w-full text-center text-xs text-(--ds-text-muted) transition-colors hover:text-(--ds-text)"
               >
                 Back to login

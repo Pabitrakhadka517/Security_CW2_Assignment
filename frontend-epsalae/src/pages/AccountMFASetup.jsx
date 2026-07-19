@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
-import { ShieldCheck, ShieldAlert, AlertTriangle, Loader2, KeyRound, Copy, Check, Download } from 'lucide-react'
+import { ShieldCheck, ShieldAlert, AlertTriangle, Loader2, KeyRound, Copy, Check, Download, Mail, Smartphone } from 'lucide-react'
 import { mfaEndpoints } from '@/components/api/userapi'
 
 const SETUP_STEPS = [
@@ -10,7 +10,8 @@ const SETUP_STEPS = [
   { id: 2, label: 'Verify' },
   { id: 3, label: 'Backup codes' },
 ]
-const STEP_NUMBER_OF = { status: 1, qr: 2, 'backup-codes': 3 }
+const STEP_NUMBER_OF = { status: 1, 'choose-method': 1, verify: 2, 'backup-codes': 3 }
+const RESEND_COOLDOWN_SECONDS = 60
 
 function SetupStepIndicator({ currentStep }) {
   return (
@@ -44,13 +45,21 @@ export default function AccountMFASetup() {
   const navigate = useNavigate()
   const [checkingStatus, setCheckingStatus] = useState(true)
   const [mfaEnabled, setMfaEnabled] = useState(false)
-  const [step, setStep] = useState('status') // status | qr | backup-codes
+  const [step, setStep] = useState('status') // status | choose-method | verify | backup-codes
+  const [method, setMethod] = useState('totp')
   const [qrCode, setQrCode] = useState(null)
   const [secret, setSecret] = useState(null)
   const [backupCodes, setBackupCodes] = useState([])
   const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
   const [hasConfirmedBackup, setHasConfirmedBackup] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const t = setTimeout(() => setResendCooldown((s) => s - 1), 1000)
+    return () => clearTimeout(t)
+  }, [resendCooldown])
 
   const {
     register,
@@ -72,16 +81,35 @@ export default function AccountMFASetup() {
     return () => { cancelled = true }
   }, [])
 
-  const startSetup = async () => {
+  const startSetup = async (chosenMethod) => {
     setLoading(true)
     try {
-      const res = await mfaEndpoints.setup()
+      const res = await mfaEndpoints.setup({ method: chosenMethod })
       const data = res.data?.data || res.data || {}
-      setQrCode(data.qrCode)
-      setSecret(data.secret)
-      setStep('qr')
+      setMethod(chosenMethod)
+      if (chosenMethod === 'email') {
+        setResendCooldown(RESEND_COOLDOWN_SECONDS)
+        toast.success('Verification code sent to your email')
+      } else {
+        setQrCode(data.qrCode)
+        setSecret(data.secret)
+      }
+      setStep('verify')
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to start MFA setup')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const resendEmailCode = async () => {
+    setLoading(true)
+    try {
+      await mfaEndpoints.setup({ method: 'email' })
+      setResendCooldown(RESEND_COOLDOWN_SECONDS)
+      toast.success('A new code has been sent to your email')
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to resend code')
     } finally {
       setLoading(false)
     }
@@ -158,45 +186,82 @@ export default function AccountMFASetup() {
                 Google Authenticator or Authy to sign in.
               </p>
               <button
-                onClick={startSetup}
+                onClick={() => setStep('choose-method')}
                 disabled={loading}
                 className="w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-sm transition disabled:opacity-60"
               >
-                {loading ? 'Starting setup…' : 'Enable MFA'}
+                Enable MFA
               </button>
             </div>
           )
         )}
 
-        {step === 'qr' && (
+        {step === 'choose-method' && (
+          <div className="space-y-3">
+            <p className="text-sm text-slate-500 mb-2">Choose how you'd like to receive verification codes.</p>
+            <button
+              onClick={() => startSetup('totp')}
+              disabled={loading}
+              className="w-full flex items-center gap-3 rounded-xl border border-slate-200 hover:border-slate-400 hover:bg-slate-50 px-4 py-3 text-left transition disabled:opacity-60"
+            >
+              <Smartphone className="w-5 h-5 text-slate-700 shrink-0" />
+              <span>
+                <span className="block text-sm font-semibold text-slate-900">Authenticator app</span>
+                <span className="block text-xs text-slate-500">Google Authenticator, Authy, or similar</span>
+              </span>
+            </button>
+            <button
+              onClick={() => startSetup('email')}
+              disabled={loading}
+              className="w-full flex items-center gap-3 rounded-xl border border-slate-200 hover:border-slate-400 hover:bg-slate-50 px-4 py-3 text-left transition disabled:opacity-60"
+            >
+              <Mail className="w-5 h-5 text-slate-700 shrink-0" />
+              <span>
+                <span className="block text-sm font-semibold text-slate-900">Email code</span>
+                <span className="block text-xs text-slate-500">We'll send a 6-digit code to your email</span>
+              </span>
+            </button>
+          </div>
+        )}
+
+        {step === 'verify' && (
           <div className="space-y-5">
-            <p className="text-sm text-slate-500">
-              Scan this with Google Authenticator or Authy.
-            </p>
-            {qrCode && (
-              <div className="flex justify-center">
-                <img src={qrCode} alt="MFA QR code" className="w-48 h-48 rounded-xl border border-slate-200" />
-              </div>
-            )}
-            {secret && (
-              <div>
-                <label className="block text-xs font-medium text-slate-500 mb-1.5">
-                  Can't scan? Type this key into your authenticator app instead
-                  (look for "Enter a setup key" when adding an account) — do not type it below.
-                </label>
-                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <code className="flex-1 text-sm font-mono text-slate-900 break-all">{secret}</code>
-                  <button type="button" onClick={copySecret} className="text-slate-400 hover:text-slate-600 shrink-0">
-                    {copied ? <Check size={16} /> : <Copy size={16} />}
-                  </button>
-                </div>
+            {method === 'totp' ? (
+              <>
+                <p className="text-sm text-slate-500">
+                  Scan this with Google Authenticator or Authy.
+                </p>
+                {qrCode && (
+                  <div className="flex justify-center">
+                    <img src={qrCode} alt="MFA QR code" className="w-48 h-48 rounded-xl border border-slate-200" />
+                  </div>
+                )}
+                {secret && (
+                  <div>
+                    <label className="block text-xs font-medium text-slate-500 mb-1.5">
+                      Can't scan? Type this key into your authenticator app instead
+                      (look for "Enter a setup key" when adding an account) — do not type it below.
+                    </label>
+                    <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+                      <code className="flex-1 text-sm font-mono text-slate-900 break-all">{secret}</code>
+                      <button type="button" onClick={copySecret} className="text-slate-400 hover:text-slate-600 shrink-0">
+                        {copied ? <Check size={16} /> : <Copy size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 text-slate-700 rounded-xl px-4 py-3 text-sm">
+                <Mail size={16} className="shrink-0" />
+                <span>We've emailed a 6-digit code to your address. It expires in 10 minutes.</span>
               </div>
             )}
 
             <form onSubmit={handleSubmit(onVerify)} className="space-y-4">
               <div>
                 <label htmlFor="token" className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Enter the 6-digit code shown in your authenticator app
+                  {method === 'totp' ? 'Enter the 6-digit code shown in your authenticator app' : 'Enter the 6-digit code we emailed you'}
                 </label>
                 {(() => {
                   const tokenField = register('token', {
@@ -232,6 +297,17 @@ export default function AccountMFASetup() {
                 {loading ? 'Verifying…' : 'Verify & Enable'}
               </button>
             </form>
+
+            {method === 'email' && (
+              <button
+                type="button"
+                onClick={resendEmailCode}
+                disabled={loading || resendCooldown > 0}
+                className="w-full text-center text-sm text-slate-500 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+              >
+                {resendCooldown > 0 ? `Resend code (${resendCooldown}s)` : 'Resend code'}
+              </button>
+            )}
           </div>
         )}
 

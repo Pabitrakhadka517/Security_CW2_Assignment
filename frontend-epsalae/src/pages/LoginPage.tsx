@@ -12,6 +12,7 @@ import { LogoMark } from '@/components/ui/Logo';
 const MAX_MFA_ATTEMPTS = 5;
 const MAX_LOGIN_ATTEMPTS = 5;
 const CAPTCHA_AFTER_ATTEMPTS = 2;
+const MFA_RESEND_COOLDOWN_SECONDS = 60;
 
 const LoginPage: React.FC = () => {
   const navigate   = useNavigate();
@@ -44,10 +45,19 @@ const LoginPage: React.FC = () => {
   // localStorage/sessionStorage — since it's a short-lived, single-purpose
   // credential that grants nothing on its own.
   const [mfaPendingToken, setMfaPendingToken] = useState<string | null>(null);
+  const [mfaMethod, setMfaMethod]             = useState<'totp' | 'email'>('totp');
   const [mfaCode, setMfaCode]                 = useState('');
   const [useBackupCode, setUseBackupCode]     = useState(false);
   const [mfaError, setMfaError]               = useState('');
   const [mfaAttemptsUsed, setMfaAttemptsUsed] = useState(0);
+  const [mfaResendCooldown, setMfaResendCooldown] = useState(0);
+  const [mfaResending, setMfaResending]       = useState(false);
+
+  useEffect(() => {
+    if (mfaResendCooldown <= 0) return;
+    const t = setTimeout(() => setMfaResendCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [mfaResendCooldown]);
 
   const [capsLockOn, setCapsLockOn] = useState(false);
   const handlePasswordKeyEvent = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -93,6 +103,7 @@ const LoginPage: React.FC = () => {
     setMfaCode('');
     setMfaError('');
     setMfaAttemptsUsed(0);
+    setMfaResendCooldown(0);
     try {
       // Two-way cart sync: pull the cart saved on the server, merge it into
       // the local cart, then push the merged result back.
@@ -124,6 +135,8 @@ const LoginPage: React.FC = () => {
 
       if (data.requiresMFA) {
         setMfaPendingToken(data.mfaPendingToken);
+        setMfaMethod(data.mfaMethod === 'email' ? 'email' : 'totp');
+        if (data.mfaMethod === 'email') setMfaResendCooldown(MFA_RESEND_COOLDOWN_SECONDS);
         return;
       }
 
@@ -162,6 +175,22 @@ const LoginPage: React.FC = () => {
     setUseBackupCode(false);
     setMfaError('');
     setMfaAttemptsUsed(0);
+    setMfaResendCooldown(0);
+  };
+
+  const handleResendMfaCode = async () => {
+    if (!mfaPendingToken) return;
+    setMfaResending(true);
+    setMfaError('');
+    try {
+      await authEndpoints.mfaResendChallenge(mfaPendingToken);
+      setMfaResendCooldown(MFA_RESEND_COOLDOWN_SECONDS);
+      toast.success('A new code has been sent to your email');
+    } catch (err: any) {
+      setMfaError(err?.response?.data?.message || 'Failed to resend code');
+    } finally {
+      setMfaResending(false);
+    }
   };
 
   const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
@@ -256,7 +285,9 @@ const LoginPage: React.FC = () => {
               <p className="text-gray-500 text-sm mb-8">
                 {useBackupCode
                   ? 'Enter one of your unused backup codes.'
-                  : 'Open your authenticator app and enter the 6-digit code.'}
+                  : mfaMethod === 'email'
+                    ? 'We emailed you a 6-digit code. Enter it below.'
+                    : 'Open your authenticator app and enter the 6-digit code.'}
               </p>
 
               {mfaError && (
@@ -295,12 +326,23 @@ const LoginPage: React.FC = () => {
                   )}
                 </button>
 
+                {!useBackupCode && mfaMethod === 'email' && (
+                  <button
+                    type="button"
+                    onClick={handleResendMfaCode}
+                    disabled={mfaResending || mfaResendCooldown > 0}
+                    className="w-full text-sm text-[#1E293B] hover:text-[#10B981] transition font-medium text-center disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {mfaResendCooldown > 0 ? `Resend code (${mfaResendCooldown}s)` : 'Resend code'}
+                  </button>
+                )}
+
                 <button
                   type="button"
                   onClick={() => { setUseBackupCode(v => !v); setMfaCode(''); setMfaError(''); }}
                   className="w-full text-sm text-[#1E293B] hover:text-[#10B981] transition font-medium text-center"
                 >
-                  {useBackupCode ? 'Use authenticator code instead' : 'Use a backup code instead'}
+                  {useBackupCode ? (mfaMethod === 'email' ? 'Use email code instead' : 'Use authenticator code instead') : 'Use a backup code instead'}
                 </button>
 
                 <button type="button" onClick={backToCredentials} className="w-full text-sm text-gray-500 hover:text-gray-700 transition text-center">

@@ -16,6 +16,13 @@ import {
   generateBackupCodes,
   hashBackupCode,
   verifyBackupCode,
+  generateEmailOtp,
+  hashEmailOtp,
+  verifyEmailOtp,
+  sendMFAEmailOtp,
+  EMAIL_OTP_TTL_MS,
+  EMAIL_OTP_RESEND_COOLDOWN_MS,
+  EMAIL_OTP_MAX_ATTEMPTS,
 } from '../services/mfa.service';
 
 type MFARole = 'user' | 'admin';
@@ -40,38 +47,91 @@ const requireAccountContext = (req: Request): { id: string; role: MFARole } => {
 
 /**
  * POST /api/v1/auth/mfa/setup
- * Generates a new TOTP secret and stores it (not yet enabled) so the client
- * can render the QR code and confirm possession via /verify-setup.
+ * method 'totp' (default): generates a new TOTP secret and stores it (not
+ * yet enabled) so the client can render the QR code and confirm possession
+ * via /verify-setup.
+ * method 'email': generates and emails an OTP (not yet enabled) so the
+ * client can confirm possession of the inbox via /verify-setup. Calling
+ * this again while method is 'email' re-sends a fresh code (resend), gated
+ * by a cooldown.
  */
 export const setupMFA = asyncHandler(async (req: Request, res: Response) => {
   const { id, role } = requireAccountContext(req);
+  const method: 'totp' | 'email' = req.body?.method === 'email' ? 'email' : 'totp';
+
+  if (method === 'email') {
+    const account = await findAccount(id, role, '+mfaEmailOtpSentAt');
+    if (!account) throw new UnauthorizedError('Account not found');
+
+    if (account.mfaEmailOtpSentAt && Date.now() - account.mfaEmailOtpSentAt.getTime() < EMAIL_OTP_RESEND_COOLDOWN_MS) {
+      throw new BadRequestError('Please wait before requesting another code');
+    }
+
+    const code = generateEmailOtp();
+    account.mfaMethod = 'email';
+    account.mfaEmailOtpHash = hashEmailOtp(code);
+    account.mfaEmailOtpExpiresAt = new Date(Date.now() + EMAIL_OTP_TTL_MS);
+    account.mfaEmailOtpAttempts = 0;
+    account.mfaEmailOtpSentAt = new Date();
+    await account.save();
+
+    await sendMFAEmailOtp(account.email, code, 'setup');
+
+    res.json({ success: true, data: { method: 'email' } });
+    return;
+  }
+
   const account = await findAccount(id, role);
   if (!account) throw new UnauthorizedError('Account not found');
 
   const { secret, otpauthUrl } = generateMFASecret(account.email);
   account.mfaSecret = secret;
+  account.mfaMethod = 'totp';
   await account.save();
 
   const qrCode = await generateQRCode(otpauthUrl);
 
-  res.json({ success: true, data: { qrCode, secret } });
+  res.json({ success: true, data: { method: 'totp', qrCode, secret } });
 });
 
 /**
  * POST /api/v1/auth/mfa/verify-setup
- * Confirms the caller actually holds the secret (via a live TOTP code)
- * before flipping mfaEnabled on, then issues one-time backup codes.
+ * Confirms the caller actually holds the secret/inbox (via a live TOTP code
+ * or emailed OTP, depending on account.mfaMethod) before flipping
+ * mfaEnabled on, then issues one-time backup codes.
  */
 export const verifySetup = asyncHandler(async (req: Request, res: Response) => {
   const { id, role } = requireAccountContext(req);
   const { token } = req.body || {};
   if (!token) throw new BadRequestError('Verification code is required');
 
-  const account = await findAccount(id, role, '+mfaSecret');
-  if (!account || !account.mfaSecret) throw new BadRequestError('MFA setup has not been started');
+  const account = await findAccount(id, role, '+mfaSecret +mfaEmailOtpHash +mfaEmailOtpExpiresAt +mfaEmailOtpAttempts');
+  if (!account) throw new UnauthorizedError('Account not found');
 
-  if (!verifyTOTP(account.mfaSecret, token)) {
-    throw new BadRequestError('Invalid verification code');
+  if (account.mfaMethod === 'email') {
+    if (!account.mfaEmailOtpHash || !account.mfaEmailOtpExpiresAt) {
+      throw new BadRequestError('MFA setup has not been started');
+    }
+    if (account.mfaEmailOtpExpiresAt.getTime() < Date.now()) {
+      throw new BadRequestError('Verification code has expired — request a new one');
+    }
+    if ((account.mfaEmailOtpAttempts ?? 0) >= EMAIL_OTP_MAX_ATTEMPTS) {
+      throw new BadRequestError('Too many attempts — request a new code');
+    }
+    if (!(await verifyEmailOtp(token, account.mfaEmailOtpHash))) {
+      account.mfaEmailOtpAttempts = (account.mfaEmailOtpAttempts ?? 0) + 1;
+      await account.save();
+      throw new BadRequestError('Invalid verification code');
+    }
+    account.mfaEmailOtpHash = undefined;
+    account.mfaEmailOtpExpiresAt = undefined;
+    account.mfaEmailOtpAttempts = 0;
+    account.mfaEmailOtpSentAt = undefined;
+  } else {
+    if (!account.mfaSecret) throw new BadRequestError('MFA setup has not been started');
+    if (!verifyTOTP(account.mfaSecret, token)) {
+      throw new BadRequestError('Invalid verification code');
+    }
   }
 
   const backupCodes = generateBackupCodes();
@@ -79,7 +139,7 @@ export const verifySetup = asyncHandler(async (req: Request, res: Response) => {
   account.mfaBackupCodes = backupCodes.map(hashBackupCode);
   await account.save();
 
-  await auditService.log({ ...createAuditContext(req), userId: id, userEmail: account.email, userRole: role, action: 'MFA_ENABLED', status: 'SUCCESS', riskLevel: 'LOW' });
+  await auditService.log({ ...createAuditContext(req), userId: id, userEmail: account.email, userRole: role, action: 'MFA_ENABLED', status: 'SUCCESS', riskLevel: 'LOW', metadata: { method: account.mfaMethod } });
 
   // Force re-login everywhere (including this device) — a stolen access
   // token from before MFA was enabled must not survive the change.
@@ -93,27 +153,47 @@ export const verifySetup = asyncHandler(async (req: Request, res: Response) => {
 
 /**
  * POST /api/v1/auth/mfa/disable
- * Requires both the current password and a live TOTP code — either alone
- * isn't enough to turn off a second factor.
+ * Requires both the current password and a live verification code — either
+ * alone isn't enough to turn off a second factor. For email-method
+ * accounts, call /disable/request-code first to get a code emailed.
  */
 export const disableMFA = asyncHandler(async (req: Request, res: Response) => {
   const { id, role } = requireAccountContext(req);
   const { token, password } = req.body || {};
   if (!token || !password) throw new BadRequestError('Password and verification code are required');
 
-  const account = await findAccount(id, role, '+password +mfaSecret');
+  const account = await findAccount(id, role, '+password +mfaSecret +mfaEmailOtpHash +mfaEmailOtpExpiresAt +mfaEmailOtpAttempts');
   if (!account) throw new UnauthorizedError('Account not found');
 
   const isPasswordValid = await account.comparePassword(password);
   if (!isPasswordValid) throw new UnauthorizedError('Incorrect password');
 
-  if (!account.mfaEnabled || !account.mfaSecret || !verifyTOTP(account.mfaSecret, token)) {
+  if (!account.mfaEnabled) {
+    throw new BadRequestError('Invalid verification code');
+  }
+
+  if (account.mfaMethod === 'email') {
+    const expired = !account.mfaEmailOtpHash || !account.mfaEmailOtpExpiresAt || account.mfaEmailOtpExpiresAt.getTime() < Date.now();
+    const tooManyAttempts = (account.mfaEmailOtpAttempts ?? 0) >= EMAIL_OTP_MAX_ATTEMPTS;
+    if (expired || tooManyAttempts || !(await verifyEmailOtp(token, account.mfaEmailOtpHash!))) {
+      if (!expired && !tooManyAttempts) {
+        account.mfaEmailOtpAttempts = (account.mfaEmailOtpAttempts ?? 0) + 1;
+        await account.save();
+      }
+      throw new BadRequestError('Invalid verification code');
+    }
+  } else if (!account.mfaSecret || !verifyTOTP(account.mfaSecret, token)) {
     throw new BadRequestError('Invalid verification code');
   }
 
   account.mfaEnabled = false;
   account.mfaSecret = undefined;
   account.mfaBackupCodes = [];
+  account.mfaMethod = 'totp';
+  account.mfaEmailOtpHash = undefined;
+  account.mfaEmailOtpExpiresAt = undefined;
+  account.mfaEmailOtpAttempts = 0;
+  account.mfaEmailOtpSentAt = undefined;
   await account.save();
 
   await auditService.log({ ...createAuditContext(req), userId: id, userEmail: account.email, userRole: role, action: 'MFA_DISABLED', status: 'SUCCESS', riskLevel: 'MEDIUM' });
@@ -130,14 +210,96 @@ export const disableMFA = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
+ * POST /api/v1/auth/mfa/disable/request-code
+ * Emails a fresh OTP for use with /disable, when the account's MFA method
+ * is 'email' (an authenticator-app user already has a live code and
+ * doesn't need this step).
+ */
+export const requestDisableCode = asyncHandler(async (req: Request, res: Response) => {
+  const { id, role } = requireAccountContext(req);
+  const account = await findAccount(id, role, '+mfaEmailOtpSentAt');
+  if (!account) throw new UnauthorizedError('Account not found');
+
+  if (!account.mfaEnabled || account.mfaMethod !== 'email') {
+    throw new BadRequestError('Email verification code is not applicable for this account');
+  }
+
+  if (account.mfaEmailOtpSentAt && Date.now() - account.mfaEmailOtpSentAt.getTime() < EMAIL_OTP_RESEND_COOLDOWN_MS) {
+    throw new BadRequestError('Please wait before requesting another code');
+  }
+
+  const code = generateEmailOtp();
+  account.mfaEmailOtpHash = hashEmailOtp(code);
+  account.mfaEmailOtpExpiresAt = new Date(Date.now() + EMAIL_OTP_TTL_MS);
+  account.mfaEmailOtpAttempts = 0;
+  account.mfaEmailOtpSentAt = new Date();
+  await account.save();
+
+  await sendMFAEmailOtp(account.email, code, 'disable');
+
+  res.json({ success: true, message: 'Verification code sent to your email' });
+});
+
+/**
  * GET /api/v1/auth/mfa/status
  */
 export const getMFAStatus = asyncHandler(async (req: Request, res: Response) => {
   const { id, role } = requireAccountContext(req);
-  const account = await findAccount(id, role, 'mfaEnabled');
+  const account = await findAccount(id, role, 'mfaEnabled mfaMethod');
   if (!account) throw new UnauthorizedError('Account not found');
 
-  res.json({ success: true, data: { mfaEnabled: account.mfaEnabled } });
+  res.json({ success: true, data: { mfaEnabled: account.mfaEnabled, mfaMethod: account.mfaMethod } });
+});
+
+/**
+ * Both /challenge and /challenge/resend authenticate via the mfa-pending
+ * token rather than requireAuth (a full session doesn't exist yet).
+ */
+const decodePendingToken = (req: Request): { userId: string; role: MFARole } => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    throw new UnauthorizedError('MFA session token required');
+  }
+  const pendingToken = authHeader.split(' ')[1];
+
+  try {
+    const decoded = verifyMFAPendingToken(pendingToken);
+    return { userId: decoded.userId, role: decoded.role === 'admin' ? 'admin' : 'user' };
+  } catch {
+    throw new UnauthorizedError('Invalid or expired MFA session');
+  }
+};
+
+/**
+ * POST /api/v1/auth/mfa/challenge/resend
+ * Re-sends the email OTP mid-login, for accounts whose MFA method is
+ * 'email'. Not applicable to TOTP accounts, which already hold a live code
+ * in their authenticator app.
+ */
+export const resendChallengeCode = asyncHandler(async (req: Request, res: Response) => {
+  const { userId, role } = decodePendingToken(req);
+
+  const account = await findAccount(userId, role, '+mfaEmailOtpSentAt');
+  if (!account || !account.mfaEnabled) throw new UnauthorizedError('MFA not enabled for this account');
+
+  if (account.mfaMethod !== 'email') {
+    throw new BadRequestError('Email verification code is not applicable for this account');
+  }
+
+  if (account.mfaEmailOtpSentAt && Date.now() - account.mfaEmailOtpSentAt.getTime() < EMAIL_OTP_RESEND_COOLDOWN_MS) {
+    throw new BadRequestError('Please wait before requesting another code');
+  }
+
+  const code = generateEmailOtp();
+  account.mfaEmailOtpHash = hashEmailOtp(code);
+  account.mfaEmailOtpExpiresAt = new Date(Date.now() + EMAIL_OTP_TTL_MS);
+  account.mfaEmailOtpAttempts = 0;
+  account.mfaEmailOtpSentAt = new Date();
+  await account.save();
+
+  await sendMFAEmailOtp(account.email, code, 'login');
+
+  res.json({ success: true, message: 'Verification code sent to your email' });
 });
 
 /**
@@ -149,25 +311,12 @@ export const getMFAStatus = asyncHandler(async (req: Request, res: Response) => 
  * Admin) and the right session/token issuance path get used below.
  */
 export const mfaChallenge = asyncHandler(async (req: Request, res: Response) => {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    throw new UnauthorizedError('MFA session token required');
-  }
-  const pendingToken = authHeader.split(' ')[1];
-
-  let decoded;
-  try {
-    decoded = verifyMFAPendingToken(pendingToken);
-  } catch {
-    throw new UnauthorizedError('Invalid or expired MFA session');
-  }
-
-  const role: MFARole = decoded.role === 'admin' ? 'admin' : 'user';
+  const { userId, role } = decodePendingToken(req);
   const { token, useBackupCode } = req.body || {};
   if (!token) throw new BadRequestError('Verification code is required');
 
-  const account = await findAccount(decoded.userId, role, '+mfaSecret +mfaBackupCodes');
-  if (!account || !account.mfaEnabled || !account.mfaSecret) {
+  const account = await findAccount(userId, role, '+mfaSecret +mfaBackupCodes +mfaEmailOtpHash +mfaEmailOtpExpiresAt +mfaEmailOtpAttempts');
+  if (!account || !account.mfaEnabled) {
     throw new UnauthorizedError('MFA not enabled for this account');
   }
 
@@ -179,7 +328,19 @@ export const mfaChallenge = asyncHandler(async (req: Request, res: Response) => 
       verified = true;
       account.mfaBackupCodes = (account.mfaBackupCodes || []).filter((_, i) => i !== index);
     }
-  } else {
+  } else if (account.mfaMethod === 'email') {
+    const expired = !account.mfaEmailOtpHash || !account.mfaEmailOtpExpiresAt || account.mfaEmailOtpExpiresAt.getTime() < Date.now();
+    const tooManyAttempts = (account.mfaEmailOtpAttempts ?? 0) >= EMAIL_OTP_MAX_ATTEMPTS;
+    if (!expired && !tooManyAttempts && account.mfaEmailOtpHash && (await verifyEmailOtp(token, account.mfaEmailOtpHash))) {
+      verified = true;
+      account.mfaEmailOtpHash = undefined;
+      account.mfaEmailOtpExpiresAt = undefined;
+      account.mfaEmailOtpAttempts = 0;
+      account.mfaEmailOtpSentAt = undefined;
+    } else if (!expired && !tooManyAttempts) {
+      account.mfaEmailOtpAttempts = (account.mfaEmailOtpAttempts ?? 0) + 1;
+    }
+  } else if (account.mfaSecret) {
     verified = verifyTOTP(account.mfaSecret, token);
   }
 

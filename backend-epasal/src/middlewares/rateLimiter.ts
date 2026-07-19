@@ -81,6 +81,13 @@ export const resetPasswordLimiter = rateLimit({
   limit: 8,
 });
 
+/** MFA email-OTP resend (login challenge) — throttle inbox-spamming. */
+export const emailOtpLimiter = rateLimit({
+  ...baseOptions,
+  windowMs: 10 * 60 * 1000,
+  limit: 5,
+});
+
 /** Coupon validation / order-total preview — throttle coupon-code guessing. */
 export const couponLimiter = rateLimit({
   ...baseOptions,

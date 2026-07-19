@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import crypto from 'crypto';
 import { Admin, IAdmin } from '../models/Admin';
 import { generateAccessToken, generateRefreshToken, generateMFAPendingToken, decodeToken, verifyRefreshToken } from '../utils/tokenGenerator';
+import { generateEmailOtp, hashEmailOtp, sendMFAEmailOtp, EMAIL_OTP_TTL_MS } from '../services/mfa.service';
 import { BadRequestError, UnauthorizedError, LockedError } from '../utils/errors';
 import { asyncHandler } from '../middlewares/asyncHandler';
 import { RefreshToken } from '../models/RefreshToken';
@@ -115,12 +116,22 @@ export const login = asyncHandler(async (req: Request, res: Response): Promise<v
   // pending token that's only good for the /auth/mfa/challenge step (mirrors
   // the same gate on the regular-user login path).
   if (admin.mfaEnabled) {
+    if (admin.mfaMethod === 'email') {
+      const code = generateEmailOtp();
+      admin.mfaEmailOtpHash = hashEmailOtp(code);
+      admin.mfaEmailOtpExpiresAt = new Date(Date.now() + EMAIL_OTP_TTL_MS);
+      admin.mfaEmailOtpAttempts = 0;
+      admin.mfaEmailOtpSentAt = new Date();
+      await admin.save();
+      await sendMFAEmailOtp(admin.email, code, 'login');
+    }
+
     const mfaPendingToken = generateMFAPendingToken(admin._id.toString(), 'admin');
     res.status(200).json({
       success: true,
       message: 'MFA verification required',
       requiresMFA: true,
-      data: { requiresMFA: true, mfaPendingToken },
+      data: { requiresMFA: true, mfaPendingToken, mfaMethod: admin.mfaMethod },
     });
     return;
   }

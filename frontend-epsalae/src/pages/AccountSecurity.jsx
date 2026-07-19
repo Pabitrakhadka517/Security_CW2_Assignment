@@ -31,26 +31,55 @@ const changePasswordSchema = z
     path: ['confirmPassword'],
   })
 
+const DISABLE_RESEND_COOLDOWN_SECONDS = 60
+
 function MFASection() {
   const [checking, setChecking] = useState(true)
   const [mfaEnabled, setMfaEnabled] = useState(false)
+  const [mfaMethod, setMfaMethod] = useState('totp')
   const [showDisable, setShowDisable] = useState(false)
   const [disableForm, setDisableForm] = useState({ password: '', token: '' })
   const [disabling, setDisabling] = useState(false)
   const [disableError, setDisableError] = useState(null)
   const [showDisablePwd, setShowDisablePwd] = useState(false)
+  const [emailCodeSent, setEmailCodeSent] = useState(false)
+  const [sendingCode, setSendingCode] = useState(false)
+  const [resendCooldown, setResendCooldown] = useState(0)
 
   useEffect(() => {
     let cancelled = false
     mfaEndpoints.status()
       .then((res) => {
         if (cancelled) return
-        setMfaEnabled(!!(res.data?.data?.mfaEnabled ?? res.data?.mfaEnabled))
+        const data = res.data?.data || res.data || {}
+        setMfaEnabled(!!data.mfaEnabled)
+        setMfaMethod(data.mfaMethod || 'totp')
       })
       .catch(() => {})
       .finally(() => { if (!cancelled) setChecking(false) })
     return () => { cancelled = true }
   }, [])
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return
+    const t = setTimeout(() => setResendCooldown((s) => s - 1), 1000)
+    return () => clearTimeout(t)
+  }, [resendCooldown])
+
+  const sendDisableCode = async () => {
+    setSendingCode(true)
+    setDisableError(null)
+    try {
+      await mfaEndpoints.requestDisableCode()
+      setEmailCodeSent(true)
+      setResendCooldown(DISABLE_RESEND_COOLDOWN_SECONDS)
+      toast.success('Verification code sent to your email')
+    } catch (err) {
+      setDisableError(err?.response?.data?.message || 'Failed to send verification code')
+    } finally {
+      setSendingCode(false)
+    }
+  }
 
   const handleDisable = async (e) => {
     e.preventDefault()
@@ -64,6 +93,7 @@ function MFASection() {
       await mfaEndpoints.disable(disableForm)
       setMfaEnabled(false)
       setShowDisable(false)
+      setEmailCodeSent(false)
       setDisableForm({ password: '', token: '' })
       toast.success('MFA disabled successfully')
     } catch (err) {
@@ -102,6 +132,32 @@ function MFASection() {
             >
               Disable MFA
             </button>
+          ) : mfaMethod === 'email' && !emailCodeSent ? (
+            <div className="space-y-3">
+              {disableError && (
+                <div role="alert" className="p-3 text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl">
+                  {disableError}
+                </div>
+              )}
+              <p className="text-sm text-slate-500">We'll email you a code to confirm disabling MFA.</p>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowDisable(false); setDisableError(null) }}
+                  className="flex-1 py-3 border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold rounded-xl text-sm transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={sendDisableCode}
+                  disabled={sendingCode}
+                  className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl text-sm transition disabled:opacity-60"
+                >
+                  {sendingCode ? 'Sending…' : 'Send code to my email'}
+                </button>
+              </div>
+            </div>
           ) : (
             <form onSubmit={handleDisable} className="space-y-3">
               {disableError && (
@@ -131,16 +187,26 @@ function MFASection() {
                 type="text"
                 inputMode="numeric"
                 maxLength={6}
-                placeholder="6-digit authenticator code"
+                placeholder={mfaMethod === 'email' ? '6-digit email code' : '6-digit authenticator code'}
                 value={disableForm.token}
                 onChange={(e) => setDisableForm((f) => ({ ...f, token: e.target.value }))}
                 disabled={disabling}
                 className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm font-mono tracking-widest text-center focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-400 disabled:opacity-50"
               />
+              {mfaMethod === 'email' && (
+                <button
+                  type="button"
+                  onClick={sendDisableCode}
+                  disabled={sendingCode || resendCooldown > 0}
+                  className="w-full text-center text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
+                >
+                  {resendCooldown > 0 ? `Resend code (${resendCooldown}s)` : 'Resend code'}
+                </button>
+              )}
               <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() => { setShowDisable(false); setDisableError(null) }}
+                  onClick={() => { setShowDisable(false); setDisableError(null); setEmailCodeSent(false) }}
                   disabled={disabling}
                   className="flex-1 py-3 border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold rounded-xl text-sm transition disabled:opacity-50"
                 >
