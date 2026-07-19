@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import toast from 'react-hot-toast';
@@ -14,6 +17,14 @@ const MAX_LOGIN_ATTEMPTS = 5;
 const CAPTCHA_AFTER_ATTEMPTS = 2;
 const MFA_RESEND_COOLDOWN_SECONDS = 60;
 
+const loginSchema = z.object({
+  email: z.string().trim().min(1, 'Email is required').email('Enter a valid email'),
+  password: z.string().min(1, 'Password is required').min(6, 'At least 6 characters'),
+  rememberMe: z.boolean(),
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+
 const LoginPage: React.FC = () => {
   const navigate   = useNavigate();
   const location   = useLocation();
@@ -22,13 +33,18 @@ const LoginPage: React.FC = () => {
 
   const returnTo: string = (location.state as any)?.returnTo || '/account';
 
-  const [email, setEmail]               = useState('');
-  const [password, setPassword]         = useState('');
-  const [rememberMe, setRememberMe]     = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading]           = useState(false);
   const [error, setError]               = useState('');
-  const [fieldErrors, setFieldErrors]   = useState<{ email?: string; password?: string }>({});
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors: fieldErrors },
+  } = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '', rememberMe: false },
+  });
 
   // CAPTCHA — required once the backend (or the local failed-attempt count)
   // signals a brute-force risk. Token lives in component state only; hCaptcha
@@ -82,16 +98,6 @@ const LoginPage: React.FC = () => {
     if (isUser) navigate(returnTo, { replace: true });
   }, [isUser, navigate, returnTo]);
 
-  const validate = () => {
-    const errs: { email?: string; password?: string } = {};
-    if (!email) errs.email = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs.email = 'Enter a valid email';
-    if (!password) errs.password = 'Password is required';
-    else if (password.length < 6) errs.password = 'At least 6 characters';
-    setFieldErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
   const completeLogin = async (data: any) => {
     const token = data.token || data.accessToken;
     const user  = data.user;
@@ -120,15 +126,13 @@ const LoginPage: React.FC = () => {
     navigate(returnTo, { replace: true });
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
+  const onSubmit = async (values: LoginFormValues) => {
     setLoading(true);
     setError('');
     try {
       const payload = requiresCaptcha
-        ? { email, password, captchaToken, rememberMe }
-        : { email, password, rememberMe };
+        ? { ...values, captchaToken }
+        : values;
       const res  = await authEndpoints.login(payload);
       const data = res.data?.data || res.data || {};
 
@@ -379,15 +383,14 @@ const LoginPage: React.FC = () => {
                 </div>
               )}
 
-              <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
                 {/* Email */}
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
                   <div className="relative">
                     <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" aria-hidden="true" />
                     <input
-                      id="email" type="email" value={email} disabled={loading} autoFocus
-                      onChange={e => { setEmail(e.target.value); setFieldErrors(p => ({ ...p, email: '' })); setError(''); }}
+                      id="email" type="email" disabled={loading} autoFocus
                       placeholder="you@example.com" autoComplete="email"
                       aria-invalid={!!fieldErrors.email}
                       aria-describedby={fieldErrors.email ? 'email-error' : undefined}
@@ -396,9 +399,10 @@ const LoginPage: React.FC = () => {
                           ? 'border-red-300 focus:ring-red-100 focus:border-red-400'
                           : 'border-gray-200 focus:ring-[#1E293B]/10 focus:border-[#1E293B]/40'
                       }`}
+                      {...register('email')}
                     />
                   </div>
-                  {fieldErrors.email && <p id="email-error" role="alert" className="mt-1.5 text-xs text-red-500">{fieldErrors.email}</p>}
+                  {fieldErrors.email && <p id="email-error" role="alert" className="mt-1.5 text-xs text-red-500">{fieldErrors.email.message}</p>}
                 </div>
 
                 {/* Password */}
@@ -412,8 +416,7 @@ const LoginPage: React.FC = () => {
                   <div className="relative">
                     <Lock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" aria-hidden="true" />
                     <input
-                      id="password" type={showPassword ? 'text' : 'password'} value={password} disabled={loading}
-                      onChange={e => { setPassword(e.target.value); setFieldErrors(p => ({ ...p, password: '' })); setError(''); }}
+                      id="password" type={showPassword ? 'text' : 'password'} disabled={loading}
                       onKeyDown={handlePasswordKeyEvent} onKeyUp={handlePasswordKeyEvent}
                       placeholder="Your password" autoComplete="current-password"
                       aria-invalid={!!fieldErrors.password}
@@ -423,6 +426,7 @@ const LoginPage: React.FC = () => {
                           ? 'border-red-300 focus:ring-red-100 focus:border-red-400'
                           : 'border-gray-200 focus:ring-[#1E293B]/10 focus:border-[#1E293B]/40'
                       }`}
+                      {...register('password')}
                     />
                     <button type="button" onClick={() => setShowPassword(v => !v)} disabled={loading}
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
@@ -430,7 +434,7 @@ const LoginPage: React.FC = () => {
                       {showPassword ? <EyeOff size={15} /> : <Eye size={15} />}
                     </button>
                   </div>
-                  {fieldErrors.password && <p id="password-error" role="alert" className="mt-1.5 text-xs text-red-500">{fieldErrors.password}</p>}
+                  {fieldErrors.password && <p id="password-error" role="alert" className="mt-1.5 text-xs text-red-500">{fieldErrors.password.message}</p>}
                   {!fieldErrors.password && capsLockOn && (
                     <p id="password-capslock" className="mt-1.5 text-xs text-amber-600 animate-fade-in">Caps Lock is on</p>
                   )}
@@ -438,9 +442,9 @@ const LoginPage: React.FC = () => {
 
                 <label className="flex items-center gap-2 select-none cursor-pointer w-fit">
                   <input
-                    type="checkbox" checked={rememberMe} disabled={loading}
-                    onChange={e => setRememberMe(e.target.checked)}
+                    type="checkbox" disabled={loading}
                     className="h-4 w-4 rounded border-gray-300 text-[#1E293B] focus:ring-[#1E293B]/30"
+                    {...register('rememberMe')}
                   />
                   <span className="text-sm text-gray-600">Remember me for 30 days</span>
                 </label>
