@@ -30,3 +30,15 @@ export const refreshCookieOptions = (maxAge?: number): CookieOptions => {
   if (maxAge !== undefined) opts.maxAge = maxAge;
   return opts;
 };
+
+/**
+ * CSRF cookie policy — same scope as the refresh cookie (issued/cleared
+ * alongside it) but NOT httpOnly, since the frontend must read its value via
+ * document.cookie to echo it back as the X-CSRF-Token header (double-submit
+ * cookie pattern). See middlewares/csrf.middleware.ts.
+ */
+export const csrfCookieOptions = (maxAge?: number): CookieOptions => {
+  const opts = refreshCookieOptions(maxAge);
+  opts.httpOnly = false;
+  return opts;
+};

@@ -6,6 +6,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import { API_URL } from '@/config';
 import { getRoleFromToken } from '@/utils/jwt';
+import { getCsrfToken } from '@/utils/csrf';
 
 const api = axios.create({
   baseURL: API_URL,
@@ -22,6 +23,12 @@ const api = axios.create({
 // server-side logs so a request whose claimed role doesn't match what the
 // token actually verifies to stands out.
 api.interceptors.request.use((config) => {
+  // Double-submit CSRF token — only actually enforced server-side on
+  // /auth/refresh and /auth/logout (see csrf.middleware.ts), but harmless to
+  // attach everywhere.
+  const csrfToken = getCsrfToken();
+  if (csrfToken) config.headers['X-CSRF-Token'] = csrfToken;
+
   const token = localStorage.getItem('adminToken');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -35,8 +42,12 @@ api.interceptors.request.use((config) => {
 let refreshPromise = null;
 const refreshAdminToken = async () => {
   if (!refreshPromise) {
+    const csrfToken = getCsrfToken();
     refreshPromise = axios
-      .post(`${API_URL}/auth/refresh`, {}, { withCredentials: true })
+      .post(`${API_URL}/auth/refresh`, {}, {
+        withCredentials: true,
+        headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : {},
+      })
       .then((res) => {
         const data = res.data?.data || res.data || {};
         const newToken = data.token || data.accessToken;

@@ -8,6 +8,7 @@ import { requireAdmin, requireAuth } from '../middlewares/authMiddleware';
 import { loginLimiter, registerLimiter, refreshLimiter, accountChangeLimiter } from '../middlewares/rateLimiter';
 import { requireCaptcha } from '../middlewares/captcha';
 import { conditionalCaptcha } from '../middlewares/conditionalCaptcha';
+import { requireCsrfToken } from '../middlewares/csrf.middleware';
 import { strongPasswordSchema } from '../validations/password.validation';
 
 const router = Router();
@@ -154,8 +155,8 @@ router.post('/google', loginLimiter, validateRequest({
   }),
 }), userController.googleLogin);
 
-router.post('/refresh', refreshLimiter, authController.refresh);
-router.post('/logout', authController.logout);
+router.post('/refresh', refreshLimiter, requireCsrfToken, authController.refresh);
+router.post('/logout', requireCsrfToken, authController.logout);
 
 // Logged-in user's own recent security activity (never another user's).
 router.get('/me/activity', requireAuth, authController.getMyActivity);

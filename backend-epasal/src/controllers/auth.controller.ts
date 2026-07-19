@@ -5,7 +5,8 @@ import { generateAccessToken, generateRefreshToken, generateMFAPendingToken, dec
 import { BadRequestError, UnauthorizedError, LockedError } from '../utils/errors';
 import { asyncHandler } from '../middlewares/asyncHandler';
 import { RefreshToken } from '../models/RefreshToken';
-import { refreshCookieOptions } from '../utils/cookieOptions';
+import { refreshCookieOptions, csrfCookieOptions } from '../utils/cookieOptions';
+import { generateCsrfToken } from '../utils/csrf';
 import * as auditService from '../services/audit.service';
 import { createAuditContext } from '../middlewares/auditLogger';
 import { sendSuccess } from '../utils/responseHelper';
@@ -27,6 +28,7 @@ export const issueAdminSession = async (req: Request, res: Response, admin: IAdm
   const session = await sessionService.createSession(admin._id.toString(), 'admin', req, refreshToken);
   const maxAge = (session.expiresAt as Date).getTime() - Date.now();
   res.cookie('refreshToken', refreshToken, refreshCookieOptions(maxAge));
+  res.cookie('csrfToken', generateCsrfToken(), csrfCookieOptions(maxAge));
 
   res.status(200).json({
     success: true,
@@ -193,6 +195,7 @@ export const refresh = asyncHandler(async (req: Request, res: Response) => {
   // Set cookie
   const maxAge = newExpiresAt.getTime() - Date.now();
   res.cookie('refreshToken', newRefreshToken, refreshCookieOptions(maxAge));
+  res.cookie('csrfToken', generateCsrfToken(), csrfCookieOptions(maxAge));
 
   await auditService.log({ ...ctx, userId: payload.id, userEmail: payload.email, userRole: effectiveRole, action: 'TOKEN_REFRESH', status: 'SUCCESS', riskLevel: 'LOW' });
 
