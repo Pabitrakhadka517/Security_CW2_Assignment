@@ -6,8 +6,9 @@ import { z } from 'zod';
 import { User, Mail, Phone, Lock, Eye, EyeOff, AlertCircle, CheckCircle2, X, ArrowRight } from 'lucide-react';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import toast from 'react-hot-toast';
-import { authEndpoints } from '@/components/api/userapi';
+import { authEndpoints, profileEndpoints } from '@/components/api/userapi';
 import { useUserAuth } from '@/components/store/authstore';
+import { useCart } from '@/store/cartstore';
 import PasswordStrengthMeter from '@/components/ui/PasswordStrengthMeter';
 import PasswordRules from '@/components/ui/PasswordRules';
 import CaptchaWidget from '@/components/ui/CaptchaWidget';
@@ -117,6 +118,18 @@ const RegisterPage: React.FC = () => {
       const token = data.token || data.accessToken;
       if (!token) throw new Error(data?.message || 'Google sign-in failed');
       loginUser(token, data.user);
+      try {
+        // Same cart sync as LoginPage's completeLogin — a guest cart built
+        // right before signing up with Google should carry into the new
+        // account, and get persisted server-side from that point on.
+        const saved = await profileEndpoints.cart.get();
+        const savedItems = saved.data?.data || [];
+        useCart.getState().mergeServerCart(savedItems);
+        const merged = useCart.getState().cart;
+        if (Array.isArray(merged) && merged.length) {
+          await profileEndpoints.cart.merge({ items: merged });
+        }
+      } catch (_) {}
       toast.success('Welcome!');
       navigate(returnTo, { replace: true });
     } catch (err: any) {

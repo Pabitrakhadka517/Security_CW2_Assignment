@@ -2,6 +2,20 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import toast from 'react-hot-toast'
 import { useAdminAuth, useUserAuth } from '@/components/store/authstore'
+import { profileEndpoints } from '@/components/api/userapi'
+
+// Best-effort push of the current cart to the logged-in user's saved server
+// cart. Without this, a removal/quantity-change only ever updated local
+// state — the server's savedCart stayed stale, so the NEXT login's
+// merge-server-cart-into-local step (see LoginPage/RegisterPage
+// completeLogin) would re-add whatever the user had just deleted, since as
+// far as the server was concerned it was never removed. Guests have no
+// server cart to push to, and a logged-out isUser===false during logout's
+// clearCart() call correctly skips this (avoids an unauthenticated request).
+const syncCartToServer = (cart) => {
+  if (!useUserAuth.getState().isUser) return
+  profileEndpoints.cart.merge({ items: cart }).catch(() => {})
+}
 
 export const useCart = create(
   persist(
@@ -35,11 +49,13 @@ export const useCart = create(
           }
           return { cart: [...state.cart, product] }
         })
+        syncCartToServer(get().cart)
         return true
       },
 
       removeFromCart: (id, opts = {}) => {
         set((state) => ({ cart: state.cart.filter((item) => item.id !== id) }))
+        syncCartToServer(get().cart)
         if (opts.silent) return
 
         // Red theme - Product removed
@@ -62,14 +78,19 @@ export const useCart = create(
         })
       },
 
-      updateQuantity: (id, quantity) =>
+      updateQuantity: (id, quantity) => {
         set((state) => ({
           cart: state.cart.map((item) =>
             item.id === id ? { ...item, quantity: Math.max(1, quantity) } : item
           ),
-        })),
+        }))
+        syncCartToServer(get().cart)
+      },
 
-      clearCart: () => set({ cart: [] }),
+      clearCart: () => {
+        set({ cart: [] })
+        syncCartToServer([])
+      },
 
       // Replace the cart wholesale (used when restoring the saved server cart).
       setCart: (items) => set({ cart: Array.isArray(items) ? items : [] }),

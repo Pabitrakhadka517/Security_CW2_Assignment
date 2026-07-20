@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { useFavoritesStore } from '@/store/favoritesstore';
+import { useCart } from '@/store/cartstore';
 
 /**
  * Two separate auth slices so an admin login can't grant user-route access
@@ -56,8 +57,14 @@ export const useUserAuth = create(
       logoutUser: () => {
         try { localStorage.removeItem('userToken'); } catch (e) {}
         set({ userToken: null, user: null, isUser: false });
-        // Reset favorites so the next user starts fresh
+        // Reset favorites AND cart so the next identity on this browser (a
+        // guest, or a different account) starts fresh instead of inheriting
+        // this session's items. Without this, the cart-merge-on-login in
+        // LoginPage's completeLogin() would fold whatever was left in the
+        // local cart into the NEXT account's saved server cart — visibly
+        // leaking one user's/guest's cart contents into another account.
         useFavoritesStore.getState().reset();
+        useCart.getState().clearCart();
       },
 
       patchUser: (patch) => set((s) => ({ user: { ...(s.user || {}), ...patch } })),
