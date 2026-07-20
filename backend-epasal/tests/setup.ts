@@ -3,6 +3,15 @@ import dotenv from 'dotenv'
 dotenv.config()
 
 process.env.NODE_ENV = 'test'
+// dotenv just loaded real SMTP/Slack credentials from .env. Tests like
+// refreshTokenReuse.spec.ts deliberately trigger alertService.triggerAlert(),
+// which would otherwise send a genuine email/Slack message on every test run.
+// Clearing these makes getTransporter()/sendSlackAlert() degrade to their
+// already-coded no-op paths instead of reaching real services.
+delete process.env.SMTP_HOST
+delete process.env.SMTP_USER
+delete process.env.SMTP_PASS
+delete process.env.SLACK_WEBHOOK_URL
 // Deterministic JWT secrets so auth tests are self-contained even without .env.
 process.env.JWT_SECRET = process.env.JWT_SECRET || 'test_user_secret'
 process.env.JWT_ADMIN_SECRET = process.env.JWT_ADMIN_SECRET || 'test_admin_secret'
