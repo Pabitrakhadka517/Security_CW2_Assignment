@@ -45,9 +45,12 @@ export const createOrderSchema = {
     items: Joi.array().items(orderItemSchema).min(1).required(),
     couponCode: Joi.string().allow(null, '').optional().uppercase().trim(),
     totalAmount: Joi.number().required().min(0).messages({ 'number.min': 'Total amount must be at least 0' }),
-    // COD only — no online payment gateway is integrated. Other values are
-    // rejected so an order can never pretend to be "paid online".
-    paymentMethod: Joi.string().valid('cod').default('cod'),
+    // Only gateways actually wired up are accepted — 'khalti'/'card'/
+    // 'bank_transfer' stay in the Order schema enum for future use but are
+    // rejected here so an order can never claim a payment method that has no
+    // real verification behind it. eSewa orders start 'pending' just like
+    // COD; only payment.service#handleEsewaCallback ever flips them to 'paid'.
+    paymentMethod: Joi.string().valid('cod', 'esewa').default('cod'),
   }),
 };
 

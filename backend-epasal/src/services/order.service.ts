@@ -304,7 +304,9 @@ export class OrderService {
       city:       data.city,
       address:    data.address,
       description: data.description,
-      paymentMethod: 'cod', // contract: COD only — no online gateways integrated
+      // Validated against ['cod', 'esewa'] by createOrderSchema — never trust
+      // this beyond what Joi already whitelisted.
+      paymentMethod: data.paymentMethod === 'esewa' ? 'esewa' : 'cod',
       paymentStatus: 'pending',
       items: resolvedItems.map(ri => ({
         productId: ri.productId,

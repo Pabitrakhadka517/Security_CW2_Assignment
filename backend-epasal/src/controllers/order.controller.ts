@@ -229,6 +229,7 @@ export class OrderController {
       city: order.city,
       district: order.district,
       paymentMethod: order.paymentMethod,
+      paymentStatus: order.paymentStatus,
       items: order.items,
       totalAmount: order.totalAmount,
       createdAt: order.created_at,

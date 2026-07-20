@@ -102,6 +102,24 @@ export const couponLimiter = rateLimit({
   limit: 30,
 });
 
+/** eSewa payment-form generation — generous (retries after closing the eSewa tab are normal), still capped. */
+export const esewaInitiateLimiter = rateLimit({
+  ...baseOptions,
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+});
+
+/**
+ * eSewa success/failure redirect callback. Called by the shopper's own
+ * browser (not eSewa's servers), generally once per payment attempt, but
+ * kept generous since a page refresh on the result page re-hits it.
+ */
+export const esewaCallbackLimiter = rateLimit({
+  ...baseOptions,
+  windowMs: 15 * 60 * 1000,
+  limit: 30,
+});
+
 /**
  * Personal data export — max 3 downloads per user per 24h, to prevent
  * using the export endpoint to harvest a compromised account's data

@@ -74,6 +74,8 @@ export interface IOrder {
   email?: string | null;
   paymentMethod?: 'cod' | 'khalti' | 'esewa' | 'card' | 'bank_transfer';
   paymentStatus?: 'pending' | 'paid' | 'failed' | 'refunded';
+  paymentTransactionUuid?: string | null;
+  paymentGatewayRef?: string | null;
   phone: string | number;
   district: string;
   city: string;

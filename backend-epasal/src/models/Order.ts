@@ -114,6 +114,19 @@ const OrderSchema = new Schema<IOrderDocument>(
       enum: ['pending', 'paid', 'failed', 'refunded'],
       default: 'pending',
     },
+    // eSewa (and future gateway) correlation fields. Never client-writable —
+    // set only by payment.service.ts. transactionUuid is regenerated on every
+    // initiate attempt (eSewa rejects a reused uuid), so a failed/cancelled
+    // attempt can be retried with a fresh one.
+    paymentTransactionUuid: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    paymentGatewayRef: {
+      type: String,
+      default: null,
+    },
     phone: {
       type: Schema.Types.Mixed,
       required: true,

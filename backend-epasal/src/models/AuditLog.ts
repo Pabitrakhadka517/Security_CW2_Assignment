@@ -48,6 +48,11 @@ export const AUDIT_ACTIONS = [
   'ORDER_CREATED',
   'ORDER_CANCELLED',
 
+  // Payment events
+  'ORDER_PAYMENT_INITIATED',
+  'ORDER_PAYMENT_SUCCESS',
+  'ORDER_PAYMENT_FAILED',
+
   // Security events
   'SUSPICIOUS_ACTIVITY',
   'IDOR_ATTEMPT',
