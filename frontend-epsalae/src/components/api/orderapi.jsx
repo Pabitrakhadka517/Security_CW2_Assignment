@@ -21,3 +21,10 @@ export const orderApi = {
   trackById: (orderId, phone) =>
     publicApi.get(`/orders/track/${encodeURIComponent(orderId)}`, { params: { phone } }),
 };
+
+export const paymentApi = {
+  // Returns { gatewayUrl, fields } — fields must be submitted as a real HTML
+  // form POST to gatewayUrl (see submitEsewaForm in Checkout.jsx), not read
+  // as JSON data — eSewa serves an HTML payment page, not an API response.
+  initiateEsewa: (orderId) => userApi.post('/payments/esewa/initiate', { orderId }),
+};

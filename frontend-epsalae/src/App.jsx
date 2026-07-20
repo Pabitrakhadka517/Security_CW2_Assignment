@@ -6,6 +6,7 @@ import Products from './pages/Products'
 import Cart from './pages/Cart'
 import Checkout from './pages/Checkout'
 import OrderSuccess from './pages/OrderSuccess'
+import PaymentResult from './pages/PaymentResult'
 import TrackOrder from './pages/TrackOrder'
 import AdminLogin from './pages/AdminLogin'
 import LoginPage from './pages/LoginPage'
@@ -160,6 +161,7 @@ function App() {
           <Route path="profile-setup" element={<UserProtectedRoute><ProfileSetup /></UserProtectedRoute>} />
           <Route path="account/*" element={<UserProtectedRoute><AccountDashboard /></UserProtectedRoute>} />
           <Route path="order-success/:orderId" element={<OrderSuccess />} />
+          <Route path="payment/esewa/result" element={<PaymentResult />} />
           <Route path="track-order" element={<TrackOrder />} />
           <Route path="403" element={<Forbidden />} />
           {/* Bare slug → sale page (handles admin CTA links like /wintersale) */}

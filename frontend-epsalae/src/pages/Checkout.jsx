@@ -2,9 +2,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Check, ChevronLeft, Lock, AlertCircle, Loader2, Truck, Tag, X, Info, MapPin, CreditCard, ShoppingBag, ShieldCheck, ArrowRight, Banknote } from 'lucide-react'
+import { Check, ChevronLeft, Lock, AlertCircle, Loader2, Truck, Tag, X, Info, MapPin, CreditCard, ShoppingBag, ShieldCheck, ArrowRight, Banknote, Wallet } from 'lucide-react'
 import { useCart } from '@/store/cartstore'
-import { orderApi } from '../components/api/orderapi'
+import { orderApi, paymentApi } from '../components/api/orderapi'
 import { getImageUrl } from '@/config'
 import { useAuthStore } from '@/components/store/authstore'
 import userApi from '../components/api/userapi'
@@ -213,6 +213,26 @@ export default function Checkout() {
     return true
   }
 
+  // ── eSewa handoff ─────────────────────────────────────────────────────────
+  // eSewa's gateway serves an HTML payment page, so the browser has to
+  // actually navigate there via a real form POST — an XHR/fetch can't render
+  // it. Build a throwaway hidden form and submit it; the page unloads right
+  // after, so nothing needs to clean this up.
+  const submitEsewaForm = (gatewayUrl, fields) => {
+    const form = document.createElement('form')
+    form.method = 'POST'
+    form.action = gatewayUrl
+    Object.entries(fields).forEach(([key, value]) => {
+      const input = document.createElement('input')
+      input.type = 'hidden'
+      input.name = key
+      input.value = value
+      form.appendChild(input)
+    })
+    document.body.appendChild(form)
+    form.submit()
+  }
+
   // ── Place order ───────────────────────────────────────────────────────────
   const handlePlaceOrder = async () => {
     if (!validateStep()) return
@@ -221,6 +241,10 @@ export default function Checkout() {
     }
 
     setIsProcessing(true)
+    // Tracks whether the order itself was created before something failed —
+    // once it's set, "try again" must NOT resubmit orderData (that would
+    // create a duplicate order); the catch block below branches on it.
+    let createdOrderId = null
     try {
       await new Promise(r => setTimeout(r, 1200))
 
@@ -241,7 +265,7 @@ export default function Checkout() {
           quantity:  Number(i.quantity),
         })),
         totalAmount:   Math.round(breakdown.total),
-        paymentMethod: 'cod',
+        paymentMethod: formData.paymentMethod === 'esewa' ? 'esewa' : 'cod',
         ...(appliedCouponCode ? { couponCode: appliedCouponCode } : {}),
         // user_id is derived server-side from the JWT — never sent in the body.
       }
@@ -255,6 +279,19 @@ export default function Checkout() {
         throw new Error('Order was created but no order id was returned. Please check your order history.')
       }
       const finalOrderId = orderId
+      createdOrderId = finalOrderId
+
+      // eSewa: the order already exists (payment-pending); hand the browser
+      // off to eSewa's hosted payment page. The result comes back via a
+      // server-verified redirect to /payment/esewa/result, not this flow.
+      if (formData.paymentMethod === 'esewa') {
+        const payRes = await paymentApi.initiateEsewa(finalOrderId)
+        const { gatewayUrl, fields } = payRes.data?.data || payRes.data
+        clearCart()
+        try { sessionStorage.removeItem('epasaley_coupon') } catch {}
+        submitEsewaForm(gatewayUrl, fields)
+        return
+      }
 
       clearCart()
       try { sessionStorage.removeItem('epasaley_coupon') } catch {}
@@ -281,8 +318,16 @@ export default function Checkout() {
       })
     } catch (err) {
       const msg = err.response?.data?.message || 'Order failed. Please try again.'
-      // If price changed since we calculated, refetch and show info
-      if (msg.toLowerCase().includes('mismatch')) {
+      if (createdOrderId) {
+        // The order already exists (only the eSewa handoff failed, e.g. a
+        // dropped connection) — clicking "Place Order" again would create a
+        // duplicate. Send them to track/retry the existing one instead.
+        setError(
+          `Order ${createdOrderId} was created, but we couldn't reach eSewa (${msg}). ` +
+          `Track it on the Track Order page to retry payment — please don't place a new order.`
+        )
+      } else if (msg.toLowerCase().includes('mismatch')) {
+        // If price changed since we calculated, refetch and show info
         setError('Prices may have changed. Recalculating...')
         await fetchBreakdown(appliedCouponCode)
         setError('Prices were updated. Please review and place the order again.')
@@ -439,11 +484,19 @@ export default function Checkout() {
                       <p className="text-sm text-gray-500">Pay when you receive your order</p>
                     </div>
                   </label>
+                  <label className={`flex items-center gap-4 p-4 border-2 rounded-2xl cursor-pointer transition ${formData.paymentMethod === 'esewa' ? 'border-emerald-600 bg-emerald-50/50' : 'border-gray-200 hover:border-gray-300'}`}>
+                    <input type="radio" name="paymentMethod" value="esewa" checked={formData.paymentMethod === 'esewa'} onChange={handleInputChange} className="w-5 h-5 accent-emerald-600" />
+                    <span className="flex items-center justify-center w-11 h-11 rounded-xl bg-emerald-100 text-emerald-700"><Wallet className="w-6 h-6" /></span>
+                    <div className="flex-1">
+                      <p className="font-bold text-gray-900">eSewa</p>
+                      <p className="text-sm text-gray-500">Pay securely online via eSewa</p>
+                    </div>
+                  </label>
                   <label className="flex items-center gap-4 p-4 border-2 border-gray-200 rounded-2xl bg-gray-50 opacity-60 cursor-not-allowed">
                     <input type="radio" disabled className="w-5 h-5" />
                     <span className="flex items-center justify-center w-11 h-11 rounded-xl bg-gray-200 text-gray-400"><Lock className="w-5 h-5" /></span>
                     <div className="flex-1">
-                      <p className="font-bold text-gray-900">Khalti / eSewa <span className="ml-1 px-2 py-0.5 text-[10px] font-semibold text-gray-500 bg-gray-200 rounded-full align-middle">Coming Soon</span></p>
+                      <p className="font-bold text-gray-900">Khalti <span className="ml-1 px-2 py-0.5 text-[10px] font-semibold text-gray-500 bg-gray-200 rounded-full align-middle">Coming Soon</span></p>
                       <p className="text-sm text-gray-500">Online payment coming soon</p>
                     </div>
                   </label>
@@ -464,8 +517,9 @@ export default function Checkout() {
                   </button>
                   <button onClick={() => handlePlaceOrder()} disabled={isProcessing || breakdownLoading || !breakdown}
                     className={`flex-1 flex items-center justify-center gap-2.5 px-6 py-4 text-base font-bold text-white rounded-xl transition shadow-sm bg-[#047857] hover:bg-[#065f46] ${(isProcessing || breakdownLoading || !breakdown) && 'opacity-70 cursor-not-allowed'}`}>
-                    {isProcessing ? (<>Processing <Loader2 className="w-5 h-5 animate-spin" /></>)
+                    {isProcessing ? (<>{formData.paymentMethod === 'esewa' ? 'Redirecting to eSewa' : 'Processing'} <Loader2 className="w-5 h-5 animate-spin" /></>)
                       : breakdownLoading ? (<>Calculating… <Loader2 className="w-5 h-5 animate-spin" /></>)
+                      : formData.paymentMethod === 'esewa' ? (<>Pay with eSewa · Rs. {total.toLocaleString()}</>)
                       : (<>Place Order · Rs. {total.toLocaleString()}</>)}
                   </button>
                 </div>

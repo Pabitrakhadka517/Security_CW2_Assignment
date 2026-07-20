@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react';
 import { Search, Package, Truck, CheckCircle, Clock, AlertCircle, MapPin, Phone, ShoppingBag, ArrowLeft, Printer, Calendar, CreditCard, Hash, User } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import { orderApi } from '../components/api/orderapi';
+import { orderApi, paymentApi } from '../components/api/orderapi';
 import { getImageUrl } from '../config';
 
 // Normalize order data from backend (handles the various field shapes).
@@ -34,6 +34,7 @@ const normalizeOrder = (rawOrder) => {
 
   const totalAmount = rawOrder.totalAmount || rawOrder.total || rawOrder.total_amount || rawOrder.grandTotal || 0;
   const paymentMethod = rawOrder.paymentMethod || rawOrder.payment_method || 'cod';
+  const paymentStatus = rawOrder.paymentStatus || rawOrder.payment_status || 'pending';
   const status = rawOrder.status || 'pending';
   const shipping = rawOrder.shipping || rawOrder.shippingFee || rawOrder.shipping_fee || 0;
   const description = rawOrder.description || rawOrder.notes || rawOrder.note || '';
@@ -42,7 +43,7 @@ const normalizeOrder = (rawOrder) => {
     ...rawOrder,
     customerName, customerPhone, customerAddress, city, district,
     orderId, orderDate, items: normalizedItems, totalAmount,
-    paymentMethod, status, shipping, description,
+    paymentMethod, paymentStatus, status, shipping, description,
   };
 };
 
@@ -59,7 +60,40 @@ export default function TrackOrder() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [searched, setSearched] = useState(false);
+  const [retrying, setRetrying] = useState(false);
+  const [retryError, setRetryError] = useState('');
   const billRef = useRef(null);
+
+  // eSewa's gateway serves an HTML payment page — the browser has to
+  // navigate there via a real form POST, not fetch/XHR (mirrors Checkout.jsx).
+  const submitEsewaForm = (gatewayUrl, fields) => {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = gatewayUrl;
+    Object.entries(fields).forEach(([key, value]) => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = key;
+      input.value = value;
+      form.appendChild(input);
+    });
+    document.body.appendChild(form);
+    form.submit();
+  };
+
+  const handleRetryPayment = async () => {
+    if (!order) return;
+    setRetrying(true);
+    setRetryError('');
+    try {
+      const payRes = await paymentApi.initiateEsewa(order.orderId);
+      const { gatewayUrl, fields } = payRes.data?.data || payRes.data;
+      submitEsewaForm(gatewayUrl, fields);
+    } catch (err) {
+      setRetryError(err.response?.data?.message || 'Could not start payment. Please try again.');
+      setRetrying(false);
+    }
+  };
 
   const statusConfig = {
     pending:    { ring: 'from-amber-400 to-emerald-500',   chip: 'bg-amber-100 text-amber-700',     icon: Clock,        label: 'Pending',    description: 'Your order has been received and is being reviewed.' },
@@ -279,6 +313,21 @@ export default function TrackOrder() {
                 </div>
               </div>
             </div>
+
+            {/* Retry eSewa payment — only when the order is genuinely still awaiting it */}
+            {order.paymentMethod === 'esewa' && order.paymentStatus === 'pending' && (
+              <div className="p-5 text-center border border-amber-200 bg-amber-50 rounded-2xl">
+                <h3 className="mb-1 font-bold text-amber-800">Payment Not Completed</h3>
+                <p className="mb-3 text-sm text-amber-700">
+                  This order is still waiting for eSewa payment. Finish it now to avoid the order being cancelled.
+                </p>
+                {retryError && <p className="mb-3 text-xs font-medium text-red-600">{retryError}</p>}
+                <button onClick={handleRetryPayment} disabled={retrying}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 font-semibold text-white transition bg-amber-600 rounded-lg hover:bg-amber-700 disabled:opacity-60">
+                  {retrying ? (<><div className="w-4 h-4 border-2 border-white rounded-full border-t-transparent animate-spin" /> Redirecting…</>) : 'Pay with eSewa'}
+                </button>
+              </div>
+            )}
 
             {/* Need help */}
             <div className="p-5 text-center border border-emerald-200 bg-emerald-50 rounded-2xl">
