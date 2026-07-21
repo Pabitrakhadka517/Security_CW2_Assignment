@@ -22,6 +22,8 @@ const SIZE_CLASSES = {
 export default function Modal({ isOpen, onClose, title, children, size = 'md' }) {
   const panelRef = useRef(null);
   const previousFocusRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -32,7 +34,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
 
     const handleKeydown = (e) => {
       if (e.key === 'Escape') {
-        onClose?.();
+        onCloseRef.current?.();
         return;
       }
       if (e.key !== 'Tab') return;
@@ -58,7 +60,7 @@ export default function Modal({ isOpen, onClose, title, children, size = 'md' })
       document.body.style.overflow = prevOverflow;
       previousFocusRef.current?.focus?.();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
