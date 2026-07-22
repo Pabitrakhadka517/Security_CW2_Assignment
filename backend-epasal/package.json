@@ -9,6 +9,8 @@
     "dev": "ts-node-dev --respawn --transpile-only src/server.ts",
     "test": "jest --runInBand --detectOpenHandles",
     "build": "tsc",
+    "audit": "npm audit --audit-level=high",
+    "audit:fix": "npm audit fix",
     "seed": "ts-node src/seed.ts",
     "setup-admin": "ts-node src/seed.ts",
     "seed:data": "ts-node --transpile-only src/seed-data.ts",
