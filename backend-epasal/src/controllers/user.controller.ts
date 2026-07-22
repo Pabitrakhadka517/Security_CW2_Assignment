@@ -19,6 +19,12 @@ import {
   sendVerificationEmail,
   VERIFICATION_TOKEN_TTL_MS,
 } from '../services/emailVerification.service';
+import {
+  generatePasswordlessToken,
+  hashPasswordlessToken,
+  sendPasswordlessLoginEmail,
+  PASSWORDLESS_TOKEN_TTL_MS,
+} from '../services/passwordlessLogin.service';
 import { withTimeout, withRetry } from '../utils/asyncResilience';
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -176,6 +182,108 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
   await auditService.detectSuspiciousActivity(ctx.ipAddress, user._id.toString());
 
   await issueUserSession(req, res, user, rememberMe);
+});
+
+const GENERIC_PASSWORDLESS_MESSAGE = 'If an account with that email exists, a login link has been sent.';
+
+/**
+ * POST /api/v1/auth/passwordless/request
+ * Same anti-enumeration posture as forgotPassword: always returns the same
+ * generic message, and only active local accounts actually get emailed —
+ * a Google-only account has no local password fallback story to protect
+ * here, but the token/link mechanism itself doesn't care about authProvider,
+ * so there's no reason to exclude it either.
+ */
+export const requestPasswordlessLogin = asyncHandler(async (req: Request, res: Response) => {
+  const { email } = req.body || {};
+  if (!email) throw new BadRequestError('Email is required');
+
+  const user = await User.findOne({ email: email.toLowerCase() });
+
+  if (user && user.isActive) {
+    const token = generatePasswordlessToken();
+    user.passwordlessLoginTokenHash = hashPasswordlessToken(token);
+    user.passwordlessLoginExpiresAt = new Date(Date.now() + PASSWORDLESS_TOKEN_TTL_MS);
+    await user.save();
+
+    await sendPasswordlessLoginEmail(user.email, token);
+
+    await auditService.log({
+      ...createAuditContext(req),
+      userId: user._id.toString(),
+      userEmail: user.email,
+      userRole: 'user',
+      action: 'PASSWORDLESS_LOGIN_REQUESTED',
+      status: 'SUCCESS',
+      riskLevel: 'LOW',
+    });
+  }
+
+  res.json({ success: true, message: GENERIC_PASSWORDLESS_MESSAGE });
+});
+
+/**
+ * POST /api/v1/auth/passwordless/verify
+ * Consumes a magic-link token (single-use, 15-min TTL) in place of a
+ * password. An MFA-enabled account still gets challenged afterwards — the
+ * link only proves inbox access, which is no stronger a factor than a
+ * password, so it doesn't get to skip the second factor the way Google SSO
+ * does (see googleLogin's comment on why that case is different).
+ */
+export const verifyPasswordlessLogin = asyncHandler(async (req: Request, res: Response) => {
+  const { token } = req.body || {};
+  if (!token) throw new BadRequestError('Token is required');
+  const ctx = createAuditContext(req);
+
+  const tokenHash = hashPasswordlessToken(token);
+  const user = await User.findOne({
+    passwordlessLoginTokenHash: tokenHash,
+    passwordlessLoginExpiresAt: { $gt: new Date() },
+  }).select('+passwordlessLoginTokenHash +passwordlessLoginExpiresAt');
+
+  // Deliberately generic — doesn't distinguish "never existed" from
+  // "expired" from "already used", same anti-enumeration posture as
+  // resetPassword.
+  if (!user) throw new BadRequestError('Invalid or expired login link');
+
+  // Single-use: burn the token immediately, before any lockout/MFA branching
+  // below, so a link can never be replayed even if the rest of login fails.
+  user.passwordlessLoginTokenHash = undefined;
+  user.passwordlessLoginExpiresAt = undefined;
+  await user.save();
+
+  if (!user.isActive) throw new UnauthorizedError('User account inactive');
+
+  if (user.isLocked) {
+    const remainingTime = Math.ceil(((user.lockUntil as Date).getTime() - Date.now()) / 60000);
+    throw new LockedError('Account locked. Try again after 15 minutes.', { remainingTime });
+  }
+
+  if (user.mfaEnabled) {
+    if (user.mfaMethod === 'email') {
+      const code = generateEmailOtp();
+      user.mfaEmailOtpHash = hashEmailOtp(code);
+      user.mfaEmailOtpExpiresAt = new Date(Date.now() + EMAIL_OTP_TTL_MS);
+      user.mfaEmailOtpAttempts = 0;
+      user.mfaEmailOtpSentAt = new Date();
+      await user.save();
+      await sendMFAEmailOtp(user.email, code, 'login');
+    }
+
+    const mfaPendingToken = generateMFAPendingToken(user._id.toString(), 'user', false);
+    res.status(200).json({
+      success: true,
+      message: 'MFA verification required',
+      requiresMFA: true,
+      data: { requiresMFA: true, mfaPendingToken, mfaMethod: user.mfaMethod },
+    });
+    return;
+  }
+
+  await auditService.log({ ...ctx, userId: user._id.toString(), userEmail: user.email, userRole: 'user', action: 'LOGIN_SUCCESS', status: 'SUCCESS', riskLevel: 'LOW', metadata: { loginMethod: 'magic_link' } });
+  await auditService.detectSuspiciousActivity(ctx.ipAddress, user._id.toString());
+
+  await issueUserSession(req, res, user);
 });
 
 /**

@@ -88,6 +88,20 @@ export const verifyEmailLimiter = rateLimit({
   limit: 8,
 });
 
+/** Passwordless-login (magic link) requests — per-IP cap to prevent email-bombing a victim's inbox. */
+export const passwordlessRequestLimiter = rateLimit({
+  ...baseOptions,
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+});
+
+/** Passwordless-login (magic link) verification — public, unauthenticated endpoint; cap token-guessing. */
+export const passwordlessVerifyLimiter = rateLimit({
+  ...baseOptions,
+  windowMs: 15 * 60 * 1000,
+  limit: 8,
+});
+
 /** MFA email-OTP resend (login challenge) — throttle inbox-spamming. */
 export const emailOtpLimiter = rateLimit({
   ...baseOptions,

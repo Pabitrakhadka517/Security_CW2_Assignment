@@ -7,7 +7,7 @@ import * as passwordResetController from '../controllers/passwordReset.controlle
 import * as emailVerificationController from '../controllers/emailVerification.controller';
 import { validateRequest } from '../middlewares/validateRequest';
 import { requireAdmin, requireAuth } from '../middlewares/authMiddleware';
-import { loginLimiter, registerLimiter, refreshLimiter, accountChangeLimiter, forgotPasswordLimiter, resetPasswordLimiter, verifyEmailLimiter } from '../middlewares/rateLimiter';
+import { loginLimiter, registerLimiter, refreshLimiter, accountChangeLimiter, forgotPasswordLimiter, resetPasswordLimiter, verifyEmailLimiter, passwordlessRequestLimiter, passwordlessVerifyLimiter } from '../middlewares/rateLimiter';
 import { requireCaptcha } from '../middlewares/captcha';
 import { conditionalCaptcha } from '../middlewares/conditionalCaptcha';
 import { requireCsrfToken } from '../middlewares/csrf.middleware';
@@ -174,6 +174,16 @@ router.post('/reset-password', resetPasswordLimiter, validateRequest({
     newPassword: strongPasswordSchema,
   }),
 }), passwordResetController.resetPassword);
+
+// Passwordless login (magic link) — user accounts only, same generic-response
+// posture as forgot/reset-password above. See passwordlessLogin.service.ts.
+router.post('/passwordless/request', passwordlessRequestLimiter, validateRequest({
+  body: Joi.object({ email: Joi.string().email().required() }),
+}), userController.requestPasswordlessLogin);
+
+router.post('/passwordless/verify', passwordlessVerifyLimiter, validateRequest({
+  body: Joi.object({ token: Joi.string().required() }),
+}), userController.verifyPasswordlessLogin);
 
 // Email verification — informational only, login is never gated on it.
 router.post('/verify-email', verifyEmailLimiter, validateRequest({
