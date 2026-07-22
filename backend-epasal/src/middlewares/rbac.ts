@@ -55,6 +55,7 @@ export const PERMISSIONS = {
     'coupon:delete:any',
     'user:read:any',
     'user:update:any',
+    'user:delete:any',
     'audit:read:any',
     'security:read:any',
   ],

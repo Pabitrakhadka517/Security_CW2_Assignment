@@ -15,6 +15,7 @@ import securityRoutes from './security.routes';
 import adminSessionRoutes from './adminSession.routes';
 import adminAlertsRoutes from './adminAlerts.routes';
 import ipManagementRoutes from './ipManagement.routes';
+import adminUserRoutes from './adminUser.routes';
 
 const router = Router();
 
@@ -43,6 +44,8 @@ router.use('/admin/sessions', adminSessionRoutes);
 router.use('/admin/alerts', adminAlertsRoutes);
 // Admin IP allow/block list management
 router.use('/admin/ip', ipManagementRoutes);
+// Admin user management (list/lock/unlock/activate/deactivate/delete)
+router.use('/admin/users', adminUserRoutes);
 // CSP violation reporting (browsers POST here automatically, no auth)
 router.use('/security', securityRoutes);
 

@@ -105,9 +105,12 @@ export interface IUser extends Document {
   }>;
   isFirstLogin?: boolean;
   savedCart?: Array<any>;
+  lastLoginAt: Date | null;
   loginAttempts: number;
   lockUntil: Date | null;
   readonly isLocked: boolean;
+  isDeleted: boolean;
+  deletedAt: Date | null;
   mfaSecret?: string;
   mfaEnabled: boolean;
   mfaBackupCodes?: string[];
@@ -137,7 +140,7 @@ export interface IUser extends Document {
 const PASSWORD_EXPIRY_MS = 90 * 24 * 60 * 60 * 1000; // 90 days
 const PASSWORD_HISTORY_LIMIT = 5;
 
-const MAX_LOGIN_ATTEMPTS = 5;
+export const MAX_LOGIN_ATTEMPTS = 5;
 const LOCK_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 
 const UserSchema = new Schema<IUser>(
@@ -168,8 +171,14 @@ UserSchema.add({
   savedAddresses: { type: Array, default: [] },
   isFirstLogin: { type: Boolean, default: true },
   savedCart: { type: Array, default: [] },
+  lastLoginAt: { type: Date, default: null },
   loginAttempts: { type: Number, default: 0 },
   lockUntil: { type: Date, default: null },
+  // Soft delete: admin-initiated account removal keeps the document (for
+  // order/audit history integrity) but anonymises PII and hides it from
+  // normal lookups. See adminUser.service#softDeleteUser.
+  isDeleted: { type: Boolean, default: false, index: true },
+  deletedAt: { type: Date, default: null },
   mfaSecret: { type: String, select: false },
   mfaEnabled: { type: Boolean, default: false },
   mfaBackupCodes: { type: [String], select: false },

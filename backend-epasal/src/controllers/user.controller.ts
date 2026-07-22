@@ -51,10 +51,9 @@ export const issueUserSession = async (
 
   const needsOnboarding = !!(user.isFirstLogin || !user.name || !user.email || !user.address || !user.phone);
 
-  if (user.isFirstLogin) {
-    user.isFirstLogin = false;
-    await user.save();
-  }
+  user.isFirstLogin = false;
+  user.lastLoginAt = new Date();
+  await user.save({ validateModifiedOnly: true });
 
   res.json({
     success: true,
