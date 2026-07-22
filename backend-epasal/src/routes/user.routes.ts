@@ -5,7 +5,7 @@ import { requireAuth, requireAdmin } from '../middlewares/authMiddleware';
 import { checkPasswordExpiry } from '../middlewares/passwordExpiry';
 import { validateRequest } from '../middlewares/validateRequest';
 import { uploadSingle } from '../middlewares/upload';
-import { accountChangeLimiter, exportDataLimiter } from '../middlewares/rateLimiter';
+import { accountChangeLimiter, exportDataLimiter, importDataLimiter } from '../middlewares/rateLimiter';
 import { strongPasswordSchema } from '../validations/password.validation';
 import { requirePermission } from '../middlewares/rbac';
 import { preventMassAssignment } from '../middlewares/sanitizeBody';
@@ -59,6 +59,40 @@ router.put('/profile/password', requireAuth, requirePermission('password:change:
 // Data export (GDPR-aligned) — the controller scopes the export to
 // req.user.id only, so there's no id param to check ownership against.
 router.get('/export-data', requireAuth, requirePermission('profile:read:own'), exportDataLimiter, userProfileController.exportMyData);
+
+// Data import (counterpart to export) — accepts the same shape exportMyData
+// produces (or a hand-built subset of it). Capped array sizes below guard
+// against a huge payload being used to bloat a user document or hammer the
+// Product lookup in the controller.
+router.post(
+	'/import-data',
+	requireAuth,
+	requirePermission('profile:import:own'),
+	checkPasswordExpiry,
+	importDataLimiter,
+	preventMassAssignment(),
+	validateRequest({ body: Joi.object({
+		profile: Joi.object({
+			name: Joi.string().min(2).max(100).optional(),
+			phone: Joi.string().max(20).allow('').optional(),
+		}).optional(),
+		addresses: Joi.array().max(20).items(Joi.object({
+			label: Joi.string().max(50).allow('').optional(),
+			addressLine: Joi.string().max(200).required(),
+			city: Joi.string().max(100).required(),
+			postalCode: Joi.string().max(20).required(),
+			country: Joi.string().max(100).required(),
+			phone: Joi.string().max(20).allow('').optional(),
+		})).optional(),
+		wishlist: Joi.array().max(200).items(
+			Joi.alternatives().try(
+				Joi.string(),
+				Joi.object({ productId: Joi.string().required(), name: Joi.string().optional() })
+			)
+		).optional(),
+	}) }),
+	userProfileController.importMyData
+);
 
 router.get('/orders', requireAuth, requirePermission('order:read:own'), checkPasswordExpiry, userProfileController.getMyOrders);
 

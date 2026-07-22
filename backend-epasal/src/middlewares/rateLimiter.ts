@@ -138,3 +138,20 @@ export const exportDataLimiter = rateLimit({
     });
   },
 });
+
+/**
+ * Personal data import — same rationale/cap as exportDataLimiter. Keyed by
+ * user id since the route is always authenticated.
+ */
+export const importDataLimiter = rateLimit({
+  ...baseOptions,
+  windowMs: 24 * 60 * 60 * 1000,
+  limit: 3,
+  keyGenerator: (req: Request) => req.user?.id || ipKeyGenerator(req.ip || 'unknown'),
+  handler: (_req: Request, res: Response) => {
+    res.status(429).json({
+      success: false,
+      message: 'You can only import your data 3 times per 24 hours. Please try again later.',
+    });
+  },
+});

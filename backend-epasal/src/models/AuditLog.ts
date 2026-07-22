@@ -33,6 +33,7 @@ export const AUDIT_ACTIONS = [
   'ADDRESS_UPDATED',
   'ADDRESS_DELETED',
   'DATA_EXPORTED',
+  'DATA_IMPORTED',
 
   // Admin events
   'ADMIN_LOGIN_SUCCESS',

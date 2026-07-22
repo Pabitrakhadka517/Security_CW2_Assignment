@@ -347,6 +347,87 @@ export const exportMyData = asyncHandler(async (req: Request, res: Response) => 
   res.status(200).send(JSON.stringify(exportPayload, null, 2));
 });
 
+// ── Self-service data import (counterpart to exportMyData) ───────────────────
+// Restores name/phone/addresses/wishlist from a previously exported (or
+// hand-crafted) payload. Deliberately excludes email, password and order
+// history: email/password changes go through their own re-authentication
+// flows, orders are immutable transactional records, and role isn't a field
+// this endpoint (or the User schema) exposes at all — so there's no
+// privilege-escalation surface here even though the import replaces
+// arrays wholesale.
+export const importMyData = asyncHandler(async (req: Request, res: Response) => {
+  const userId = requireUserId(req);
+  const { profile, addresses, wishlist } = req.body || {};
+
+  const user = await User.findById(userId);
+  if (!user) throw new NotFoundError('User not found');
+
+  const changedFields: string[] = [];
+
+  if (profile?.name) {
+    user.name = profile.name;
+    changedFields.push('name');
+  }
+  if (profile?.phone !== undefined) {
+    user.phone = profile.phone;
+    changedFields.push('phone');
+  }
+
+  if (Array.isArray(addresses)) {
+    user.savedAddresses = addresses.map((a: any) => ({
+      label: a?.label,
+      addressLine: a?.addressLine,
+      city: a?.city,
+      postalCode: a?.postalCode,
+      country: a?.country,
+      phone: a?.phone,
+    }));
+    user.markModified('savedAddresses');
+    changedFields.push('addresses');
+  }
+
+  // Silently drop any productId that no longer resolves to an active
+  // product, rather than importing dangling favorites.
+  let skippedFavorites = 0;
+  if (Array.isArray(wishlist)) {
+    const requestedIds = [...new Set(
+      wishlist.map((w: any) => (typeof w === 'string' ? w : w?.productId)).filter(Boolean)
+    )] as string[];
+    const validProducts = requestedIds.length
+      ? await Product.find({ id: { $in: requestedIds }, isActive: true }).lean().select('id')
+      : [];
+    const validIds = new Set(validProducts.map((p: any) => String(p.id)));
+    user.favorites = requestedIds.filter((id) => validIds.has(id));
+    skippedFavorites = requestedIds.length - user.favorites.length;
+    changedFields.push('wishlist');
+  }
+
+  await user.save();
+
+  await auditService.log({
+    ...createAuditContext(req),
+    userId,
+    userEmail: user.email,
+    userRole: 'user',
+    action: 'DATA_IMPORTED',
+    status: 'SUCCESS',
+    riskLevel: 'MEDIUM',
+    metadata: {
+      fields: changedFields,
+      addressCount: user.savedAddresses?.length ?? 0,
+      favoriteCount: user.favorites?.length ?? 0,
+      skippedFavorites,
+    },
+  });
+
+  sendSuccess(res, 200, 'Profile data imported', {
+    profile: { name: user.name, phone: user.phone },
+    addresses: user.savedAddresses,
+    wishlist: user.favorites,
+    skippedFavorites,
+  });
+});
+
 // ── Admin: get all users with their wishlists (populated) ────────────────────
 export const adminGetAllWishlists = asyncHandler(async (req: Request, res: Response) => {
   await auditService.log({ ...createAuditContext(req), action: 'ADMIN_USER_VIEWED', status: 'SUCCESS', riskLevel: 'LOW', metadata: { view: 'wishlists' } });
