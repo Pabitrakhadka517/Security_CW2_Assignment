@@ -13,6 +13,7 @@ import LoginPage from './pages/LoginPage'
 import ForgotPasswordPage from './pages/ForgotPasswordPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
 import VerifyEmailPage from './pages/VerifyEmailPage'
+import PasswordlessLoginPage from './pages/PasswordlessLoginPage'
 import SalePage from './pages/SalePage'
 import SalesHub from './pages/SalesHub'
 import RegisterPage from './pages/RegisterPage'
@@ -157,6 +158,7 @@ function App() {
           <Route path="forgot-password" element={<ForgotPasswordPage />} />
           <Route path="reset-password" element={<ResetPasswordPage />} />
           <Route path="verify-email" element={<VerifyEmailPage />} />
+          <Route path="passwordless-login" element={<PasswordlessLoginPage />} />
           <Route path="sale/:slug" element={<SalePage />} />
           <Route path="sales" element={<SalesHub />} />
           <Route path="register" element={<RegisterPage />} />

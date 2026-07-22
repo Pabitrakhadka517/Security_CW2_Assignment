@@ -3,7 +3,7 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, AlertCircle, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
 import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
 import toast from 'react-hot-toast';
 import { authEndpoints, profileEndpoints } from '@/components/api/userapi';
@@ -70,11 +70,32 @@ const LoginPage: React.FC = () => {
   const [mfaResendCooldown, setMfaResendCooldown] = useState(0);
   const [mfaResending, setMfaResending]       = useState(false);
 
+  // Passwordless (magic-link) login — an alternative to the password form,
+  // not a replacement. Toggled inline rather than a separate route, since
+  // it's just a different way to fill the same "prove it's you" step.
+  const [magicLinkMode, setMagicLinkMode]   = useState(false);
+  const [magicLinkEmail, setMagicLinkEmail] = useState('');
+  const [magicLinkSent, setMagicLinkSent]   = useState(false);
+  const [magicLinkLoading, setMagicLinkLoading] = useState(false);
+
   useEffect(() => {
     if (mfaResendCooldown <= 0) return;
     const t = setTimeout(() => setMfaResendCooldown((s) => s - 1), 1000);
     return () => clearTimeout(t);
   }, [mfaResendCooldown]);
+
+  // Arriving here from PasswordlessLoginPage when the magic link's account
+  // has MFA enabled — that page can't complete the challenge itself, so it
+  // hands the pending token off to this page's existing MFA UI/logic.
+  useEffect(() => {
+    const state = location.state as any;
+    if (state?.mfaPendingToken) {
+      setMfaPendingToken(state.mfaPendingToken);
+      setMfaMethod(state.mfaMethod === 'email' ? 'email' : 'totp');
+      if (state.mfaMethod === 'email') setMfaResendCooldown(MFA_RESEND_COOLDOWN_SECONDS);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [capsLockOn, setCapsLockOn] = useState(false);
   const handlePasswordKeyEvent = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -197,6 +218,25 @@ const LoginPage: React.FC = () => {
       setMfaError(err?.response?.data?.message || 'Failed to resend code');
     } finally {
       setMfaResending(false);
+    }
+  };
+
+  const handleMagicLinkSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!magicLinkEmail) return;
+    setMagicLinkLoading(true);
+    try {
+      const res = await authEndpoints.passwordlessRequest(magicLinkEmail);
+      setMagicLinkSent(true);
+      toast.success(res.data?.message || 'If an account with that email exists, a login link has been sent.');
+    } catch (err: any) {
+      if (err?.response?.status === 429) {
+        toast.error('Too many requests. Please wait a while before trying again.');
+      } else {
+        toast.error(err?.response?.data?.message || 'Something went wrong. Please try again.');
+      }
+    } finally {
+      setMagicLinkLoading(false);
     }
   };
 
@@ -357,6 +397,50 @@ const LoginPage: React.FC = () => {
                 </button>
               </form>
             </div>
+          ) : magicLinkMode ? (
+            <div className="animate-fade-in">
+              <h1 className="text-2xl font-bold text-gray-900 mb-1">Sign in with an email link</h1>
+              <p className="text-gray-500 text-sm mb-8">No password needed — we'll email you a one-time link to sign in.</p>
+
+              {magicLinkSent ? (
+                <div role="status" aria-live="polite" className="flex items-center gap-3 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-3 text-sm">
+                  <CheckCircle2 size={15} className="shrink-0" />
+                  <span>If an account with that email exists, a login link has been sent. Check your inbox — the link expires in 15 minutes.</span>
+                </div>
+              ) : (
+                <form onSubmit={handleMagicLinkSubmit} className="space-y-4" noValidate>
+                  <div>
+                    <label htmlFor="magicLinkEmail" className="block text-sm font-medium text-gray-700 mb-1.5">Email address</label>
+                    <div className="relative">
+                      <Mail size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" aria-hidden="true" />
+                      <input
+                        id="magicLinkEmail" type="email" value={magicLinkEmail} disabled={magicLinkLoading} autoFocus
+                        onChange={e => setMagicLinkEmail(e.target.value)}
+                        placeholder="you@example.com" autoComplete="email"
+                        className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 placeholder-gray-400 text-sm transition focus:outline-none focus:ring-2 focus:ring-[#1E293B]/10 focus:border-[#1E293B]/40 focus:bg-white disabled:opacity-50"
+                      />
+                    </div>
+                  </div>
+
+                  <button type="submit" disabled={magicLinkLoading || !magicLinkEmail}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 mt-1 bg-[#1E293B] hover:bg-[#0B1220] text-white font-semibold rounded-xl text-sm transition shadow-md shadow-blue-900/20 disabled:opacity-60 disabled:cursor-not-allowed">
+                    {magicLinkLoading ? (
+                      <><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending…</>
+                    ) : (
+                      <>Send login link <ArrowRight size={15} /></>
+                    )}
+                  </button>
+                </form>
+              )}
+
+              <button
+                type="button"
+                onClick={() => { setMagicLinkMode(false); setMagicLinkSent(false); setMagicLinkEmail(''); }}
+                className="w-full text-sm text-gray-500 hover:text-gray-700 transition text-center mt-6"
+              >
+                ← Back to password sign in
+              </button>
+            </div>
           ) : (
             <div className="animate-fade-in">
               <h1 className="text-2xl font-bold text-gray-900 mb-1">Sign in</h1>
@@ -477,6 +561,16 @@ const LoginPage: React.FC = () => {
                   )}
                 </button>
               </form>
+
+              <p className="text-center mt-4">
+                <button
+                  type="button"
+                  onClick={() => setMagicLinkMode(true)}
+                  className="text-xs text-gray-600 hover:text-gray-800 transition"
+                >
+                  Sign in with an email link instead
+                </button>
+              </p>
 
               <div className="mt-5 flex items-center gap-3">
                 <div className="h-px flex-1 bg-gray-200" />

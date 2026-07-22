@@ -145,6 +145,8 @@ export const authEndpoints = {
   resetPassword: (payload) => userApi.post('/auth/reset-password', payload),
   verifyEmail: (token) => userApi.post('/auth/verify-email', { token }),
   resendVerification: () => userApi.post('/auth/resend-verification'),
+  passwordlessRequest: (email) => userApi.post('/auth/passwordless/request', { email }),
+  passwordlessVerify: (token) => userApi.post('/auth/passwordless/verify', { token }),
 };
 
 export const sessionEndpoints = {
