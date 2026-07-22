@@ -31,11 +31,14 @@ export default function RBACGuard({ requiredRole, children, fallback }) {
   }
 
   const payload = decodeJwt(token)
-  // Admin JWTs always carry role 'admin' regardless of the underlying
-  // Admin document's role ('admin' or 'super_admin') — see backend
-  // auth.controller#adminLogin — so 'super_admin' never appears in a token
-  // and doesn't need to be accepted here.
-  const roleMatches = requiredRole === 'admin' ? payload?.role === 'admin' : payload?.role === 'user'
+  // Admin JWTs now carry the underlying Admin document's real role — 'admin'
+  // or 'super_admin' — see backend auth.controller#issueAdminSession and
+  // rbac.ts PERMISSIONS.super_admin (a strict superset of admin). So a
+  // super_admin token must still satisfy requiredRole="admin" here; the
+  // finer-grained split between the two happens server-side per-endpoint.
+  const roleMatches = requiredRole === 'admin'
+    ? payload?.role === 'admin' || payload?.role === 'super_admin'
+    : payload?.role === 'user'
 
   if (!payload || isTokenExpired(token) || !roleMatches) {
     // Tampered, expired, or wrong-role token — don't trust the store's

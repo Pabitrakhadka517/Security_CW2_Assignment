@@ -14,8 +14,9 @@ export default function ProtectedRoute({ children }) {
   }
 
   // Defense-in-depth: also verify the stored adminToken actually decodes to
-  // role 'admin' and isn't expired, so a stale/tampered token can't keep
-  // rendering the admin shell after the store's isAdmin flag goes stale.
+  // an admin-tier role ('admin' or 'super_admin') and isn't expired, so a
+  // stale/tampered token can't keep rendering the admin shell after the
+  // store's isAdmin flag goes stale.
   return (
     <RBACGuard requiredRole="admin" fallback={<Navigate to="/admin/login" replace />}>
       {children}
