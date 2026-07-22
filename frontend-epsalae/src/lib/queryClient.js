@@ -43,4 +43,6 @@ export const queryKeys = {
   orders: (params = {}) => ['orders', params],
   coupons: (params = {}) => ['coupons', params],
   saleCategories: (params = {}) => ['sale-categories', params],
+  adminUsers: (params = {}) => ['admin-users', params],
+  adminUser: (id) => ['admin-users', 'detail', id],
 };

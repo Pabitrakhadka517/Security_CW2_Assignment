@@ -16,6 +16,7 @@ const BannerCrud       = lazy(() => import('./bannercrud'));
 const SaleCrud         = lazy(() => import('./salecrud'));
 const SaleProductsCrud = lazy(() => import('./saleproductscrud'));
 const WishlistCrud     = lazy(() => import('./wishlistcrud'));
+const UserCrud          = lazy(() => import('./usercrud'));
 const BulkUpload       = lazy(() => import('./bulkupload'));
 const SecurityDashboard = lazy(() => import('./SecurityDashboard'));
 
@@ -48,6 +49,7 @@ export default function AdminLayout() {
               <Route path="/salecrud" element={<SaleCrud />} />
               <Route path="/saleproducts" element={<SaleProductsCrud />} />
               <Route path="/wishlists" element={<WishlistCrud />} />
+              <Route path="/users" element={<UserCrud />} />
               <Route path="/bulk-upload" element={<BulkUpload />} />
               <Route path="/security" element={<SecurityDashboard />} />
             </Routes>
