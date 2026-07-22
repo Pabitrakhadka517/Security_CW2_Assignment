@@ -9,7 +9,19 @@
 
    Usage: apply the `.ds-*` classes instead of re-deriving ad-hoc Tailwind chains.
    Dark mode: add `data-theme="dark"` to <html> (or rely on prefers-color-scheme).
+
+   Everything below lives in the `components` cascade layer (Tailwind v4's
+   layer order is theme < base < components < utilities). Without this, these
+   plain-CSS rules sit outside any layer and — per the Cascade Layers spec —
+   unlayered CSS always beats layered CSS regardless of source order. That
+   silently defeated any Tailwind utility paired with a `.ds-*` class (e.g.
+   `className="ds-input pl-9"` for an icon-padded search box: `.ds-input`'s
+   own `padding` shorthand always won over `pl-9`, so the icon overlapped the
+   input text). Layering these as `components` restores the intended
+   precedence: utilities can still override the design-system defaults.
    ========================================================================== */
+
+@layer components {
 
 :root {
   /* Brand palette --------------------------------------------------------- */
@@ -212,3 +224,5 @@
   .ds-page-title { font-size: 1.25rem; }
   .ds-card-pad   { padding: 1rem; }
 }
+
+} /* @layer components */
