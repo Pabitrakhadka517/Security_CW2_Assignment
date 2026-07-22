@@ -8,7 +8,9 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "audit": "npm audit --audit-level=high",
+    "audit:fix": "npm audit fix"
   },
   "dependencies": {
     "@hcaptcha/react-hcaptcha": "^2.0.2",
