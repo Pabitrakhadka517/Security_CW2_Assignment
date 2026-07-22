@@ -1,9 +1,10 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Ban, ShieldCheck, RefreshCw, Loader2, AlertTriangle } from 'lucide-react';
+import { Ban, ShieldCheck, RefreshCw, Loader2, AlertTriangle, Lock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { ipManagementApi } from '../api/ipManagementApi';
 import ConfirmDialog from '../ui/ConfirmDialog';
 import { ErrorState } from '../ui/States';
+import { useAdminAuth } from '../store/authstore';
 
 const STAT_CARDS = [
   { key: 'totalBlocked', label: 'Total Blocked', color: 'text-red-600' },
@@ -23,6 +24,12 @@ function formatExpiry(expiresAt, permanent) {
 }
 
 export default function IPManagement() {
+  // Mutating IP rules is a super_admin-only permission on the backend
+  // (security:manage:any — see rbac.ts). A plain admin can still view this
+  // page read-only; hide the mutation controls rather than let them hit a 403.
+  const { admin } = useAdminAuth();
+  const canManage = admin?.role === 'super_admin';
+
   const [blockedIPs, setBlockedIPs] = useState([]);
   const [allowedIPs, setAllowedIPs] = useState([]);
   const [stats, setStats] = useState(null);
@@ -150,6 +157,13 @@ export default function IPManagement() {
         <p className="ds-page-sub">Block or allow-list IP addresses across the platform</p>
       </div>
 
+      {!canManage && (
+        <div className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-600 bg-slate-50 border border-slate-200 rounded-xl">
+          <Lock className="w-4 h-4 shrink-0" />
+          Read-only — only super admins can block, allow, or remove IP rules.
+        </div>
+      )}
+
       {error && stats && (
         <div className="flex items-center gap-2 px-4 py-2.5 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-xl">
           <AlertTriangle className="w-4 h-4 shrink-0" />
@@ -175,7 +189,7 @@ export default function IPManagement() {
           {[
             { id: 'blocked', label: `Blocked (${blockedIPs.length})` },
             { id: 'allowed', label: `Allowed (${allowedIPs.length})` },
-            { id: 'add', label: '+ Add Rule' },
+            ...(canManage ? [{ id: 'add', label: '+ Add Rule' }] : []),
           ].map((tab) => (
             <button
               key={tab.id}
@@ -226,12 +240,14 @@ export default function IPManagement() {
                       </td>
                       <td className="text-(--ds-text-muted) text-xs">{formatExpiry(rule.expiresAt, rule.permanent)}</td>
                       <td className="text-right">
-                        <button
-                          onClick={() => setPendingAction({ type: 'unblock', ip: rule.ip })}
-                          className="ds-btn ds-btn-primary ds-btn-icon"
-                        >
-                          Unblock
-                        </button>
+                        {canManage && (
+                          <button
+                            onClick={() => setPendingAction({ type: 'unblock', ip: rule.ip })}
+                            className="ds-btn ds-btn-primary ds-btn-icon"
+                          >
+                            Unblock
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -267,12 +283,14 @@ export default function IPManagement() {
                         {rule.createdAt ? new Date(rule.createdAt).toLocaleDateString() : '—'}
                       </td>
                       <td className="text-right">
-                        <button
-                          onClick={() => setPendingAction({ type: 'removeAllow', ip: rule.ip })}
-                          className="ds-btn ds-btn-danger ds-btn-icon"
-                        >
-                          Remove
-                        </button>
+                        {canManage && (
+                          <button
+                            onClick={() => setPendingAction({ type: 'removeAllow', ip: rule.ip })}
+                            className="ds-btn ds-btn-danger ds-btn-icon"
+                          >
+                            Remove
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -284,7 +302,7 @@ export default function IPManagement() {
       )}
 
       {/* Add rule forms */}
-      {view === 'add' && (
+      {view === 'add' && canManage && (
         <div className="grid md:grid-cols-2 gap-5">
           <form onSubmit={handleBlockIP} className="ds-card ds-card-pad space-y-3 border-red-100">
             <h3 className="font-semibold text-red-700 flex items-center gap-2">
