@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff, Lock, ShieldCheck, ShieldOff, CheckCircle2, AlertCircle, Loader2, Download, Info, Mail } from 'lucide-react'
+import { Eye, EyeOff, Lock, ShieldCheck, ShieldOff, CheckCircle2, AlertCircle, Loader2, Download, Upload, Info, Mail } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { profileEndpoints, mfaEndpoints, authEndpoints } from '@/components/api/userapi'
 import { useUserAuth } from '@/components/store/authstore'
@@ -334,6 +334,74 @@ function DataExportSection() {
   )
 }
 
+function DataImportSection() {
+  const { patchUser } = useUserAuth()
+  const [importing, setImporting] = useState(false)
+  const fileInputRef = useRef(null)
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow re-selecting the same file next time
+    if (!file) return
+
+    setImporting(true)
+    try {
+      const text = await file.text()
+      const parsed = JSON.parse(text)
+      const payload = {
+        profile: parsed.profile ? { name: parsed.profile.name, phone: parsed.profile.phone } : undefined,
+        addresses: parsed.addresses,
+        wishlist: parsed.wishlist,
+      }
+      const res = await profileEndpoints.importData(payload)
+      const data = res.data?.data || {}
+      if (data.profile?.name) patchUser({ name: data.profile.name })
+      toast.success(res.data?.message || 'Your data has been imported')
+    } catch (err) {
+      if (err instanceof SyntaxError) {
+        toast.error('That file is not valid JSON — use a file exported from "Download My Data".')
+      } else if (err?.response?.status === 429) {
+        toast.error('You can only import your data 3 times per day')
+      } else {
+        toast.error(err?.response?.data?.message || 'Failed to import data')
+      }
+    } finally {
+      setImporting(false)
+    }
+  }
+
+  return (
+    <div className="mt-10 max-w-md border-t border-slate-100 pt-8">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+          <Upload className="w-4 h-4 text-slate-700" />
+        </div>
+        <div>
+          <h4 className="text-base font-semibold text-slate-900">Restore My Data</h4>
+          <p className="text-xs text-slate-500">Import your name, phone, addresses and wishlist from a previously exported file.</p>
+        </div>
+      </div>
+      <input ref={fileInputRef} type="file" accept="application/json" className="hidden" onChange={handleFileChange} />
+      <button
+        onClick={() => fileInputRef.current?.click()}
+        disabled={importing}
+        className="w-full py-3 border border-slate-200 text-slate-700 hover:bg-slate-50 font-semibold rounded-xl text-sm transition disabled:opacity-50 flex items-center justify-center gap-2"
+      >
+        {importing ? (
+          <>
+            <Loader2 size={14} className="animate-spin" /> Importing...
+          </>
+        ) : (
+          <>
+            <Upload size={14} /> Choose File to Import
+          </>
+        )}
+      </button>
+      <p className="mt-2 text-[11px] text-slate-400">Limited to 3 imports per 24 hours. Never affects your password, email or order history.</p>
+    </div>
+  )
+}
+
 export default function SecurityPage() {
   const navigate = useNavigate()
   const { logoutUser } = useUserAuth()
@@ -484,6 +552,7 @@ export default function SecurityPage() {
         <EmailVerificationSection />
         <MFASection />
         <DataExportSection />
+        <DataImportSection />
       </div>
     </div>
   )

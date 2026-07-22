@@ -183,6 +183,7 @@ export const profileEndpoints = {
   orders: (q) => userApi.get('/user/orders', { params: q }),
   changePassword: (payload) => userApi.put('/user/profile/password', payload),
   exportData: () => userApi.get('/user/export-data'),
+  importData: (payload) => userApi.post('/user/import-data', payload),
 };
 
 export default userApi;
