@@ -28,11 +28,13 @@ import ProfileSetup from './pages/ProfileSetup'
 import AccountDashboard from './pages/AccountDashboard'
 import IdleTimeoutManager from './components/IdleTimeoutManager'
 import DeviceMismatchBanner from './components/DeviceMismatchBanner'
+import EmailVerificationBanner from './components/EmailVerificationBanner'
 
 function PublicLayout() {
   return (
     <div className="relative flex flex-col min-h-screen overflow-x-hidden bg-[linear-gradient(180deg,#ffffff_0%,#f8fbff_48%,#eef3ff_100%)] text-slate-900">
       <DeviceMismatchBanner />
+      <EmailVerificationBanner />
       <Navbar />
       <SearchBar />
       <main className="flex-1">

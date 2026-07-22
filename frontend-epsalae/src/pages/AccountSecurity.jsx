@@ -9,6 +9,7 @@ import { profileEndpoints, mfaEndpoints, authEndpoints } from '@/components/api/
 import { useUserAuth } from '@/components/store/authstore'
 import PasswordStrengthMeter from '@/components/ui/PasswordStrengthMeter'
 import PasswordRules from '@/components/ui/PasswordRules'
+import { useEmailVerificationStatus } from '@/hooks/useEmailVerificationStatus'
 
 const changePasswordSchema = z
   .object({
@@ -237,22 +238,8 @@ function MFASection() {
 }
 
 function EmailVerificationSection() {
-  const [checking, setChecking] = useState(true)
-  const [verified, setVerified] = useState(true)
+  const { checking, verified } = useEmailVerificationStatus()
   const [sending, setSending] = useState(false)
-
-  useEffect(() => {
-    let cancelled = false
-    profileEndpoints.me()
-      .then((res) => {
-        if (cancelled) return
-        const data = res.data?.data || res.data || {}
-        setVerified(!!data.emailVerified)
-      })
-      .catch(() => {})
-      .finally(() => { if (!cancelled) setChecking(false) })
-    return () => { cancelled = true }
-  }, [])
 
   const handleResend = async () => {
     setSending(true)
