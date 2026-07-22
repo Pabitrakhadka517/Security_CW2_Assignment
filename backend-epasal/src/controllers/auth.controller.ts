@@ -22,7 +22,7 @@ import { validatePasswordChange } from '../services/password.service';
  * issuance logic lives in exactly one place (mirrors issueUserSession).
  */
 export const issueAdminSession = async (req: Request, res: Response, admin: IAdmin): Promise<void> => {
-  const payload = { id: admin._id.toString(), email: admin.email, role: 'admin' as const };
+  const payload = { id: admin._id.toString(), email: admin.email, role: admin.role };
   const accessToken = generateAccessToken(payload);
   const refreshToken = generateRefreshToken(payload);
 

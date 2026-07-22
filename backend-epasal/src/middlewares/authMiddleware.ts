@@ -37,8 +37,10 @@ export const authenticate = (isAdmin: boolean = false) => {
       // Verify token
       const decoded = verifyAccessToken(token, isAdmin);
 
-      // Check if admin role is required
-      if (isAdmin && decoded.role !== 'admin') {
+      // Check if admin role is required (super_admin is a strict superset of
+      // admin — see rbac.ts PERMISSIONS.super_admin — so it passes this gate
+      // too; finer-grained separation between the two happens in requirePermission).
+      if (isAdmin && decoded.role !== 'admin' && decoded.role !== 'super_admin') {
         throw new ForbiddenError('Admin access required');
       }
 

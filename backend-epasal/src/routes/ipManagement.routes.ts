@@ -3,6 +3,7 @@ import { asyncHandler } from '../middlewares/asyncHandler';
 import { requireAdmin } from '../middlewares/authMiddleware';
 import { checkPasswordExpiry } from '../middlewares/passwordExpiry';
 import { validateRequest } from '../middlewares/validateRequest';
+import { requirePermission } from '../middlewares/rbac';
 import { ipListService } from '../services/ipList.service';
 import { sendSuccess } from '../utils/responseHelper';
 import { BadRequestError, NotFoundError } from '../utils/errors';
@@ -12,11 +13,18 @@ const router = Router();
 
 router.use(requireAdmin, checkPasswordExpiry);
 
+// Mutating routes (block/allow/unblock/refresh-cache) are restricted to
+// super_admin — see rbac.ts PERMISSIONS.super_admin. A plain admin can still
+// view the current lists via the read-only routes below, which stay open to
+// both roles under 'security:read:any'.
+const requireSecurityManage = requirePermission('security:manage:any');
+
 /**
  * GET /api/v1/admin/ip/stats
  */
 router.get(
   '/stats',
+  requirePermission('security:read:any'),
   asyncHandler(async (_req: Request, res: Response) => {
     const stats = await ipListService.getStats();
     sendSuccess(res, 200, 'IP stats retrieved', { stats });
@@ -28,6 +36,7 @@ router.get(
  */
 router.get(
   '/blocked',
+  requirePermission('security:read:any'),
   asyncHandler(async (_req: Request, res: Response) => {
     const ips = await ipListService.getBlockedIPs();
     sendSuccess(res, 200, 'Blocked IPs retrieved', { count: ips.length, ips });
@@ -39,6 +48,7 @@ router.get(
  */
 router.get(
   '/allowed',
+  requirePermission('security:read:any'),
   asyncHandler(async (_req: Request, res: Response) => {
     const ips = await ipListService.getAllowedIPs();
     sendSuccess(res, 200, 'Allowed IPs retrieved', { count: ips.length, ips });
@@ -50,6 +60,7 @@ router.get(
  */
 router.post(
   '/block',
+  requireSecurityManage,
   validateRequest(blockIPSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { ip, reason, permanent, expiresInHours } = req.body;
@@ -78,6 +89,7 @@ router.post(
  */
 router.post(
   '/allow',
+  requireSecurityManage,
   validateRequest(allowIPSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { ip, reason } = req.body;
@@ -93,6 +105,7 @@ router.post(
  */
 router.delete(
   '/block/:ip',
+  requireSecurityManage,
   validateRequest(ipParamSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { ip } = req.params;
@@ -109,6 +122,7 @@ router.delete(
  */
 router.delete(
   '/allow/:ip',
+  requireSecurityManage,
   validateRequest(ipParamSchema),
   asyncHandler(async (req: Request, res: Response) => {
     const { ip } = req.params;
@@ -127,6 +141,7 @@ router.delete(
  */
 router.post(
   '/refresh-cache',
+  requireSecurityManage,
   asyncHandler(async (_req: Request, res: Response) => {
     await ipListService.invalidateCache();
     const stats = await ipListService.getStats();
