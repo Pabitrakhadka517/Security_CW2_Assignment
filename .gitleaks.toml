@@ -1,0 +1,11 @@
+title = "gitleaks config"
+
+# Extend the default rule set rather than replacing it.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Known false positives: truncated example JWTs in API documentation"
+paths = [
+  '''backend-epasal/FRONTEND_API_GUIDE\.txt''',
+]
