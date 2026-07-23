@@ -22,6 +22,11 @@ process.env.MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/
 // Deterministic 32-byte key so encryption tests are self-contained even without .env.
 process.env.ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || '5dd3a31dadeeca787e2f267240259f1563b763719417bb2d5b4b51a325bd506e'
 process.env.ENCRYPTION_KEY_VERSION = process.env.ENCRYPTION_KEY_VERSION || '1'
+// eSewa's own publicly documented UAT/sandbox merchant secret (see
+// .env.example) — not a real credential, safe to default here so
+// esewaPayment.spec.ts's HMAC signing is self-contained even without .env.
+process.env.ESEWA_SECRET_KEY = process.env.ESEWA_SECRET_KEY || '8gBm/:&EnhH.1/q'
+process.env.ESEWA_PRODUCT_CODE = process.env.ESEWA_PRODUCT_CODE || 'EPAYTEST'
 
 // No real Mongo in CI/sandbox: make DB operations fail fast instead of buffering
 // for serverSelectionTimeoutMS. Pure-logic and routing/auth/validation tests
