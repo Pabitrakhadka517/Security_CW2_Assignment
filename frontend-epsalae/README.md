@@ -49,4 +49,4 @@ See `.env.example` for the full list. The important ones:
 * MFA (authenticator app or emailed code), forgot/reset password, and email verification
   all have dedicated pages under `src/pages/`.
 
-Deployment notes for specific hosts are in `DEPLOYMENT.md` and `HOSTINGER-DEPLOY.md`.
+Deployment notes are in `DEPLOYMENT.md`.
